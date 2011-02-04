@@ -20,6 +20,12 @@ if (!framework.IsHeadless())
     fileMenu.addAction("Quit").triggered.connect(Quit);
 
     var viewMenu = menu.addMenu("&View");
+
+    var connectMenu = menu.addMenu("&Connect");
+    connectMenu.addAction("Chiru world").triggered.connect(ConnectRemote);
+    connectMenu.addAction("Local world").triggered.connect(ConnectLocal);
+
+
     if (framework.GetModuleQObj("SceneStructure"))
     {
         viewMenu.addAction("Assets").triggered.connect(OpenAssetsWindow);
@@ -100,5 +106,18 @@ if (!framework.IsHeadless())
     function OpenConsoleWindow()
     {
         framework.GetModuleQObj("Console").ToggleConsole();
+    }
+
+    function ConnectRemote()
+    {
+        console.ExecuteCommand("disconnect");
+        console.ExecuteCommand("connect(chiru.cie.fi)");
+        
+    }
+
+    function ConnectLocal()
+    {
+        console.ExecuteCommand("disconnect");
+        console.ExecuteCommand("connect(localhost)");
     }
 }

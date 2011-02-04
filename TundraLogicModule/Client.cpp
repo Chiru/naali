@@ -98,12 +98,17 @@ void Client::Logout(bool fail)
         
         framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_DISCONNECTED, 0);
         framework_->RemoveScene("TundraClient");
-        
         emit Disconnected();
     }
     
     if (fail)
+    {
         framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_LOGIN_FAILED, 0);
+
+        //network is down so we need to fallback
+        emit FallbackConnection();
+    }
+
     else // An user deliberately disconnected from the world, and not due to a connection error.
     {
         // Clear all the login properties we used for this session, so that the next login session will start from an

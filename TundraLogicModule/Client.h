@@ -79,6 +79,9 @@ signals:
     
     /// This signal is emitted when the client has disconnected from the server.
     void Disconnected();
+
+    /// This signal is emitted when connection to the server is lost and couldn't accomplish reconnection.
+    void FallbackConnection();
     
 public slots:
 

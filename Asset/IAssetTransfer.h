@@ -11,6 +11,8 @@
 #include "AssetFwd.h"
 #include "AssetReference.h"
 
+#include <QByteArray>
+
 class IAssetTransfer : public QObject, public boost::enable_shared_from_this<IAssetTransfer>
 {
     Q_OBJECT
@@ -52,6 +54,7 @@ public:
     /// Stores the raw asset bytes for this asset.
     std::vector<u8> rawAssetData;
 
+public slots:
     /// Returns the current transfer progress in the range [0, 1].
     // float Progress() const;
 
@@ -68,6 +71,9 @@ public:
     QString DiskSource() const { return diskSource; }
 
     bool CachingAllowed() const { return cachingAllowed; }
+
+    // Raw data getter for scripts
+    QByteArray GetRawData() { return QByteArray::fromRawData((const char*)&rawAssetData[0], rawAssetData.size()); }
 
 signals:
     /// Emitted when the raw byte download of this asset finishes.

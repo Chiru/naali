@@ -171,8 +171,9 @@ bool LoginScreenModule::HandleEvent(event_category_id_t category_id, event_id_t 
             break;
         case TundraLogic::Events::EVENT_TUNDRA_DISCONNECTED:
             connected_ = false;
-            if (ui && window_)
-                ui->ShowWidget(window_);
+            //commented out for demo purposes only!!
+            //if (ui && window_)
+              //  ui->ShowWidget(window_);
             break;
         }
     }

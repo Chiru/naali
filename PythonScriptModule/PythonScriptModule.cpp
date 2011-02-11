@@ -53,11 +53,12 @@
 #include "GenericMessageUtils.h"
 #include "LoginServiceInterface.h"
 #include "Frame.h"
-#include "Console.h"
+#include "ConsoleAPI.h"
 #include "Audio.h"
 #include "NaaliUi.h"
 #include "NaaliGraphicsView.h"
 #include "NaaliMainWindow.h"
+#include "DebugAPI.h"
 
 //Kristalli UserConnection
 //for JS this is actually registered in TundraLogicModule, which depends on QtScript directly.
@@ -1869,8 +1870,9 @@ namespace PythonScript
             mainModule.addObject("_naali", GetFramework());
             PythonQt::self()->registerClass(&Frame::staticMetaObject);
             PythonQt::self()->registerClass(&DelayedSignal::staticMetaObject);
-            PythonQt::self()->registerClass(&ScriptConsole::staticMetaObject);
+            PythonQt::self()->registerClass(&ConsoleAPI::staticMetaObject);
             PythonQt::self()->registerClass(&Command::staticMetaObject);
+            PythonQt::self()->registerClass(&DebugAPI::staticMetaObject);
             PythonQt::self()->registerClass(&Scene::Entity::staticMetaObject);
             PythonQt::self()->registerClass(&EntityAction::staticMetaObject);
 
@@ -1902,7 +1904,7 @@ namespace PythonScript
             PythonQt::self()->registerCPPClass("Vector3df");
             PythonQt::self()->addDecorators(new QuaternionDecorator());
             PythonQt::self()->registerCPPClass("Quaternion");
-			PythonQt::self()->addDecorators(new TransformDecorator());
+            PythonQt::self()->addDecorators(new TransformDecorator());
             PythonQt::self()->registerCPPClass("Transform");
 
             // For some reason: plain registerClass doosn't work for these classes.

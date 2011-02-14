@@ -15,12 +15,12 @@ function prevSlide() {
 function changeSlide(dir) {
     print("Changing slide!");
     var dyn = me.GetComponentRaw("EC_DynamicComponent", "Slidelist");
-    var slide_index = dyn.GetAttribute("Current") + dir;
+    var slide_index = parseInt(dyn.GetAttribute("Current")) + dir;
+    var max = dyn.GetAttribute("MaxIndex");
 
-    if (dyn.GetAttribute(slide_index + "") == undefined) {
-	slide_index = 0;
-    } else if (dyn.GetAttribute(slide_index + "") == undefined) {
-	//FIXME
+    if (slide_index < 0) {
+	slide_index = max;
+    } else if (slide_index > max) {
 	slide_index = 0;
     }
 

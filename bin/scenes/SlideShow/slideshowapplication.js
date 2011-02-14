@@ -9,25 +9,35 @@
 engine.ImportExtension("qt.core");
 engine.ImportExtension("qt.gui");
 
+//handly for dealing with qbytearrays
+QByteArray.prototype.toString = function() {
+    ts = new QTextStream( this, QIODevice.ReadOnly ); 
+    return ts.readAll();
+}
+
+
 // connect to Drag events
 ui.GraphicsView().DragEnterEvent.connect(handleEnter);
 ui.GraphicsView().DragMoveEvent.connect(handleMove);
 ui.GraphicsView().DropEvent.connect(handleDrop);
 
 // Url for the server
-var serverurl = "http://localhost:8000/";
+var serverurl = "http://192.168.1.114:8000/";
 // Storage name
 var storagename = "Productivity Converter storage";
 
-print ('foo')
+print ('foo');
 
 var entity;
 var canvassource;
-var slides;
+var slides = [];
+var prev;
+var next;
 var slide_index = 0;
+var max_slides;
 
 function checkSuffix(url) {
-    // FIXME
+    // FIXME find a better way to get the suffix
     url = ("" + url).replace('.ppt', '.pptx')
     if (url.split('.ppt').length == 2) {
 	print("I accept!");
@@ -77,6 +87,7 @@ function handleDrop(event) {
 	    break;
 	}
     }
+    createCanvas(event);
 }
 
 function upload(uploadStorageUrl, uploadStorageName, filename) {
@@ -85,7 +96,6 @@ function upload(uploadStorageUrl, uploadStorageName, filename) {
     } else {
 	print("HORRERNOUS ERROR! CANNOT HANDLE ERRORNOUS HORROR!!!1!");
     }
-    
 }
 
 function AddAssetStorage(url, name) {
@@ -114,9 +124,94 @@ function UploadAsset(fileName, storageName, uploadName) {
     }
 }
 
-function getSlides(ref) {
-    //TODO
 
+function RequestAsset(ref, type)
+{
+    ForgetAsset(ref);
+
+    print("Requesting:", ref);
+    var transferptr = asset.RequestAsset(ref, type);
+    var transfer = transferptr.get();
+    transfer.Downloaded.connect(DownloadReady);
+}
+
+function DownloadReady(/* IAssetTransfer* */ transfer)
+{
+    var data = transfer.GetRawData();
+    print("Download ready");
+    print("  >> Source    :", transfer.GetSourceUrl());
+    print("  >> Type      :", transfer.GetAssetType());
+    print("  >> Data len  :", data.size());
+    print("  >> index     :", parseInt(data.toString()));
+    noSlides = parseInt(data.toString());
+    
+    var baseurl = transfer.GetSourceUrl().replace('/index.txt', '');
+    print(baseurl)
+    var parts = baseurl.split('/')
+	print(parts)
+    var slidename = parts[parts.length - 1]
+	print(slidename)
+    
+    for (i = 0; i < noSlides; i++) {
+     	slides.push(baseurl + '/' + slidename + '-' + i + '.png');
+    }
+
+    // set source to first slide
+    canvassource = entity.GetComponentRaw('EC_3DCanvasSource')
+    canvassource.show2d = false;
+    canvassource.source = slides[0];
+    canvassource.submesh = 1;
+
+    // Make dynamic component of the slide stuff
+
+    var dyn = entity.dynamiccomponent;
+
+    dyn.Name = "Slidelist";
+
+    for (s = 0; s < slides.length; s++) {
+	var slidename = s;
+	var attr = dyn.CreateAttribute("string", slidename);
+	dyn.SetAttribute(slidename, slides[s] + "");
+    }
+
+    dyn.CreateAttribute("int", "Current");
+    dyn.SetAttribute("Current", 0);
+
+    dyn.CreateAttribute("int", "MaxIndex");
+    dyn.SetAttribute("MaxIndex", noSlides - 1);
+
+
+    // ec_script
+    var script = entity.script;
+    script.type = "js";
+    script.runOnLoad = true;
+    var r = script.scriptRef;
+    r.ref = "local://slideshow.js";
+    script.scriptRef = r;
+	
+    // Now we are done
+    scene.EmitEntityCreatedRaw(entity);
+}
+
+function ForgetAsset(assetRef) {
+    // Make AssetAPI forget this asset if already loaded in
+    // to the system and remove the disk cache entry.
+    asset.ForgetAsset(assetRef, true);
+}
+
+function getSlides(ref) {
+    var parts = ref.split('/');
+    var filename = parts[parts.length - 1];
+    var path = filename.replace('.ppt', '');
+    RequestAsset(serverurl + path + '/index.txt', "Binary");
+
+    // set name
+    entity.name.name = "Slideshow: " + filename;
+    entity.name.description = "Simple slideshow app from " + filename;
+    prev.name.name = 'Button prev (' + entity.name.name + ')';
+    scene.EmitEntityCreatedRaw(prev);
+    next.name.name = 'Button next (' + entity.name.name + ')';
+    scene.EmitEntityCreatedRaw(next);
 }
 
 
@@ -125,12 +220,8 @@ function UploadCompleted(/* IAssetUploadTransfer* */ transfer) {
     print("Upload completed");
     print("  >> New asset ref    :", transfer.AssetRef());
     print("  >> Destination name :", transfer.GetDesticationName(), "\n");
-    
+
     getSlides(transfer.AssetRef())
-	
-    //print(slides);
-    //createCanvas(filename, slides, event);
-    // if you want to handle multiple drops do the magic here
 }
 
 function UploadFailed(/* IAssetUploadTransfer* */ transfer) {
@@ -189,38 +280,13 @@ function conjg(quat, v) {
 }
 
 
-function createCanvas(filename, slides, event) {
+function createCanvas(event) {
     entity = scene.CreateEntityRaw(scene.NextFreeId(), ['EC_Placeable', 'EC_Mesh', 'EC_3DCanvasSource', 'EC_Name', 'EC_DynamicComponent', 'EC_Script']);
-
-    // set name
-    entity.name.name = "Slideshow: " + filename;
-    entity.name.description = "Simple slideshow app from " + filename;
 
     // set mesh
     var mesh_ref = entity.mesh.meshRef;
     mesh_ref.ref = 'local://screen.mesh';
     entity.mesh.meshRef = mesh_ref;
-
-    // set source to first slide
-    canvassource = entity.GetComponentRaw('EC_3DCanvasSource')
-    canvassource.show2d = false;
-    canvassource.source = slides[0];
-    canvassource.submesh = 1;
-
-    // Make dynamic component of the slide stuff
-
-    var dyn = entity.dynamiccomponent;
-
-    dyn.Name = "Slidelist";
-
-    for (s = 0; s < slides.length; s++) {
-	var slidename = s;
-	var attr = dyn.CreateAttribute("string", slidename);
-	dyn.SetAttribute(slidename, slides[s] + "");
-    }
-
-    dyn.CreateAttribute("int", "Current");
-    dyn.SetAttribute("Current", 0);
 
     var worldpos;
 
@@ -262,15 +328,6 @@ function createCanvas(filename, slides, event) {
     
     entity.placeable.transform = transform;
 
-    // ec_script
-    var script = entity.script;
-    script.type = "js";
-    script.runOnLoad = true;
-    var r = script.scriptRef;
-    r.ref = "local://slideshow.js";
-    script.scriptRef = r;
-
-
     //FIXME move this and makeslide widget to slideshow.js when
     // appropriate
     // Create UI
@@ -280,25 +337,22 @@ function createCanvas(filename, slides, event) {
 
     rotvec = new Vector3df();
 
+    rotvec.x = 187;
+    rotvec.y = 180;
+
+    prev = makeButton('prev', entity.placeable, 1, rotvec);
+
     rotvec.x = 180;
     rotvec.y = 0;
 
-    makeButton('prev', entity.placeable, -1, rotvec);
-
-    rotvec.x = 187;
-    rotvec.y = 180;
        
-    makeButton('next', entity.placeable, 1, rotvec);
-
-    // Now we are done
-    scene.EmitEntityCreatedRaw(entity);
+    next = makeButton('next', entity.placeable, -1, rotvec);
 
 }
 
 function makeButton(name, placeable, dir, rotation) {
 
     var button = scene.CreateEntityRaw(scene.NextFreeId(), ['EC_Mesh', 'EC_Placeable', 'EC_Name']);
-    button.name.name = 'Button ' + name +' (' + entity.name.name + ')';
 
     var button_mesh_ref = button.mesh.meshRef;
     button_mesh_ref.ref = 'local://kolmionappi.mesh';
@@ -319,8 +373,7 @@ function makeButton(name, placeable, dir, rotation) {
 
     button.placeable.transform = transform;
 
-    scene.EmitEntityCreatedRaw(button);
-
+    return button;
 
 }
 

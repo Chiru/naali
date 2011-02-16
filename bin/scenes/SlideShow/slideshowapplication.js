@@ -30,7 +30,6 @@ print ('foo');
 
 var entity;
 var canvassource;
-var slides = [];
 var prev;
 var next;
 var slide_index = 0;
@@ -92,7 +91,9 @@ function handleDrop(event) {
 
 function upload(uploadStorageUrl, uploadStorageName, filename) {
     if (AddAssetStorage(uploadStorageUrl, uploadStorageName)) {
-	    UploadAsset(filename, uploadStorageName, filename, "binary");
+	var parts = filename.split('/');
+	var newName = parts[parts.length - 1];
+	UploadAsset(filename, uploadStorageName, newName, "binary");
     } else {
 	print("HORRERNOUS ERROR! CANNOT HANDLE ERRORNOUS HORROR!!!1!");
     }
@@ -144,6 +145,8 @@ function DownloadReady(/* IAssetTransfer* */ transfer)
     print("  >> Data len  :", data.size());
     print("  >> index     :", parseInt(data.toString()));
     noSlides = parseInt(data.toString());
+
+    var slides = [];
     
     var baseurl = transfer.GetSourceUrl().replace('/index.txt', '');
     print(baseurl)
@@ -188,6 +191,11 @@ function DownloadReady(/* IAssetTransfer* */ transfer)
     var r = script.scriptRef;
     r.ref = "local://slideshow.js";
     script.scriptRef = r;
+
+    //FIXME move this and makeslide widget to slideshow.js when
+    // appropriate
+    // Create UI
+    // makeSlideWidget(slides);
 	
     // Now we are done
     scene.EmitEntityCreatedRaw(entity);
@@ -202,15 +210,16 @@ function ForgetAsset(assetRef) {
 function getSlides(ref) {
     var parts = ref.split('/');
     var filename = parts[parts.length - 1];
-    var path = filename.replace('.ppt', '');
+    var path = filename.replace('.pptx', '');
+    path = path.replace('.ppt', '');
     RequestAsset(serverurl + path + '/index.txt', "Binary");
 
     // set name
     entity.name.name = "Slideshow: " + filename;
     entity.name.description = "Simple slideshow app from " + filename;
-    prev.name.name = 'Button prev (' + entity.name.name + ')';
+    prev.name.name = 'Button prev (' + entity.name.name + ' ' + entity.Id + ')';
     scene.EmitEntityCreatedRaw(prev);
-    next.name.name = 'Button next (' + entity.name.name + ')';
+    next.name.name = 'Button next (' + entity.name.name + ' ' + entity.Id + ')';
     scene.EmitEntityCreatedRaw(next);
 }
 
@@ -328,13 +337,6 @@ function createCanvas(event) {
     
     entity.placeable.transform = transform;
 
-    //FIXME move this and makeslide widget to slideshow.js when
-    // appropriate
-    // Create UI
-    //makeSlideWidget(slides);
-
-    // add buttons
-
     rotvec = new Vector3df();
 
     rotvec.x = 187;
@@ -385,7 +387,7 @@ function makeSlideWidget(slides) {
 
     for (s = 0; s < slides.length; s++) {
 	var label = new MyLabel(gfxscene, s);
-	var pic = new QPixmap("C:\\Users\\playsign\\sand_d.jpg");
+	var pic = new QPixmap(slides[s]);
 	label.setPixmap(pic.scaledToWidth(100));
 	label.move(0, 110 * s);
 	gfxscene.addWidget(label)

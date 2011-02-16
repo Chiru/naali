@@ -5,6 +5,7 @@
 #include "HttpAssetTransfer.h"
 #include "LoggingFunctions.h"
 #include "IAssetUploadTransfer.h"
+#include "ConfigurationManager.h"
 
 #include "AssetAPI.h"
 #include "IAsset.h"
@@ -12,6 +13,7 @@
 #include <QNetworkAccessManager>
 #include <QNetworkRequest>
 #include <QNetworkReply>
+#include <QNetworkProxy>
 #include <QNetworkDiskCache>
 
 DEFINE_POCO_LOGGING_FUNCTIONS("HttpAssetProvider")
@@ -22,6 +24,19 @@ HttpAssetProvider::HttpAssetProvider(Foundation::Framework *framework_)
     // Http access manager
     networkAccessManager = new QNetworkAccessManager(this);
     connect(networkAccessManager, SIGNAL(finished(QNetworkReply*)), SLOT(OnHttpTransferFinished(QNetworkReply*)));
+
+    QString http_proxy_host = QString::fromStdString(framework_->GetDefaultConfig().GetSetting<std::string>("Asset", "http_proxy_host"));
+    QString http_proxy_port = QString::fromStdString(framework_->GetDefaultConfig().GetSetting<std::string>("Asset", "http_proxy_port"));
+    if (!http_proxy_host.isEmpty() && !http_proxy_port.isEmpty())
+    {
+	LogInfo("HttpAssetProvider: Using proxy " + http_proxy_host.toStdString() + " at port " + ToString((int)http_proxy_port.toUInt()));
+	QNetworkProxy proxy;
+	proxy.setHostName(http_proxy_host);
+	proxy.setPort(http_proxy_port.toUInt());
+	proxy.setType(QNetworkProxy::HttpProxy);
+	QNetworkProxy::setApplicationProxy(proxy);
+	networkAccessManager->setProxy(proxy);
+    } 
 
     // Http disk cache
     QString diskCachePath = QString::fromStdString(framework->GetPlatform()->GetApplicationDataDirectory()) + "/assetcache";
@@ -62,6 +77,9 @@ AssetTransferPtr HttpAssetProvider::RequestAsset(QString assetRef, QString asset
     request.setUrl(QUrl(assetRef));
     request.setRawHeader("User-Agent", "realXtend Naali");
 
+    // QNetworkProxy proxy = networkAccessManager->proxy();
+    // LogInfo("HttpAssetProvider: making get request with proxy " + proxy.hostName().toStdString() + ToString((int)proxy.port()));
+    
     QNetworkReply *reply = networkAccessManager->get(request);
 
     HttpAssetTransferPtr transfer = HttpAssetTransferPtr(new HttpAssetTransfer);

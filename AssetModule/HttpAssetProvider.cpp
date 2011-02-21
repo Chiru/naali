@@ -10,6 +10,7 @@
 #include "ConfigurationManager.h"
 
 #include "AssetAPI.h"
+#include "AssetCache.h"
 #include "IAsset.h"
 
 #include <QNetworkAccessManager>
@@ -25,6 +26,7 @@ HttpAssetProvider::HttpAssetProvider(Foundation::Framework *framework_)
 {
     // Http access manager
     networkAccessManager = new QNetworkAccessManager(this);
+    networkAccessManager->setCache(framework_->Asset()->GetAssetCache());
     connect(networkAccessManager, SIGNAL(finished(QNetworkReply*)), SLOT(OnHttpTransferFinished(QNetworkReply*)));
 
     QString http_proxy_host = QString::fromStdString(framework_->GetDefaultConfig().GetSetting<std::string>("Asset", "http_proxy_host"));
@@ -127,23 +129,6 @@ void HttpAssetProvider::DeleteAssetFromStorage(QString assetRef)
     networkAccessManager->deleteResource(request);
 }
 
-void HttpAssetProvider::ForgetAsset(AssetPtr asset)
-{
-    ForgetAsset(asset->Name());
-}
-
-void HttpAssetProvider::ForgetAsset(QString assetRef)
-{
-    QAbstractNetworkCache *internalCache = networkAccessManager->cache();
-    if (!internalCache)
-        return;
-    QUrl url(assetRef);
-    QString urlString = url.toString();
-    if (url.isValid() && (urlString.startsWith("http://") || urlString.startsWith("https://"))) /// \todo better checks
-        if (!internalCache->remove(url))
-            LogError("Could not remove \"" + urlString.toStdString() + "\" from QNetworkDiskCache");
-}
-
 void HttpAssetProvider::OnHttpTransferFinished(QNetworkReply *reply)
 {
     // QNetworkAccessManager requires us to delete the QNetworkReply, or it will leak.
@@ -166,9 +151,18 @@ void HttpAssetProvider::OnHttpTransferFinished(QNetworkReply *reply)
 
         if (reply->error() == QNetworkReply::NoError)
         {
+            // If asset request creator has not allowed caching, remove it now
+            AssetCache *cache = framework->Asset()->GetAssetCache();
             if (!transfer->CachingAllowed())
-                ForgetAsset(transfer->source.ref);
-            transfer->SetCachingBehavior(false, ""); // Don't duplicate store to normal asset cache
+                cache->remove(reply->url());
+
+            // Setting cache allowed as false is very important! The items are already in our cache via the 
+            // QAccessManagers QAbstractNetworkCache (same as our AssetAPI::AssetCache). Network replies will already call them
+            // so the AssetAPI::AssetTransferCompletes doesn't have to.
+            // \note GetDiskSource() will return empty string if above cache remove was performed, this is wanted behaviour.
+            transfer->SetCachingBehavior(false, cache->GetDiskSource(reply->url()));
+
+            // Copy raw data to transfer
             transfer->rawAssetData.insert(transfer->rawAssetData.end(), data.data(), data.data() + data.size());
             framework->Asset()->AssetTransferCompleted(transfer.get());
         }

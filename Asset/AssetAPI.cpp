@@ -48,7 +48,7 @@ void AssetAPI::OpenAssetCache(QString directory)
 {
     SAFE_DELETE(assetCache);
     SAFE_DELETE(diskSourceChangeWatcher);
-    assetCache = new AssetCache(directory.toStdString().c_str());
+    assetCache = new AssetCache(this, directory.toStdString().c_str());
     diskSourceChangeWatcher = new QFileSystemWatcher();
     connect(diskSourceChangeWatcher, SIGNAL(fileChanged(QString)), this, SLOT(OnAssetDiskSourceChanged(QString)));
 }
@@ -60,7 +60,14 @@ std::vector<AssetProviderPtr> AssetAPI::GetAssetProviders() const
 
 void AssetAPI::RegisterAssetProvider(AssetProviderPtr provider)
 {
-    ///\todo Debug check for duplicates.
+    for(uint i=0; i<providers.size(); ++i)
+    {
+        if (providers[i]->Name() == provider->Name())
+        {
+            LogWarning("AssetAPI::RegisterAssetProvider: Provider with name '" + provider->Name().toStdString() + "' already registered.");
+            return;
+        }
+    }
     providers.push_back(provider);
 }
 
@@ -79,7 +86,7 @@ AssetStoragePtr AssetAPI::AddAssetStorage(const QString &url, const QString &nam
     IAssetProvider *provider = GetProviderForAssetRef(url, "Binary").get();
     if (!provider)
     {
-        LogError("AddAssetStorage() Could not find a provider for the new storage location " + url.toStdString());
+        LogError("AssetAPI::AddAssetStorage: Could not find a provider for the new storage location " + url.toStdString());
         return newStorage; 
     }
 
@@ -92,7 +99,7 @@ AssetStoragePtr AssetAPI::AddAssetStorage(const QString &url, const QString &nam
             continue;
         if (newStorage->BaseURL() == url && newStorage->Name() == name)
         {
-            LogDebug("AddAssetStorage() Found existing storage with same url and name, returning the existing storage.");
+            LogDebug("AssetAPI::AddAssetStorage: Found existing storage with same url and name, returning the existing storage.");
             break;
         }
         // Reset so the last valid provider wont be used! 
@@ -105,7 +112,7 @@ AssetStoragePtr AssetAPI::AddAssetStorage(const QString &url, const QString &nam
     if (newStorage.get() && setAsDefault)
         SetDefaultAssetStorage(newStorage);
     if (!newStorage.get())
-        LogError("AddAssetStorage() Could not create new storage for " + url.toStdString());
+        LogError("AssetAPI::AddAssetStorage: Could not create new storage for " + url.toStdString());
     return newStorage;
 }
 
@@ -298,7 +305,11 @@ void AssetAPI::ForgetAsset(AssetPtr asset, bool removeDiskSource)
     if (removeDiskSource && !asset->DiskSource().isEmpty())
     {
         emit DiskSourceAboutToBeRemoved(asset);
-        QFile::remove(asset->DiskSource());
+        // Remove disk watcher before deleting the file. Otherwise we get tons of spam and not wanted reload tries.
+        if (diskSourceChangeWatcher)
+            diskSourceChangeWatcher->removePath(asset->DiskSource());
+        assetCache->DeleteAsset(asset->Name());
+        asset->SetDiskSource("");
     }
 
     // Do an explicit unload of the asset before deletion (the dtor of each asset has to do unload as well, but this handles the cases where
@@ -391,10 +402,9 @@ AssetUploadTransferPtr AssetAPI::UploadAssetFromFile(const char *filename, Asset
     std::vector<u8> data;
     bool success = LoadFileToVector(filename, data);
     if (!success)
-        return AssetUploadTransferPtr(); ///\todo Log out error.
-
+        throw Exception("AssetAPI::UploadAssetFromFile failed! Could not load file to a data vector.");
     if (data.size() == 0)
-        return AssetUploadTransferPtr(); ///\todo Log out error.
+        throw Exception("AssetAPI::UploadAssetFromFile failed! Loaded file to data vector but size is zero.");
 
     return UploadAssetFromFileInMemory(&data[0], data.size(), destination, assetName);
 }
@@ -560,7 +570,7 @@ AssetTransferPtr AssetAPI::RequestAsset(QString assetRef, QString assetType)
     }
 
     // Check if we can fetch the asset from the asset cache. If so, we do a immediately load the data in from the asset cache and don't go to any asset provider.
-    QString assetFileInCache = assetCache->FindAsset(assetRef);
+    QString assetFileInCache = assetCache->GetDiskSource(assetRef);
     AssetTransferPtr transfer;
 
     if (!assetFileInCache.isEmpty())
@@ -674,7 +684,10 @@ void AssetAPI::RegisterAssetTypeFactory(AssetTypeFactoryPtr factory)
 {
     AssetTypeFactoryPtr existingFactory = GetAssetTypeFactory(factory->Type());
     if (existingFactory)
-        return; ///\todo Log out warning.
+    {
+        LogWarning("AssetAPI::RegisterAssetTypeFactory: Factory with type '" + factory->Type().toStdString() + "' already registered.");
+        return;
+    }
 
     assert(factory->Type() == factory->Type().trimmed());
 
@@ -1079,18 +1092,22 @@ void AssetAPI::OnAssetLoaded(AssetPtr asset)
 void AssetAPI::OnAssetDiskSourceChanged(const QString &path_)
 {
     QDir path(path_);
-
     for(AssetMap::iterator iter = assets.begin(); iter != assets.end(); ++iter)
+    {
         if (!iter->second->DiskSource().isEmpty() && QDir(iter->second->DiskSource()) == path)
         {
-            AssetPtr asset = iter->second;
+            // Return if file does not exists at the moment, no need to try asset->LoadFromCache()
+            if (!QFile::exists(iter->second->DiskSource()))
+                return;
 
+            AssetPtr asset = iter->second;
             bool success = asset->LoadFromCache();
             if (!success)
                 LogError("Failed to reload changed asset \"" + asset->ToString().toStdString() + "\" from file \"" + path_.toStdString() + "\"!");
             else
                 LogDebug("Reloaded changed asset \"" + asset->ToString().toStdString() + "\" from file \"" + path_.toStdString() + "\".");
         }
+    }
 }
 
 bool LoadFileToVector(const char *filename, std::vector<u8> &dst)
@@ -1098,7 +1115,7 @@ bool LoadFileToVector(const char *filename, std::vector<u8> &dst)
     FILE *handle = fopen(filename, "rb");
     if (!handle)
     {
-        LogError("Could not open file " + std::string(filename) + ".");
+        LogError("AssetAPI::LoadFileToVector: Failed to open file '" + std::string(filename) + "' for reading.");
         return false;
     }
 

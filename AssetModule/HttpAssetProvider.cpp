@@ -41,16 +41,6 @@ HttpAssetProvider::HttpAssetProvider(Foundation::Framework *framework_)
 	QNetworkProxy::setApplicationProxy(proxy);
 	networkAccessManager->setProxy(proxy);
     } 
-
-    // Http disk cache
-    QString diskCachePath = QString::fromStdString(framework->GetPlatform()->GetApplicationDataDirectory()) + "/assetcache";
-    QNetworkDiskCache *diskCache = new QNetworkDiskCache(this);
-    diskCache->setCacheDirectory(diskCachePath);
-    qint64 cacheSize = diskCache->maximumCacheSize(); // default is 50mb
-    diskCache->setMaximumCacheSize(cacheSize * 10 * 4); // go up to 2000mb
-    networkAccessManager->setCache(diskCache);
-
-    connect(framework_->Asset(), SIGNAL(DiskSourceAboutToBeRemoved(AssetPtr)), SLOT(ForgetAsset(AssetPtr)));
 }
 
 HttpAssetProvider::~HttpAssetProvider()

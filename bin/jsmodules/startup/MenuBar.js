@@ -139,13 +139,13 @@ if (!framework.IsHeadless())
     function ConnectRemote()
     {
         console.ExecuteCommand("disconnect");
-        console.ExecuteCommand("connect(chiru.cie.fi)");
+        console.ExecuteCommand("connect(chiru.cie.fi, 2345, 'erkki', '', udp)");
         
     }
 
     function ConnectLocal()
     {
         console.ExecuteCommand("disconnect");
-        console.ExecuteCommand("connect(localhost)");
+        console.ExecuteCommand("connect(localhost, 2345, 'erkki', '', udp)");
     }
 }

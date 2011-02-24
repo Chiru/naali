@@ -28,6 +28,7 @@ namespace TundraLogic
 std::string TundraLogicModule::type_name_static_ = "TundraLogic";
 
 static const unsigned short cDefaultPort = 2345;
+static const std::string cDefaultProtocol = "udp";
 
 TundraLogicModule::TundraLogicModule() : IModule(type_name_static_),
     autostartserver_(false),
@@ -67,7 +68,7 @@ void TundraLogicModule::PostInitialize()
         "Stops the server",
         Console::Bind(this, &TundraLogicModule::ConsoleStopServer)));
     RegisterConsoleCommand(Console::CreateCommand("connect", 
-        "Connects to a server. Usage: connect(address,port,username,password)",
+        "Connects to a server. Usage: connect(address,port,username,password,protocol)",
         Console::Bind(this, &TundraLogicModule::ConsoleConnect)));
     RegisterConsoleCommand(Console::CreateCommand("disconnect", 
         "Disconnects from a server.",
@@ -209,6 +210,7 @@ Console::CommandResult TundraLogicModule::ConsoleConnect(const StringVector& par
     unsigned short port = cDefaultPort;
     std::string username = "test";
     std::string password = "test";
+    std::string protocol = cDefaultProtocol;
     
     try
     {
@@ -218,10 +220,12 @@ Console::CommandResult TundraLogicModule::ConsoleConnect(const StringVector& par
             username = params[2];
         if (params.size() > 3)
             password = params[3];
+        if (params.size() > 4)
+            protocol = params[4];
     }
     catch (...) {}
     
-    client_->Login(QString::fromStdString(params[0]), port, QString::fromStdString(username), QString::fromStdString(password));
+    client_->Login(QString::fromStdString(params[0]), port, QString::fromStdString(username), QString::fromStdString(password), QString::fromStdString(protocol));
     
     return Console::ResultSuccess();
 }

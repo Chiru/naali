@@ -74,6 +74,8 @@ signals:
     /// can be authorized to log in or not.
     void AboutToConnect();
 
+    void LastHeardUpdate(float time);
+
     /// This signal is emitted immediately after this client has successfully connected to a server.
     void Connected();
     

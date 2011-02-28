@@ -207,6 +207,8 @@ void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, 
         return;
     }
     
+    emit LastHeardUpdate(source->LastHeardTime());
+
     switch (id)
     {
     case cLoginReplyMessage:

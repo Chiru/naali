@@ -1,0 +1,223 @@
+#!/bin/bash
+
+# Script to build naali and dependencies in mounted MeeGo image
+# Creates rpm packages from deps for easy installation in target device
+#
+# Do not run outside MeeGo filesystem
+#
+# TODO: Make the script shut up and do it's work without user interference
+# TODO: Take parameters from "host" script, and build custom branches/packages
+
+export PYTHON_PATH=/usr/bin/
+export PYTHON_LIB=/usr/lib/python2.6/
+
+rpmbuild=$HOME/rpmbuild
+naalidir=$HOME/naali
+doneflags=$rpmbuild/flags
+packets=/packages/usr
+
+pcount=`grep -c "^processor" /proc/cpuinfo`
+
+mkdir -p $packets/lib $packets/include $packets/../rpms
+mkdir -p $rpmbuild/SPECS $rpmbuild/SOURCES $doneflags
+cp /meegoScripts/specs/* $rpmbuild/SPECS
+
+# Install dependencies
+zypper -n install boost boost-devel python-devel libicu xmlrpc-c-c++ xmlrpc-c-client++ xmlrpc-c-devel openjpeg openjpeg-devel freetype xorg-x11-proto-xproto xorg-x11-proto-kbproto libXau libXau-devel libpthread-stubs xorg-x11-filesystem xorg-x11-proto-randrproto xorg-x11-proto-renderproto rpm-build qt-qmake expat-dev libxcb-devel libX11-devel libICE-devel libSM-devel libXt-devel libXmu-devel libXaw-devel libXrandr-devel libXrender-devel libphonon-devel zip libqt-devel zlib-devel SDL-devel xmlto libqtopengl-devel libqtwebkit-devel wget mesa-libGLESv2 mesa-libGLESv2-devel mesa-libEGL mesa-libEGL-devel git libvorbis-devel mesa-libglut-devel freetype-devel
+
+cd $HOME
+test -f mercurial-1.7.1-3.1.i586.rpm || wget http://repo.pub.meego.com/home:/arfoll:/utils/meego_1.1_core/i586/mercurial-1.7.1-3.1.i586.rpm
+rpm -i mercurial-1.7.1-3.1.i586.rpm
+
+function build-rpm {
+	url=$1
+	shift
+	package=$1
+	shift
+	extension=$1
+
+	cd $rpmbuild/SOURCES
+	
+	if test -f $doneflags/$package; then
+		echo BUILDSCRIPT: $package already built
+	else
+		test -f $package.$extension || wget $url/$package.$extension
+		cd ..
+		echo BUILDSCRIPT: Building package $package
+		rpmbuild -bb --target i586 SPECS/$package.spec
+		touch $doneflags/$package
+	fi
+}
+
+# Building rpm of freeimage (ImathMatrix.h needs some editing --> can't use rpm-build function)
+url=http://downloads.sourceforge.net/project/freeimage/Source%20Distribution/3.14.1
+package=FreeImage3141
+extension=zip
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+		echo BUILDSCRIPT: $package already built
+else
+	test -f $package.$extension || wget $url/$package.$extension
+	#----editing the source-----
+	unzip $package.$extension && rm $package.$extension
+	cd FreeImage/Source/OpenEXR/Imath
+	sed "54a #include <string.h>" ImathMatrix.h >> TEMPFILE && mv TEMPFILE ImathMatrix.h
+	cd ../../../..
+	zip -r $package.$extension FreeImage/ && rm -rf FreeImage/
+	#----/editing the source----
+	cd ..
+	echo BUILDSCRIPT: Building package $package
+	rpmbuild -bb --target i586 SPECS/$package.spec
+	touch $doneflags/$package
+fi
+
+# Building PythonQt (com_trolltech_qt_core0.h needs some editing)
+url=http://downloads.sourceforge.net/project/pythonqt/pythonqt/PythonQt-2.0.1
+package=PythonQt2.0.1
+extension=zip
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+		echo BUILDSCRIPT: $package already built
+else
+	test -f $package.$extension || wget $url/$package.$extension
+	unzip $package.$extension
+	#----editing the source-----
+	cd $package/generated_cpp/com_trolltech_qt_core
+	sed 's/CocoaRequestModal = QEvent::CocoaRequestModal,/ /g' com_trolltech_qt_core0.h > TEMPFILE && mv TEMPFILE com_trolltech_qt_core0.h
+	cd ../../
+	#----/editing the source----
+	echo BUILDSCRIPT: Building package $package
+	qmake
+	make all -j $pcount
+	rm $packets/lib/libPythonQt*
+	cp -u lib/libPythonQt* $packets/lib
+	cp -u src/PythonQt*.h $packets/include
+	cp -u extensions/PythonQt_QtAll/PythonQt*.h $packets/include
+	cp -u lib/libPythonQt* /usr/lib
+	cp -u src/PythonQt*.h /usr/include
+	cp -u extensions/PythonQt_QtAll/PythonQt*.h /usr/include
+	touch $doneflags/$package
+fi
+
+# Building qtpropertybrowser
+url=http://get.qt.nokia.com/qt/solutions/lgpl
+package=qtpropertybrowser-2.5_1-opensource
+extension=tar.gz
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+		echo BUILDSCRIPT: $package already built
+else
+	test -f $package.$extension || wget $url/$package.$extension
+	tar xzf $package.$extension
+	cd $package
+	echo BUILDSCRIPT: Building package $package
+	touch .licenseAccepted
+	./configure -library
+	qmake
+	make -j $pcount
+	cp -u lib/lib* $packets/lib
+	cp -u src/qt*.h src/Qt* $packets/include
+	cp -u lib/lib* /usr/lib
+	cp -u src/qt*.h src/Qt* /usr/include
+	touch $doneflags/$package
+fi
+
+# Building knet
+url=http://bitbucket.org/clb
+package=knet
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+		echo BUILDSCRIPT: $package already built
+else
+	rm -rf $package && hg clone -r stable $url/$package
+	cd $package
+	sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
+	mv x CMakeLists.txt
+	cmake .
+	make -j $pcount
+	cp -u lib/libkNet.so $packets/lib/
+	cp -u lib/libkNet.so /usr/lib/
+	rsync -r include/* /usr/include/
+	rsync -r include/* $packets/include/
+	touch $doneflags/$package
+fi
+
+# Building OpenAL
+url=http://connect.creativelabs.com/openal/Downloads
+package=openal-soft-1.12.854
+extension=tbz2
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+        echo BUILDSCRIPT: $package already built
+else
+    test -f $package.$extension || wget $url/$package.$extension
+    tar xvfj $package.$extension
+    cd $package/build
+    echo BUILDSCRIPT: Building package $package
+    cmake ..
+    make -j $pcount
+    make install
+    cp -u libopenal.* $packets/lib
+    cp -r ../include/AL $packets/include
+    touch $doneflags/$package
+fi
+
+# Building Bullet
+url=http://bullet.googlecode.com/files
+package=bullet-2.77
+extension=tgz
+
+cd $rpmbuild/SOURCES
+
+if test -f $doneflags/$package; then
+        echo BUILDSCRIPT: $package already built
+else
+    test -f $package.$extension || wget $url/$package.$extension
+    tar xzf $package.$extension
+    cd $package
+    echo BUILDSCRIPT: Building package $package
+    cmake -DCMAKE_INSTALL_PREFIX=/usr -DBUILD_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -fPIC -DNDEBUG-DBT_NO_PROFILE" .
+    make -j $pcount
+    make install
+    touch $doneflags/$package
+fi
+
+# Build packages packages that don't require custom steps
+build-rpm http://downloads.sourceforge.net/project/xmlrpc-epi/xmlrpc-epi-base/0.54.1 xmlrpc-epi-0.54.1 tar.gz
+build-rpm http://downloads.sourceforge.net/project/poco/sources/poco-1.4.0 poco-1.4.0 tar.gz
+build-rpm http://downloads.sourceforge.net/project/zziplib/zziplib13/0.13.59 zziplib-0.13.59 tar.bz2
+
+# Installing RPMS built so far (Ogre has dependencies for some of these)
+echo BUILDSCRIPT: Installing rpm packages
+rpm -U $rpmbuild/RPMS/i586/* --nodeps
+
+# Building rpm of Ogre
+build-rpm http://ruttis.serveftp.org/~juhahyva/paketit ogre-1.8.0 tar.gz
+rpm -U $rpmbuild/RPMS/i586/ogre* --nodeps
+
+# Packaging deps for transfer
+cp $rpmbuild/RPMS/i586/* $packets/../rpms
+cd $packets/..
+tar -pczf custombuilt.tar.gz usr/ && mv custombuilt.tar.gz ./rpms # TODO: make this process to build a rpm package
+tar -pczf naali-deps.tar.gz rpms
+
+# Building tundra
+echo BUILDSCRIPT: Building tundra
+
+rm -rf $naalidir
+git clone git://github.com/Chiru/naali.git $naalidir
+cd $naalidir
+
+git checkout tundra
+NAALI_DEP_PATH=/usr/ cmake .
+make -j $pcount && tar -pczf naali.tar.gz bin/ && mv naali.tar.gz $packets/..

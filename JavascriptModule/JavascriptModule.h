@@ -2,7 +2,7 @@
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
  *  @file   JavascriptModule.h
- *  @brief  Enables Javascript execution and scripting in Naali.
+ *  @brief  Enables Javascript execution and scripting by using QtScript.
  */
 
 #ifndef incl_JavascriptModule_JavascriptModule_h
@@ -14,13 +14,12 @@
 #include "ScriptServiceInterface.h"
 
 #include "AssetFwd.h"
+#include "SceneFwd.h"
 #include "JavascriptFwd.h"
 
 #include <QObject>
 
-/// Enables Javascript execution and scripting in Naali.
-/**
-*/
+/// Enables Javascript execution and scripting by using QtScript.
 class JavascriptModule : public QObject, public IModule, public Foundation::ScriptServiceInterface
 {
     Q_OBJECT
@@ -34,9 +33,6 @@ public:
 
     /// IModule override.
     void Load();
-
-    /// IModule override.
-    void PreInitialize();
 
     /// IModule override.
     void Initialize();
@@ -97,24 +93,21 @@ private:
     /*! Destroys old scripts if they exist
      */
     void LoadStartupScripts();
-    
+
     //! Stop & delete startup scripts
     void UnloadStartupScripts();
-    
+
     /// Type name of the module.
     static std::string type_name_static_;
-    
+
     /// Default engine for console & commandline script execution
     QScriptEngine *engine;
-    
+
     /// Engines for executing startup (possibly persistent) scripts
     std::vector<JavascriptInstance *> startupScripts_;
-    
+
     /// Additional startupscript defined from command line
     std::string commandLineStartupScript_;
-    
-    /// Framework event category
-    event_category_id_t frameworkEventCategory_;
 };
 
 // API things

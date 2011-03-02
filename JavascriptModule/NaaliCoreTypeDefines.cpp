@@ -213,25 +213,23 @@ QScriptValue toScriptValueAssetReference(QScriptEngine *engine, const AssetRefer
 
 void fromScriptValueAssetReferenceList(const QScriptValue &obj, AssetReferenceList &s)
 {
+    // Clear the old content as we are appending from the start!
+    s.refs.clear();
+
     QScriptValueIterator it(obj);
-  
-    while (it.hasNext()) {
+    while (it.hasNext()) 
+    {
         it.next();
         AssetReference reference(it.value().toString());
         s.Append(reference);
     }
-    
 }
 
 QScriptValue toScriptValueAssetReferenceList(QScriptEngine *engine, const AssetReferenceList &s)
 {
     QScriptValue obj = engine->newObject();
-  
-    for( int i = 0; i < s.refs.size(); ++i)
-    {
-        obj.setProperty(i, QScriptValue(engine, s.refs[i].toString()));
-    }
-
+    for(int i = 0; i < s.refs.size(); ++i)
+        obj.setProperty(i, QScriptValue(engine, s[i].ref));
     return obj;
 }
 

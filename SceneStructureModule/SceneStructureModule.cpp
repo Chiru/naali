@@ -15,6 +15,7 @@
 #include "SupportedFileTypes.h"
 #include "AddContentWindow.h"
 
+#include "AssetAPI.h"
 #include "IAsset.h"
 #include "IAssetTransfer.h"
 #include "SceneManager.h"
@@ -129,6 +130,7 @@ QList<Scene::Entity *> SceneStructureModule::InstantiateContent(const QStringLis
         {
             TundraLogic::SceneImporter importer(scene);
             if (IsUrl(filename))
+                ///\todo Perhaps download the mesh before instantiating so we could inspect the mesh binar for materials and skeleton? The path is already there for tundra scene file web drops
                 sceneDescs.append(importer.GetSceneDescForMesh(QUrl(filename)));
             else
                 sceneDescs.append(importer.GetSceneDescForMesh(filename));
@@ -140,6 +142,7 @@ QList<Scene::Entity *> SceneStructureModule::InstantiateContent(const QStringLis
                 AssetTransferPtr transfer = framework_->Asset()->RequestAsset(filename);
                 if (transfer.get())
                 {
+                    urlToDropPos[filename] = worldPos;
                     connect(transfer.get(), SIGNAL(Loaded(AssetPtr)), SLOT(HandleSceneDescLoaded(AssetPtr)));
                     connect(transfer.get(), SIGNAL(Failed(IAssetTransfer*, QString)), SLOT(HandleSceneDescFailed(IAssetTransfer*, QString)));
                     break; // Only allow one .txml drop at a time
@@ -155,6 +158,7 @@ QList<Scene::Entity *> SceneStructureModule::InstantiateContent(const QStringLis
                 AssetTransferPtr transfer = framework_->Asset()->RequestAsset(filename);
                 if (transfer.get())
                 {
+                    urlToDropPos[filename] = worldPos;
                     connect(transfer.get(), SIGNAL(Loaded(AssetPtr)), SLOT(HandleSceneDescLoaded(AssetPtr)));
                     connect(transfer.get(), SIGNAL(Failed(IAssetTransfer*, QString)), SLOT(HandleSceneDescFailed(IAssetTransfer*, QString)));
                     break; // Only allow one .tbin drop at a time
@@ -751,6 +755,15 @@ void SceneStructureModule::HandleSceneDescLoaded(AssetPtr asset)
         return;
     }
 
+    // Resolve the adjust raycast pos of this drop
+    Vector3df adjustPos = Vector3df::ZERO;
+    if (urlToDropPos.contains(asset->Name()))
+    {
+        adjustPos = urlToDropPos[asset->Name()];
+        urlToDropPos.remove(asset->Name());
+    }
+
+    // Get xml data
     std::vector<u8> data;
     asset->SerializeTo(data);
     if (data.empty())
@@ -786,6 +799,7 @@ void SceneStructureModule::HandleSceneDescLoaded(AssetPtr asset)
     // Show add content window
     AddContentWindow *addContent = new AddContentWindow(framework_, scene);
     addContent->AddDescription(sceneDesc);
+    addContent->AddPosition(adjustPos);
     addContent->show();
 }
 
@@ -794,6 +808,9 @@ void SceneStructureModule::HandleSceneDescFailed(IAssetTransfer *transfer, QStri
     QApplication::restoreOverrideCursor();
     QString error = QString("Failed to download %1 with reason %2").arg(transfer->source.ref, reason);
     LogError(error.toStdString());
+
+    if (urlToDropPos.contains(transfer->GetSourceUrl()))
+        urlToDropPos.remove(transfer->GetSourceUrl());
 }
 
 extern "C" void POCO_LIBRARY_API SetProfiler(Foundation::Profiler *profiler);

@@ -19,7 +19,7 @@
 #include "NaaliApplication.h"
 #include "CoreException.h"
 #include "Input.h"
-#include "Frame.h"
+#include "FrameAPI.h"
 #include "AssetAPI.h"
 #include "GenericAssetFactory.h"
 #include "Audio.h"
@@ -70,7 +70,7 @@ namespace Foundation
         log_formatter_(0),
         splitterchannel(0),
         naaliApplication(0),
-        frame(new Frame(this)),
+        frame(new FrameAPI(this)),
         console(new ConsoleAPI(this)),
         ui(0),
         input(0),
@@ -160,6 +160,7 @@ namespace Foundation
             RegisterDynamicObject("asset", asset);
             RegisterDynamicObject("audio", audio);
             RegisterDynamicObject("debug", debug);
+            RegisterDynamicObject("application", naaliApplication);
         }
     }
 
@@ -716,7 +717,7 @@ namespace Foundation
         return config_manager_.get();
     }
 
-    Frame *Framework::GetFrame() const
+    FrameAPI *Framework::Frame() const
     {
         return frame;
     }

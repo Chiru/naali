@@ -5,26 +5,78 @@
 #include "ModuleLoggingFunctions.h"
 
 #include <QObject>
-#include <QFile>
-#include <QTextStream>
-#include <QDate>
-#include <QTime>
 #include <QString>
+#include <QList>
 
 #include <QSystemInfo>
 #include <QSystemDeviceInfo>
 #include <QSystemNetworkInfo>
-#include <QSystemStorageInfo>
-#include <QSystemScreenSaver>
 #include <QSystemDisplayInfo>
-#include <QNetworkAccessManager>
 
+#include <QNetworkSession>
+#include <QNetworkConfigurationManager>
+#include <QNetworkConfiguration>
+#include <QNetworkInterface>
+
+#define BATTERYCRITICALVALUE 10
+
+using namespace QtMobility;
 
 class MobilityModule : public QObject, public IModule
 {
     Q_OBJECT
 
 public:
+    enum DeviceFeature
+    {
+        BluetoothFeature = 0,
+        CameraFeature = 1,
+        FmradioFeature = 2,
+        IrFeature = 3,
+        LedFeature = 4,
+        MemcardFeature = 5,
+        UsbFeature = 6,
+        VibFeature	= 7,
+        WlanFeature	= 8,
+        SimFeature	= 9,
+        LocationFeature = 10,
+        VideoOutFeature = 11,
+        HapticsFeature = 12
+    };
+
+    enum NetworkState
+    {
+        StateInvalid = 0,
+        StateNotAvailable = 1,
+        StateConnecting = 2,
+        StateConnected = 3,
+        StateClosing = 4,
+        StateDisconnected = 5,
+        StateRoaming = 6
+    };
+
+    enum NetworkMode
+    {
+        ModeUnknown = 0,
+        ModeEthernet = 1,
+        ModeWLAN = 2,
+        Mode2G = 3,
+        ModeCDMA2000 = 4,
+        ModeWCDMA = 5,
+        ModeHSPA = 6,
+        ModeBluetooth = 7,
+        ModeWiMax = 8
+    };
+
+    enum ScreenState
+    {
+        ScreenUnknown = 0,
+        ScreenOn = 1,
+        ScreenDimmed = 2,
+        ScreenOff = 3,
+        ScreenSaver = 4
+    };
+
     /// Default constructor.
     MobilityModule();
 
@@ -53,24 +105,44 @@ public:
 
     /// Returns name of this module. Needed for logging.
     static const std::string &NameStatic() { return type_name_static_; }
-    
-    /// Returns the percentage of battery level
+
+    /// \return Current battery level percentage (0-100)
     int batteryLevel();
-    
-    /// Returns the status of the battery
-    int batteryStatus();
-    
-    /// Returns whether the device is using wall or battery power
-    int powerState();
-    
-    /// Returns whether the network is accessible
-    bool networkAccessible();
+
+    /// \return Is the system using battery or wall power (true for battery, false for wall)
+    bool usingBattery();
+
+    /// \return Boolean for battery critical state
+    /// \note Always returns false when on battery power
+    bool batteryCritical();
+
+    /// \return Current network state as defined in MobilityModule::NetworkState
+    MobilityModule::NetworkState networkState();
+
+    /// \return Current network mode as defined in MobilityModule::NetworkMode
+    MobilityModule::NetworkMode networkMode();
+
+    /// \return Current network quality percentage (0-100)
+    int networkQuality();
+
+    /// Checks if platform has a feature available
+    /// \param feature Feature defined in MobilityModule::DeviceFeature
+    /// \return Boolean for availability of the given feature
+    bool featureAvailable(MobilityModule::DeviceFeature feature);
+
+    /// \return Current screen state as defined in MobilityModule::ScreenState
+    MobilityModule::ScreenState screenState();
 
 private:
-    
-    /// Returns current date and time, used for primitive logging functions
-    QString getTime();
-    
+
+    /// Open network session to monitor connection state
+    /// \note Contais work-around for bug in QNetworkConfigurationManager which lists interfaces as
+    /// active devices. Once the bug in Qt is fixed this can be changed.
+    /// \bug If the current session changes state to inactive and new connection is made with different
+    /// network configuration, network_session_ becomes invalid and connection state monitoring fails.
+    /// Bugs in Qt bearer API makes it difficult to switch to new configuration.
+    void initNetworkSession();
+
     /// Type name of the module.
     static std::string type_name_static_;
 
@@ -85,43 +157,103 @@ private:
 
     /// "Tundra" event category ID.
     event_category_id_t tundra_category_;
-    
-    QtMobility::QSystemInfo *system_info_;
-    QtMobility::QSystemDeviceInfo *system_device_info_;
-    QtMobility::QSystemNetworkInfo *system_network_info_;
-    QtMobility::QSystemStorageInfo *system_storage_info_;
-    QtMobility::QSystemScreenSaver *system_screen_saver_;
-    QtMobility::QSystemDisplayInfo *system_display_info_;
-    QNetworkAccessManager *network_access_manager_;
-    
-    //QtMobility::QSystemBatteryInfo *system_battery_info_;
-    
-    QFile log_file;
-    QTextStream log_stream;
-    QDate date;
-    QTime time;
-    
+
+    /// QSystemInfo, source of device capabilities related info
+    QSystemInfo *system_info_;
+
+    /// QSystemDeviceInfo, source of battery related information
+    QSystemDeviceInfo *system_device_info_;
+
+    /// QSystemNetworkInfo
+    QSystemNetworkInfo *system_network_info_;
+
+    /// QSystemDisplayInfo
+    QSystemDisplayInfo *system_display_info_;
+
+    QNetworkConfigurationManager *network_configuration_manager_;
+
+    /// List of available features
+    QList<bool> features_;
+
+    /// Current battery level
+    int battery_level_;
+
+    /// Current battery critical state
+    bool battery_critical_;
+
+    /// Current power source (true for battery, false for wall)
+    bool using_battery_power_;
+
+    /// Current screen state
+    ScreenState screen_state_;
+
+    /// Current network mode
+    NetworkMode network_mode_;
+
+    /// Current network state
+    NetworkState network_state_;
+
+    /// Current network quality
+    int network_quality_;
+
+    /// Active network session
+    QNetworkSession *network_session_;
+
+
 public slots:
 
-    void batteryStatusHandler(QtMobility::QSystemDeviceInfo::BatteryStatus batteryStatus);
+    /// Handler for battery level information
     void batteryLevelHandler(int batteryLevel);
-    void powerStateHandler(QtMobility::QSystemDeviceInfo::PowerState powerState);
-    void networkAccessibleHandler(QNetworkAccessManager::NetworkAccessibility networkAccessible);
+
+    /// Handler for power source information
+    void usingBatteryHandler(QSystemDeviceInfo::PowerState powerState);
+
+    /// Handler for network state information
+    void networkStateHandler(QNetworkSession::State networkState);
+
+    /// Handler for screen state information
+    /// \todo Implement when MCE daemon becomes part of MeeGo or QSystemDeviceInfo provides the required data.
+    void screenStateHandler(int screenState);
+
+    /// Handler for network mode information
+    /// \note Partially implemented so we can query the mode with networkMode(),
+    /// actual signal is not yet emitted
+    /// \todo Implement when QSystemNetworkInfo is patched to work properly with ConnMan or
+    /// NetworkConfigurationManager works properly on MeeGo.
+    void networkModeHandler(QSystemNetworkInfo::NetworkMode networkMode);
+
+    void networkConfigurationChanged(const QNetworkConfiguration &networkConfig);
 
 signals:
 
-    /// Emitted when battery status changes
-    void batteryStatusChanged(QtMobility::QSystemDeviceInfo::BatteryStatus batteryStatus);
-    
     /// Emitted when battery level changes
+    /// \note Only emitted when using battery power
     void batteryLevelChanged(int batteryLevel);
-    
+
+    /// Emitted when battery level drops to critical
+    /// \note Only emitted once when battery level drops below critical threshold
+    /// \note Not emitted when on wall power (shouldn't happen anyways)
+    void batteryLevelCritical();
+
     /// Emitted when power state changes from wall to battery or vice versa
-    void powerStateChanged(QtMobility::QSystemDeviceInfo::PowerState powerState);
-    
-    /// Emitted when network accessibility changes
-    void networkAccessibleChanged(QNetworkAccessManager::NetworkAccessibility networkAccessible);
-      
+    void usingBattery(bool state);
+
+    /// Emitted when network status changes (offline/online/roaming...)
+    /// \note Not tested on ConnMan backend. On NetworkManager, only signals Connected and Disconnected states.
+    void networkStateChanged(MobilityModule::NetworkState networkState);
+
+    /// Emitted when network mode changes
+    /// \note Currently unimplemented
+    void networkModeChanged(MobilityModule::NetworkMode networkMode);
+
+    /// Emitted when network quality changes
+    /// \note Currently unimplemented
+    void networkQualityChanged(int networkQuality);
+
+    /// Emitted when screen status changes (not implemented yet)
+    /// \note Currently unimplemented
+    void screenStateChanged(MobilityModule::ScreenState screenState);
 };
+
 
 #endif // MOBILITYMODULE_H

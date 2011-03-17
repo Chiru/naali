@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in license.txt
 
-#ifndef MOBILITYMODULE_H
-#define MOBILITYMODULE_H
+#ifndef incl_MobilityModule_MobilityModule_h
+#define incl_MobilityModule_MobilityModule_h
 
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
@@ -19,8 +19,6 @@
 #include <QNetworkConfigurationManager>
 #include <QNetworkConfiguration>
 #include <QNetworkInterface>
-
-#define BATTERYCRITICALVALUE 10
 
 using namespace QtMobility;
 
@@ -135,6 +133,9 @@ public:
     /// \return Current screen state as defined in MobilityModule::ScreenState
     MobilityModule::ScreenState screenState();
 
+    /// \param Critical level for battery power in percentage (1-100)
+    void setBatteryCriticalValue(int criticalValue);
+
 private:
 
     /// Open network session to monitor connection state
@@ -147,18 +148,6 @@ private:
 
     /// Type name of the module.
     static std::string type_name_static_;
-
-    /// Input context for this module.
-    boost::shared_ptr<InputContext> input_;
-
-    /// "Framework" event category ID.
-    event_category_id_t framework_category_;
-
-    /// "NetworkState" event category ID.
-    event_category_id_t network_category_;
-
-    /// "Tundra" event category ID.
-    event_category_id_t tundra_category_;
 
     /// QSystemInfo, source of device capabilities related info
     QSystemInfo *system_info_;
@@ -183,6 +172,9 @@ private:
 
     /// Current battery critical state
     bool battery_critical_;
+
+    /// Value after which battery is considered to be in critical state (current default 20)
+    int battery_critical_value_;
 
     /// Current power source (true for battery, false for wall)
     bool using_battery_power_;
@@ -261,4 +253,4 @@ signals:
 };
 
 
-#endif // MOBILITYMODULE_H
+#endif // incl_MobilityModule_MobilityModule_h

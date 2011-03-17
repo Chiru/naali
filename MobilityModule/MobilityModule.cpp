@@ -1,7 +1,7 @@
 /**
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   InWorldChatModule.cpp
+ *  @file   MobilityModule.cpp
  *  @brief  Stub implementation of the MobilityModule which is supposed to gather data from various
  *          sources and pass it on for other modules.
  */

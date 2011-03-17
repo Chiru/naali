@@ -1,3 +1,5 @@
+// For conditions of distribution and use, see copyright notice in license.txt
+
 #ifndef MOBILITYMODULE_H
 #define MOBILITYMODULE_H
 
@@ -169,7 +171,8 @@ private:
 
     /// QSystemDisplayInfo
     QSystemDisplayInfo *system_display_info_;
-
+    
+    /// QNetworkConfigurationManager, used to keep track of active network configurations
     QNetworkConfigurationManager *network_configuration_manager_;
 
     /// List of available features
@@ -222,6 +225,8 @@ public slots:
     /// NetworkConfigurationManager works properly on MeeGo.
     void networkModeHandler(QSystemNetworkInfo::NetworkMode networkMode);
 
+    /// Used to circumvent the problem that QNetworkConfigurationManager can't determine
+    /// the system online state reliably on linux platform
     void networkConfigurationChanged(const QNetworkConfiguration &networkConfig);
 
 signals:

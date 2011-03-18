@@ -22,9 +22,7 @@ QTM_USE_NAMESPACE
 std::string MobilityModule::type_name_static_ = "Mobility";
 
 MobilityModule::MobilityModule() :
-    IModule(type_name_static_),
-    framework_category_(0),
-    network_category_(0)
+    IModule(type_name_static_)
 {
 }
 
@@ -58,6 +56,7 @@ void MobilityModule::Initialize()
 
     // Set initial values for mobility related info by triggering the correspondig slots
     battery_critical_ = false;
+    setBatteryCriticalValue(20);
     usingBatteryHandler(system_device_info_->currentPowerState());
     batteryLevelHandler(system_device_info_->batteryLevel());
     //screenStateHandler();
@@ -69,8 +68,6 @@ void MobilityModule::Initialize()
 
 void MobilityModule::PostInitialize()
 {
-    framework_category_ = framework_->GetEventManager()->QueryEventCategory("Framework");
-    tundra_category_ = framework_->GetEventManager()->QueryEventCategory("Tundra");
 }
 
 bool MobilityModule::HandleEvent(event_category_id_t category_id, event_id_t event_id, IEventData* data)
@@ -88,16 +85,17 @@ void MobilityModule::Update(f64 frametime)
 
 void MobilityModule::batteryLevelHandler(int batteryLevel)
 {
-    // Nothing gets emitted unless we are running on battery power
+    emit batteryLevelChanged(batteryLevel);
+
+    // Battery critical signal only gets emitted once when using battery power and battery level drops below set critical.
     if(using_battery_power_)
     {
-        if(batteryLevel <= BATTERYCRITICALVALUE && !battery_critical_)
+        if(batteryLevel <= battery_critical_value_ && !battery_critical_)
         {
             battery_critical_ = true;
             LogWarning("Battery state critical");
             emit batteryLevelCritical();
         }
-        emit batteryLevelChanged(batteryLevel);
     }
 
     battery_level_ = batteryLevel;
@@ -156,6 +154,8 @@ void MobilityModule::networkStateHandler(QNetworkSession::State networkState)
     LogInfo("Network state changed to: " + connected_string_.toStdString());
 
     // Straight cast from QNetworkSession::State to MobilityModule::NetworkState, this needs to be handled differently if either is modified.
+    // This is done because the source of the information might change in future implementations (when QNetworkInfo works properly?) but
+    // the mobility interface needs to stay intact.
     network_state_ = (MobilityModule::NetworkState)networkState;
 
     /*if(networkState == QNetworkSession::Connected)
@@ -227,8 +227,14 @@ MobilityModule::ScreenState MobilityModule::screenState()
 
 int MobilityModule::networkQuality()
 {
-    /// \todo Change this when actual implementation of network
+    /// \todo Change this when actual implementation of networkquality is made
     return 100;
+}
+
+void MobilityModule::setBatteryCriticalValue(int criticalValue)
+{
+    if(criticalValue > 0 && criticalValue <= 100)
+        battery_critical_value_ = criticalValue;
 }
 
 void MobilityModule::initNetworkSession()
@@ -241,10 +247,12 @@ void MobilityModule::initNetworkSession()
         for(int x = 0; x < configs_.size(); x++)
         {
             if(QString::compare(configs_.at(x).name(), iface.humanReadableName(), Qt::CaseInsensitive) == 0)
+            {
                 configs_.removeAt(x);
+                x--; // Rest of the list has shifted one position towards zero, check the same position again.
+            }
         }
     }
-
 
     // There's a configuration in active state, set QNetworkSession to track it.
     if(configs_.size() > 0)
@@ -265,7 +273,6 @@ void MobilityModule::initNetworkSession()
     }
 }
 
-
 bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
 {
     if(features_.size() <= (int)feature)
@@ -273,14 +280,11 @@ bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
     return features_.at((int)feature);
 }
 
-
-
 extern "C" void POCO_LIBRARY_API SetProfiler(Foundation::Profiler *profiler);
 void SetProfiler(Foundation::Profiler *profiler)
 {
     Foundation::ProfilerSection::SetProfiler(profiler);
 }
-
 
 POCO_BEGIN_MANIFEST(IModule)
    POCO_EXPORT_CLASS(MobilityModule)

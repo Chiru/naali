@@ -22,6 +22,7 @@
 #include "Platform.h"
 #include "CoreException.h"
 #include "Entity.h"
+#include "SceneAPI.h"
 
 #include "NaaliUi.h"
 #include "NaaliMainWindow.h"
@@ -49,7 +50,7 @@
 #include <QUuid>
 
 #ifdef PROFILING
-#include "Input.h"
+#include "InputAPI.h"
 #endif
 
 #include "MemoryLeakCheck.h"
@@ -772,7 +773,7 @@ namespace OgreRenderer
 #ifdef PROFILING
         // Performance debugging: Toggle the UI overlay visibility based on a debug key.
         // Allows testing whether the GPU is majorly fill rate bound.
-        if (framework_->GetInput()->IsKeyDown(Qt::Key_F8))
+        if (framework_->Input()->IsKeyDown(Qt::Key_F8))
             renderWindow->OgreOverlay()->hide();
         else
             renderWindow->OgreOverlay()->show();
@@ -1224,7 +1225,7 @@ namespace OgreRenderer
     void Renderer::PrepareImageRendering(int width, int height)
     {
         // Only do this once per connect as we create entitys here
-        Scene::ScenePtr scene = framework_->GetDefaultWorldScene();
+        Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
         if (scene && image_rendering_texture_name_.empty())
         {
             image_rendering_texture_name_ = "ImageRenderingTexture-" + QUuid::createUuid().toString().toStdString();

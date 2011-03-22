@@ -13,17 +13,17 @@
 #include "Environment.h"
 #include "EC_OgreEnvironment.h"
 
+#include "Renderer.h"
 #include "SceneManager.h"
-
 #include "ModuleManager.h"
 #include "ServiceManager.h"
 #include "OgreMaterialUtils.h"
 #include "InputEvents.h"
-#include "../Input/Input.h"
+#include "InputAPI.h"
 #include "OgreRenderingModule.h"
 #include "UiServiceInterface.h"
 #include "UiProxyWidget.h"
-#include <AttributeChangeType.h>
+#include "AttributeChangeType.h"
 
 #include <OgreManualObject.h>
 #include <OgreSceneManager.h>
@@ -1847,7 +1847,7 @@ namespace Environment
         assert(environment_module_);
 
         // Priority 110: Must be over EtherInput priority (100, see UiModule.cpp) to get the ESC edit cancel message.
-        terrainPaintInputContext = environment_module_->GetFramework()->GetInput()->RegisterInputContext("TerrainPaint", 110);
+        terrainPaintInputContext = environment_module_->GetFramework()->Input()->RegisterInputContext("TerrainPaint", 110);
         terrainPaintInputContext->SetTakeKeyboardEventsOverQt(true); // To be able to process ESC over Qt and Ether.
         terrainPaintInputContext->SetTakeMouseEventsOverQt(true);
 

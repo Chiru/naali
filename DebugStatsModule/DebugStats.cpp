@@ -18,6 +18,7 @@
 #include "ModuleManager.h"
 #include "ConsoleCommandServiceInterface.h"
 #include "WorldStream.h"
+#include "SceneAPI.h"
 #include "SceneManager.h"
 #include "Entity.h"
 #include "NetworkEvents.h"
@@ -29,7 +30,7 @@
 #include "UiProxyWidget.h"
 #include "EC_OpenSimPresence.h"
 #include "ConsoleAPI.h"
-#include "Input.h"
+#include "InputAPI.h"
 #include "NaaliUi.h"
 #include "NaaliMainWindow.h"
 
@@ -114,7 +115,7 @@ void DebugStatsModule::PostInitialize()
 
     frameworkEventCategory_ = framework_->GetEventManager()->QueryEventCategory("Framework");
 
-    inputContext = framework_->GetInput()->RegisterInputContext("DebugStatsInput", 90);
+    inputContext = framework_->Input()->RegisterInputContext("DebugStatsInput", 90);
     connect(inputContext.get(), SIGNAL(KeyPressed(KeyEvent *)), this, SLOT(HandleKeyPressed(KeyEvent *)));
 
 
@@ -132,9 +133,7 @@ void DebugStatsModule::HandleKeyPressed(KeyEvent *e)
     if (e->eventType != KeyEvent::KeyPressed || e->keyPressCount > 1)
         return;
 
-    Input &input = *framework_->GetInput();
-
-    const QKeySequence showProfiler = input.KeyBinding("ShowProfilerWindow", QKeySequence(Qt::ShiftModifier + Qt::Key_P));
+    const QKeySequence showProfiler = framework_->Input()->KeyBinding("ShowProfilerWindow", QKeySequence(Qt::ShiftModifier + Qt::Key_P));
     if (QKeySequence(e->keyCode | e->modifiers) == showProfiler)
         ShowProfilingWindow();
 }
@@ -272,7 +271,7 @@ bool DebugStatsModule::HandleEvent(event_category_id_t category_id, event_id_t e
             if (!event_data)
                 return false;
 
-            Scene::EntityPtr entity = framework_->GetDefaultWorldScene()->GetEntity(event_data->localId);
+            Scene::EntityPtr entity = GetFramework()->Scene()->GetDefaultScene()->GetEntity(event_data->localId);
             if (!entity)
                 return false;
 
@@ -288,7 +287,7 @@ bool DebugStatsModule::HandleEvent(event_category_id_t category_id, event_id_t e
             if (!event_data)
                 return false;
 
-            Scene::EntityPtr entity = framework_->GetDefaultWorldScene()->GetEntity(event_data->localId);
+            Scene::EntityPtr entity = GetFramework()->Scene()->GetDefaultScene()->GetEntity(event_data->localId);
             if (!entity)
                 return false;
 
@@ -420,7 +419,7 @@ Console::CommandResult DebugStatsModule::KickUser(const StringVector &params)
     if (params.empty())
         return Console::ResultFailure("Not enough parameters. Usage: \"kick(fullname)\"");
 
-    Scene::ScenePtr scene = GetFramework()->GetDefaultWorldScene();
+    Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
     if (!scene)
         return Console::ResultFailure("No active scene found.");
 
@@ -519,7 +518,7 @@ Console::CommandResult DebugStatsModule::Exec(const StringVector &params)
     if (id == 0)
         return Console::ResultFailure("Invalid value for entity ID. The ID must be an integer and unequal to zero.");
 
-    Scene::ScenePtr scene = framework_->GetDefaultWorldScene();
+    Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
     if (!scene)
         return Console::ResultFailure("No active scene.");
 

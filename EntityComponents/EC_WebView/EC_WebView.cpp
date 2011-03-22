@@ -5,10 +5,14 @@
 #include "EC_WebView.h"
 
 #include "IModule.h"
+#include "SceneAPI.h"
+#include "SceneInteract.h"
 #include "Entity.h"
 
 #include "EventManager.h"
 #include "UserConnection.h"
+
+#include "RenderServiceInterface.h"
 
 #include "NaaliUi.h"
 #include "NaaliMainWindow.h"
@@ -19,6 +23,7 @@
 
 #include "EC_3DCanvas.h"
 #include "EC_Mesh.h"
+#include "CoreMath.h"
 
 #include <QWebView>
 #include <QWebFrame>
@@ -98,9 +103,12 @@ EC_WebView::EC_WebView(IModule *module) :
     connect(renderTimer_, SIGNAL(timeout()), SLOT(Render()), Qt::UniqueConnection);
 
     // Prepare scene interactions
-    QObject *sceneInteract = GetFramework()->property("sceneinteract").value<QObject*>();
-    if (sceneInteract)
-        connect(sceneInteract, SIGNAL(EntityClicked(Scene::Entity *)), SLOT(EntityClicked(Scene::Entity*)));
+    SceneInteractWeakPtr sceneInteract = GetFramework()->Scene()->GetSceneIteract();
+    if (!sceneInteract.isNull())
+    {
+        connect(sceneInteract.data(), SIGNAL(EntityClicked(Scene::Entity*, Qt::MouseButton, RaycastResult*)), 
+                SLOT(EntityClicked(Scene::Entity*, Qt::MouseButton, RaycastResult*)));
+    }
 
     PrepareWebview();
 }
@@ -500,12 +508,7 @@ void EC_WebView::RenderTimerStartOrSingleShot()
         {
             // Clamp FPS to 0-25, the EC editor UI does this for us with AttributeMetaData,
             // but someone can inject crazy stuff here directly from code
-            int renderFPS = 1000 / getrenderRefreshRate();
-            if (renderFPS < 40)
-                renderFPS = 40;
-            if (renderFPS <= 0)
-                return;
-            renderTimer_->start(renderFPS);
+            renderTimer_->start(clamp(1000/getrenderRefreshRate(), 0, 40));
         }
         else
             QTimer::singleShot(10, this, SLOT(Render()));
@@ -692,19 +695,22 @@ EC_3DCanvas *EC_WebView::GetSceneCanvasComponent()
     return canvas;
 }
 
-void EC_WebView::EntityClicked(Scene::Entity *entity)
+void EC_WebView::EntityClicked(Scene::Entity *entity, Qt::MouseButton button, RaycastResult *raycastResult)
 {
     if (!getinteractive() || !GetParentEntity())
         return;
-
+    
+    // We are only interested in left clicks on our entity.
+    if (!raycastResult)
+        return;
+    if (button != Qt::LeftButton)
+        return;
+    
     if (entity == GetParentEntity())
     {
-        /*! 
-            \todo Make this only happen on left mouse click events. This means improving SceneInteract.
-            \todo Make this only show the popup if the our submesh index was hit in the raycast. 
-                  Can do another raycast but for that we would need the mouse position. 
-                  Preferred fix would be to make SceneInteract emit a nice signal with this data already.
-        */
+        // We are only interested in clicks to our target submesh index.
+        if (raycastResult->submesh_ != (unsigned)getrenderSubmeshIndex())
+            return;
 
         // Entities have EC_Selected if it is being manipulated.
         // At this situation we don't want to show any ui.

@@ -10,12 +10,13 @@
 #include "TreeWidgetItemExpandMemory.h"
 
 #include "EventManager.h"
+#include "SceneAPI.h"
 #include "SceneManager.h"
 #include "ConsoleCommandServiceInterface.h"
 #include "ModuleManager.h"
 #include "EC_DynamicComponent.h"
 #include "UiServiceInterface.h"
-#include "Input.h"
+#include "InputAPI.h"
 #include "NaaliUi.h"
 #include "NaaliMainWindow.h"
 
@@ -70,7 +71,7 @@ void ECEditorModule::PostInitialize()
 
     AddEditorWindowToUI();
 
-    inputContext = framework_->GetInput()->RegisterInputContext("ECEditorInput", 90);
+    inputContext = framework_->Input()->RegisterInputContext("ECEditorInput", 90);
     connect(inputContext.get(), SIGNAL(KeyPressed(KeyEvent *)), this, SLOT(HandleKeyPressed(KeyEvent *)));
 }
 
@@ -197,7 +198,7 @@ Console::CommandResult ECEditorModule::ShowDocumentation(const StringVector &par
  */
 Console::CommandResult ECEditorModule::EditDynamicComponent(const StringVector &params)
 {
-    Scene::SceneManager *sceneMgr = framework_->GetDefaultWorldScene().get();
+    Scene::SceneManager *sceneMgr = GetFramework()->Scene()->GetDefaultScene().get();
     if(!sceneMgr)
         return Console::ResultFailure("Failed to find main scene.");
 
@@ -317,9 +318,7 @@ void ECEditorModule::HandleKeyPressed(KeyEvent *e)
     if (e->eventType != KeyEvent::KeyPressed || e->keyPressCount > 1)
         return;
 
-    Input &input = *framework_->GetInput();
-
-    const QKeySequence showEcEditor = input.KeyBinding("ShowECEditor", QKeySequence(Qt::ShiftModifier + Qt::Key_E));
+    const QKeySequence showEcEditor = framework_->Input()->KeyBinding("ShowECEditor", QKeySequence(Qt::ShiftModifier + Qt::Key_E));
     if (QKeySequence(e->keyCode | e->modifiers) == showEcEditor)
     {
         if (!active_editor_)
@@ -329,6 +328,7 @@ void ECEditorModule::HandleKeyPressed(KeyEvent *e)
         }
         else
             active_editor_->setVisible(!active_editor_->isVisible());
+        e->handled = true;
     }
 }
 

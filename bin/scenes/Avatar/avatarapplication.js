@@ -51,8 +51,9 @@ function ServerHandleUserConnected(connectionID, user) {
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.
     avatarEntity.SetName(avatarEntityName);
     
+    var username = user.GetProperty("username");
     if (user != null) {
-	avatarEntity.SetDescription(user.GetProperty("username"));
+	avatarEntity.SetDescription(username);
     }
 
     var script = avatarEntity.script;
@@ -65,9 +66,15 @@ function ServerHandleUserConnected(connectionID, user) {
     // Set random starting position for avatar
     var placeable = avatarEntity.placeable;
     var transform = placeable.transform;
-    transform.pos.x = (Math.random() - 0.5) * avatar_area_size + avatar_area_x;
-    transform.pos.y = (Math.random() - 0.5) * avatar_area_size + avatar_area_y;
-    transform.pos.z = avatar_area_z;
+    var sticky = me.GetOrCreateComponentRaw("EC_DynamicComponent");
+    var prev_transform = sticky.GetAttribute(username);
+    if (prev_transform) {
+        transform = prev_transform;
+    } else {
+        transform.pos.x = (Math.random() - 0.5) * avatar_area_size + avatar_area_x;
+        transform.pos.y = (Math.random() - 0.5) * avatar_area_size + avatar_area_y;
+        transform.pos.z = avatar_area_z;
+    }
     placeable.transform = transform;
 
     scene.EmitEntityCreatedRaw(avatarEntity);
@@ -79,10 +86,20 @@ function ServerHandleUserConnected(connectionID, user) {
 
 function ServerHandleUserDisconnected(connectionID, user) {
     var avatarEntityName = "Avatar" + connectionID;
-    var entityID = scene.GetEntityByNameRaw(avatarEntityName).Id;
+    var avatarEntity = scene.GetEntityByNameRaw(avatarEntityName);
+    var entityID = avatarEntity.Id;
+
+    var sticky = me.GetOrCreateComponentRaw("EC_DynamicComponent");
+    var av_transform = avatarEntity.placeable.transform;
     scene.RemoveEntityRaw(entityID);
 
     if (user != null) {
-	print("[Avatar Application] User " + user.GetProperty("username") + " disconnected, destroyed avatar entity.");
-    }
+        var username = user.GetProperty("username");
+	print("[Avatar Application] User " + username + " disconnected, destroyed avatar entity.");
+        if (!sticky.GetAttribute(username))
+            sticky.AddQVariantAttribute(username);
+        
+        sticky.SetAttribute(username, av_transform);
+     }
+
 }

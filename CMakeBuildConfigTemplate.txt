@@ -23,6 +23,10 @@ if (MSVC)
 #  configure_hydrax ()
 endif()
 
+# Configure the use of MobilityModule. Disabled by default.
+SET(MOBILITY_ENABLED 0)
+#use_package_qtmobility()
+
 # If WINDOWS_APP == 0, the console (output log) window is created and shown when Naali starts on Windows.
 # If WINDOWS_APP == 1, this window is not shown. This flag only affects when building on Windows.
 SET(WINDOWS_APP 0)
@@ -148,6 +152,9 @@ add_subdirectory(CommunicationsModule)  # Enables communication capabilities.
 add_subdirectory(SceneStructureModule)      # Allows accessing, editing, importing and exporting of scene structure data
 if (OPENASSETIMPORT)
     add_subdirectory(OpenAssetImport)        # Allows import of various mesh file formats
+endif()
+if (MOBILITY_ENABLED)
+    add_subdirectory(MobilityModule)
 endif()
 
 AddEntityComponent(EntityComponents/EC_ChatBubble EC_ChatBubble)   # declared by InWorldChatModule

@@ -25,7 +25,9 @@ endif()
 
 # Configure the use of MobilityModule. Disabled by default.
 SET(MOBILITY_ENABLED 0)
-#use_package_qtmobility()
+if(MOBILITY_ENABLED)
+    use_package_qtmobility()
+endif()
 
 # If WINDOWS_APP == 0, the console (output log) window is created and shown when Naali starts on Windows.
 # If WINDOWS_APP == 1, this window is not shown. This flag only affects when building on Windows.

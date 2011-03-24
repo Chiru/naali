@@ -90,7 +90,7 @@ bool Server::Start(unsigned short port)
         }
         Scene::ScenePtr scene = framework_->Scene()->CreateScene("TundraServer", true);
         framework_->Scene()->SetDefaultScene(scene);
-        owner_->GetSyncManager()->RegisterToScene(scene);
+        //owner_->GetSyncManager()->RegisterToScene(scene);
         
         // Create an authoritative physics world
         Physics::PhysicsModule *physics = framework_->GetModule<Physics::PhysicsModule>();
@@ -301,7 +301,7 @@ void Server::HandleLogin(kNet::MessageConnection* source, const MsgLogin& msg)
     }
     
     // Tell syncmanager of the new user
-    owner_->GetSyncManager()->NewUserConnected(user);
+    //owner_->GetSyncManager()->NewUserConnected(user);
     
     emit UserConnected(user->userID, user);
 }

@@ -52,12 +52,15 @@ void TundraLogicModule::Initialize()
 {
     tundraEventCategory_ = framework_->GetEventManager()->RegisterEventCategory("Tundra");
     
-    syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this, framework_));
+    //syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this, framework_));
     client_ = boost::shared_ptr<Client>(new Client(this, framework_));
     server_ = boost::shared_ptr<Server>(new Server(this, framework_));
+
+    connect(GetFramework()->Scene(), SIGNAL(SceneAdded(const QString &)), this, SLOT(AttachSyncManagerToScene(const QString &)));
     
     framework_->RegisterDynamicObject("client", client_.get());
     framework_->RegisterDynamicObject("server", server_.get());
+
 }
 
 void TundraLogicModule::PostInitialize()
@@ -116,11 +119,21 @@ void TundraLogicModule::PostInitialize()
 void TundraLogicModule::Uninitialize()
 {
     kristalliModule_.reset();
-    syncManager_.reset();
+    foreach (SyncManager * sm, syncManagers_)
+        delete sm;
+    syncManagers_.clear();
     client_.reset();
     server_.reset();
 }
 
+void TundraLogicModule::AttachSyncManagerToScene(const QString &name)
+{
+    SyncManager *sm = new SyncManager(this, framework_);
+    sm->RegisterToScene(framework_->Scene()->GetScene(name));
+    syncManagers_.append(sm);
+    LogInfo("Registered SyncManager to scene " + name.toStdString());
+}
+    
 void TundraLogicModule::Update(f64 frametime)
 {
     {
@@ -147,8 +160,8 @@ void TundraLogicModule::Update(f64 frametime)
         if (server_)
             server_->Update(frametime);
         // Run scene sync
-        if (syncManager_)
-            syncManager_->Update(frametime);
+        foreach (SyncManager *sm, syncManagers_)
+            sm->Update(frametime);
         // Run scene interpolation
         Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
         if (scene)
@@ -215,6 +228,7 @@ void TundraLogicModule::StartupSceneLoaded(AssetPtr asset)
     else
         LogError("Could not resolve disk source for loaded scene file " + asset->Name().toStdString());
 }
+
 
 void TundraLogicModule::StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason)
 {
@@ -422,8 +436,8 @@ bool TundraLogicModule::HandleEvent(event_category_id_t category_id, event_id_t 
             client_->HandleKristalliEvent(event_id, data);
         if (server_)
             server_->HandleKristalliEvent(event_id, data);
-        if (syncManager_)
-            syncManager_->HandleKristalliEvent(event_id, data);
+        foreach (SyncManager *sm, syncManagers_)
+            sm->HandleKristalliEvent(event_id, data);
     }
     
     return false;

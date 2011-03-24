@@ -101,6 +101,7 @@ void SyncManager::RegisterToScene(Scene::ScenePtr scene)
         SLOT( OnEntityRemoved(Scene::Entity*, AttributeChange::Type) ));
     connect(sceneptr, SIGNAL( ActionTriggered(Scene::Entity *, const QString &, const QStringList &, EntityAction::ExecutionType) ),
         SLOT( OnActionTriggered(Scene::Entity *, const QString &, const QStringList &, EntityAction::ExecutionType)));
+    TundraLogicModule::LogInfo("SyncManager hooked up signals from scene");
 }
 
 void SyncManager::HandleKristalliEvent(event_id_t event_id, IEventData* data)

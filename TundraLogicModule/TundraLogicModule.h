@@ -93,7 +93,7 @@ public:
     const boost::shared_ptr<KristalliProtocol::KristalliProtocolModule>& GetKristalliModule() const { return kristalliModule_; }
     
     /// Return syncmanager
-    const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
+    //const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
     
     /// Return client
     const boost::shared_ptr<Client>& GetClient() const { return client_; }
@@ -104,6 +104,9 @@ public:
 private slots:
     void StartupSceneLoaded(AssetPtr asset);
     void StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason);
+    void AttachSyncManagerToScene(const QString &name);
+
+    void HandleSceneRemoved(const QString &name);
 
 private:
     /// Handle a Kristalli protocol message
@@ -113,7 +116,8 @@ private:
     void LoadStartupScene();
     
     /// Sync manager
-    boost::shared_ptr<SyncManager> syncManager_;
+    //boost::shared_ptr<SyncManager> syncManager_;
+    QList<SyncManager *> syncManagers_;
     /// Client
     boost::shared_ptr<Client> client_;
     /// Server

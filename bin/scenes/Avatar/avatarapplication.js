@@ -26,6 +26,9 @@ function ClientHandleToggleCamera() {
     // For camera switching to work, must have both the freelookcamera & avatarcamera in the scene
     var freelookcameraentity = scene.GetEntityByNameRaw("FreeLookCamera");
     var avatarcameraentity = scene.GetEntityByNameRaw("AvatarCamera");
+    var freecameralistener = freelookcameraentity.GetComponentRaw("EC_SoundListener");
+    var avatarent = scene.GetEntityByNameRaw("Avatar" + client.GetConnectionID());
+    var avatarlistener = avatarent.GetComponentRaw("EC_SoundListener");
     if ((freelookcameraentity == null) || (avatarcameraentity == null))
         return;
     var freelookcamera = freelookcameraentity.ogrecamera;
@@ -34,9 +37,16 @@ function ClientHandleToggleCamera() {
     if (avatarcamera.IsActive()) {
         freelookcameraentity.placeable.transform = avatarcameraentity.placeable.transform;
         freelookcamera.SetActive();
+        freecameralistener.active = true;
+        avatarlistener.active = false;
     } else {
         avatarcamera.SetActive();
+        avatarlistener.active = true;
+        freecameralistener.active = false;
     }
+    
+    // Ask entity to check his camera state
+    avatarent.Exec(1, "CheckState");
 }
 
 function ServerHandleUserAboutToConnect(connectionID, user) {
@@ -86,20 +96,13 @@ function ServerHandleUserConnected(connectionID, user) {
 
 function ServerHandleUserDisconnected(connectionID, user) {
     var avatarEntityName = "Avatar" + connectionID;
-    var avatarEntity = scene.GetEntityByNameRaw(avatarEntityName);
-    var entityID = avatarEntity.Id;
+    var avatartEntity = scene.GetEntityByNameRaw(avatarEntityName);
+    if (avatartEntity != null) {
+        var entityID = avatartEntity.Id;
+        scene.RemoveEntityRaw(entityID);
 
-    var sticky = me.GetOrCreateComponentRaw("EC_DynamicComponent");
-    var av_transform = avatarEntity.placeable.transform;
-    scene.RemoveEntityRaw(entityID);
-
-    if (user != null) {
-        var username = user.GetProperty("username");
-	print("[Avatar Application] User " + username + " disconnected, destroyed avatar entity.");
-        if (!sticky.GetAttribute(username))
-            sticky.AddQVariantAttribute(username);
-        
-        sticky.SetAttribute(username, av_transform);
-     }
-
+        if (user != null) {
+        print("[Avatar Application] User " + user.GetProperty("username") + " disconnected, destroyed avatar entity.");
+        }
+    }
 }

@@ -99,7 +99,7 @@ void Client::Logout(bool fail)
         client_id_ = 0;
         
         framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_DISCONNECTED, 0);
-        framework_->RemoveScene("TundraClient");
+        framework_->Scene()->RemoveScene("TundraClient");
 
         emit Disconnected();
     }

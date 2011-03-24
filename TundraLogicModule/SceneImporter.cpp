@@ -63,10 +63,10 @@ Scene::EntityPtr SceneImporter::ImportMesh(const std::string& filename, std::str
             return Scene::EntityPtr();
 
     QSet<QString> material_names_set;
-    for (uint i = 0; i < material_names.size(); ++i)
+    foreach (QString str, material_names_set)
     {
-        LogDebug("Material ref: " + material_names[i].toStdString());
-        material_names_set.insert(material_names[i]);
+        LogDebug("Material ref: " + str.toStdString());
+        material_names_set.insert(str);
     }
 
     LogDebug("Skeleton ref: " + skeleton_name.toStdString());
@@ -976,8 +976,8 @@ void SceneImporter::ProcessNodeForAssets(QDomElement node_elem, const std::strin
                 QStringList material_names;
                 QString skeleton_name;
                 ParseMeshForMaterialsAndSkeleton(QString::fromStdString(in_asset_dir + "/" + mesh_name), material_names, skeleton_name);
-                for (uint i = 0; i < material_names.size(); ++i)
-                    material_names_.insert(material_names[i].toStdString());
+                foreach (QString mname, material_names)
+                    material_names_.insert(mname.toStdString());
                 mesh_default_materials_[mesh_name.c_str()] = material_names;
             }
         }

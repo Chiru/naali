@@ -1,7 +1,7 @@
 #!/bin/bash
 export QTBUILDDIR=$HOME/qt
 export QTTARGETDIR=/usr/local/qt-releases/v4.7.2
-export QTINSTALLDIR=/usr/local/qt-releases/qt
+#export QTINSTALLDIR=/usr/local/qt-releases/qt
 mkdir -p $QTBUILDDIR
 cd $QTBUILDDIR
 #---- Build QT
@@ -11,7 +11,7 @@ git checkout v4.7.2
 ./configure --prefix=$QTTARGETDIR --disable-qt3support -dbus -phonon-backend | tee configure.log
 make -j 8
 sudo make install
-sudo ln -s $QTTARGETDIR $QTINSTALLDIR
+#sudo ln -s $QTTARGETDIR $QTINSTALLDIR
 #---- Build QT3D
 git clone git://gitorious.org/qt-labs/qt3d.git
 cd qt3d
@@ -28,7 +28,8 @@ wget http://get.qt.nokia.com/qt/add-ons/qt-mobility-opensource-src-1.2.0-tp1.tar
 tar xvf qt-mobility-opensource-src-1.2.0-tp1.tar.gz
 cd qt-mobility-opensource-src-1.2.0-tp1
 sudo aptitude install libxv-dev libbluetooth-dev
-./configure --prefix $QTINSTALLDIR -qmake-exec $QTINSTALLDIR/bin/qmake -examples
+./configure --prefix $QTTARGETDIR -qmake-exec $QTARGETDIR/bin/qmake
 make -j 8
 sudo make install
 exit 0
+

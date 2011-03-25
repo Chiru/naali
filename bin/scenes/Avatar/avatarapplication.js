@@ -1,3 +1,5 @@
+// !ref: local://simpleavatar.js
+
 // Avatar application. Will handle switching logic between avatar & freelook camera (clientside), and
 // spawning avatars for clients (serverside). Note: this is not a startup script, but is meant to be
 // placed in an entity in a scene that wishes to implement avatar functionality.
@@ -20,6 +22,19 @@ if (isserver == false) {
     server.UserAboutToConnect.connect(ServerHandleUserAboutToConnect);
     server.UserConnected.connect(ServerHandleUserConnected);
     server.UserDisconnected.connect(ServerHandleUserDisconnected);
+    
+    // If there are connected users when this script was added, add av for all of them
+    var userIdList = server.GetConnectionIDs();
+    if (userIdList.length > 0)
+        print("[Avatar Application] Application started. Creating avatars for logged in clients.");
+
+    for (var i=0; i < userIdList.length; i++)
+    {
+        var userId = userIdList[i];
+        var userConnection = server.GetUserConnection(userId);
+        if (userConnection != null)
+            ServerHandleUserConnected(userId, userConnection);
+    }
 }
 
 function ClientHandleToggleCamera() {
@@ -90,7 +105,7 @@ function ServerHandleUserConnected(connectionID, user) {
     scene.EmitEntityCreatedRaw(avatarEntity);
     
     if (user != null) {
-	print("[Avatar Application] Created avatar for " + user.GetProperty("username"));
+        print("[Avatar Application] Created avatar for " + user.GetProperty("username"));
     }
 }
 

@@ -115,6 +115,22 @@ macro(CopyModuleXMLFile)
     endforeach()
 endmacro()
 
+# Adds a compilation step that copies the module QML files to the runtime /bin/data/qmlfiles directory.
+# Before calling this, define the QML_FILES list in your module.
+macro(CopyModuleQMLFiles)
+    # Recreate the /bin/data/qmlfiles folder if it does not exist.
+    if (NOT EXISTS ${PROJECT_SOURCE_DIR}/bin/data)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/bin/data)
+    endif ()    
+    if (NOT EXISTS ${PROJECT_SOURCE_DIR}/bin/data/qmlfiles)
+        execute_process(COMMAND ${CMAKE_COMMAND} -E make_directory ${PROJECT_SOURCE_DIR}/bin/data/qmlfiles)
+    endif ()
+
+    foreach(QML_FILE ${QML_FILES})
+        add_custom_command(TARGET ${TARGET_NAME} POST_BUILD COMMAND ${CMAKE_COMMAND} ARGS -E copy_if_different ${QML_FILE} ${PROJECT_SOURCE_DIR}/bin/data/qmlfiles)
+    endforeach()
+endmacro()
+
 # Moves all Qt ui copmiler-generated .h files into their own folder in the Visual Studio project. Call this once after having added all source files in the build in your module.
 # This macro is optional and for "conveniency" only. If you omit this call, you will have all the generated moc files in the Visual Studio project root.
 macro(UiFolder)

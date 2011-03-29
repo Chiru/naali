@@ -26,5 +26,6 @@ link_package_qtdeclarative()
 
 SetupCompileFlagsWithPCH()
 CopyModuleXMLFile()
+CopyModuleQMLFiles()
 
 final_target ()

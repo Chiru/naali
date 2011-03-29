@@ -1,7 +1,6 @@
 #ifndef incl_QMLUIModule_QMLUIModule_h
 #define incl_QMLUIModule_QMLUIModule_h
 
-#include <QtGui/QMainWindow>
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
 #include "SceneManager.h"
@@ -75,24 +74,15 @@ private:
     /// "Tundra" event category ID.
     event_category_id_t tundra_category_;
 
-    /// Are we currently connected to world.
-    bool connected_;
 
     QByteArray scenexml_;
     Scene::SceneManager *sceneMngr;
 
 private slots:
 
-    void HandleKeyEvent(KeyEvent *key);
-
-    void ProcessTundraLogin(const QMap<QString, QString> &data);
-
     void Exit();
 
-    void qmlTest(UiServiceInterface *ui, QDeclarativeView *view);
-
 signals:
-    void Connect(const QMap<QString, QString> &login_data);
     void helloQML(QVariant text);
 
 };

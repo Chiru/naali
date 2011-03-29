@@ -13,33 +13,18 @@
 
 #include "UiServiceInterface.h"
 #include "UiService.h"
-#include "LoginServiceInterface.h"
 #include "UiServiceInterface.h"
 #include "UiProxyWidget.h"
 #include "EventManager.h"
-//#include "SceneManager.h"
-#include "SceneAPI.h"
-#include "Entity.h"
 
 
-#ifdef ENABLE_TAIGA_LOGIN
-#include "../ProtocolUtilities/NetworkEvents.h"
-#endif
-
-#include "../TundraLogicModule/TundraEvents.h"
-
-#include "MemoryLeakCheck.h"
-#include <QtOpenGL/QtOpenGL>
 
 
 std::string QMLUIModule::type_name_static_ = "QMLUIModule";
 
 QMLUIModule::QMLUIModule() :
-    IModule(type_name_static_),
-    window_(0),
-    framework_category_(0),
-    network_category_(0),
-    connected_(false)
+    IModule(type_name_static_)
+
 {
     //For QML-debugging
     QByteArray data = "1";
@@ -66,7 +51,7 @@ void QMLUIModule::PostInitialize()
 
     if (ui)
     {
-        window_ = new QMLWidget(framework_);
+        window_ = new QMLWidget();
 
         UiProxyWidget *proxy = new UiProxyWidget(window_, Qt::Widget);
         uis->AddProxyWidgetToScene(proxy);
@@ -112,12 +97,6 @@ void QMLUIModule::PostInitialize()
     }
 }
 
-void QMLUIModule::qmlTest(UiServiceInterface *ui, QDeclarativeView *view)
-{
-    ui->ShowWidget(view);
-
-}
-
 void QMLUIModule::Uninitialize()
 {
     SAFE_DELETE(window_);
@@ -134,39 +113,6 @@ bool QMLUIModule::HandleEvent(event_category_id_t category_id, event_id_t event_
     return false;
 }
 
-void QMLUIModule::HandleKeyEvent(KeyEvent *key)
-{
-}
-
-void QMLUIModule::ProcessTundraLogin(const QMap<QString, QString> &data)
-{
-    if (data["AvatarType"] == "Tundra")
-    {
-
-        std::string worldAddress = data["WorldAddress"].toStdString();
-        unsigned short port = 0; // Use default if not specified
-
-        size_t pos = worldAddress.find(':');
-        if (pos != std::string::npos)
-        {
-            try
-            {
-                port = ParseString<int>(worldAddress.substr(pos + 1));
-            }
-            catch (...) {}
-            worldAddress = worldAddress.substr(0, pos);
-        }
-
-        TundraLogic::Events::TundraLoginEventData logindata;
-        logindata.address_ = worldAddress;
-        logindata.port_ = port;
-        logindata.username_ = data["Username"].toStdString();
-        logindata.password_ = data["Password"].toStdString();
-        logindata.protocol_ = data["Protocol"].toStdString();
-        LogInfo("Attempting Tundra connection to " + worldAddress + " as " + logindata.username_);
-        framework_->GetEventManager()->SendEvent(tundra_category_, TundraLogic::Events::EVENT_TUNDRA_LOGIN, &logindata);
-    }
-}
 
 void QMLUIModule::Exit()
 {

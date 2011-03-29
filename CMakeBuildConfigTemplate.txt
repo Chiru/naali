@@ -29,6 +29,12 @@ if(MOBILITY_ENABLED)
     use_package_qtmobility()
 endif()
 
+# Configure the use of QMLUIModule. Disabled by default.
+SET(DECLARATIVE_ENABLED 0)
+if(DECLARATIVE_ENABLED)
+    use_package_qtdeclarative()
+endif()
+
 # If WINDOWS_APP == 0, the console (output log) window is created and shown when Naali starts on Windows.
 # If WINDOWS_APP == 1, this window is not shown. This flag only affects when building on Windows.
 SET(WINDOWS_APP 0)
@@ -160,6 +166,9 @@ if (OPENASSETIMPORT)
 endif()
 if (MOBILITY_ENABLED)
     add_subdirectory(MobilityModule)
+endif()
+if (DECLARATIVE_ENABLED)
+    add_subdirectory(QMLUIModule)
 endif()
 
 AddEntityComponent(EntityComponents/EC_ChatBubble EC_ChatBubble)   # declared by InWorldChatModule

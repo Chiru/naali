@@ -47,14 +47,30 @@ void MobilityModule::Initialize()
 
     initNetworkSession();
 
+    const FEATUREMAP map[] = {
+        { QSystemInfo::BluetoothFeature, MobilityModule::BluetoothFeature },
+        { QSystemInfo::CameraFeature, MobilityModule::CameraFeature },
+        { QSystemInfo::FmradioFeature, MobilityModule::FmradioFeature },
+        { QSystemInfo::IrFeature, MobilityModule::IrFeature },
+        { QSystemInfo::LedFeature, MobilityModule::LedFeature },
+        { QSystemInfo::MemcardFeature, MobilityModule::MemcardFeature },
+        { QSystemInfo::UsbFeature, MobilityModule::UsbFeature },
+        { QSystemInfo::VibFeature, MobilityModule::VibFeature },
+        { QSystemInfo::WlanFeature, MobilityModule::WlanFeature },
+        { QSystemInfo::SimFeature, MobilityModule::SimFeature },
+        { QSystemInfo::LocationFeature, MobilityModule::LocationFeature },
+        { QSystemInfo::VideoOutFeature, MobilityModule::VideoOutFeature },
+        { QSystemInfo::HapticsFeature, MobilityModule::HapticsFeature }
+    };
+
     // Query platform features from QtMobility
     features_.clear();
-    for(int x = 0; x < 13; x++)
+    for(int x = 0; x < ( sizeof(map)/sizeof(FEATUREMAP) ); x++)
     {
-        features_.append(system_info_->hasFeatureSupported((QSystemInfo::Feature)x));
+        features_.insert(map[x].mfeature, system_info_->hasFeatureSupported(map[x].feature));
     }
 
-    // Set initial values for mobility related info by triggering the correspondig slots
+    // Set initial values for mobility related info by triggering the corresponding slots
     battery_critical_ = false;
     setBatteryCriticalValue(20);
     usingBatteryHandler(system_device_info_->currentPowerState());
@@ -222,7 +238,7 @@ MobilityModule::NetworkMode MobilityModule::networkMode()
 
 MobilityModule::ScreenState MobilityModule::screenState()
 {
-    return MobilityModule::ScreenUnknown;
+    return MobilityModule::ScreenOn;
 }
 
 int MobilityModule::networkQuality()
@@ -233,7 +249,7 @@ int MobilityModule::networkQuality()
 
 void MobilityModule::setBatteryCriticalValue(int criticalValue)
 {
-    if(criticalValue > 0 && criticalValue <= 100)
+    if(criticalValue >= 0 && criticalValue <= 100)
         battery_critical_value_ = criticalValue;
 }
 
@@ -275,9 +291,10 @@ void MobilityModule::initNetworkSession()
 
 bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
 {
-    if(features_.size() <= (int)feature)
+    if(features_.contains(feature))
+        return features_.value(feature);
+    else
         return false;
-    return features_.at((int)feature);
 }
 
 extern "C" void POCO_LIBRARY_API SetProfiler(Foundation::Profiler *profiler);

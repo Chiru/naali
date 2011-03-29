@@ -22,6 +22,12 @@
 
 using namespace QtMobility;
 
+//class MobilityModule;
+
+
+
+
+
 class MobilityModule : public QObject, public IModule
 {
     Q_OBJECT
@@ -76,6 +82,12 @@ public:
         ScreenOff = 3,
         ScreenSaver = 4
     };
+
+    /// Mapping for QSystemDeviceInfo::Feature <-> MobilityModule::DeviceFeature
+    typedef struct _featuremap {
+        QSystemInfo::Feature feature;
+        MobilityModule::DeviceFeature mfeature;
+    }FEATUREMAP;
 
     /// Default constructor.
     MobilityModule();
@@ -164,8 +176,8 @@ private:
     /// QNetworkConfigurationManager, used to keep track of active network configurations
     QNetworkConfigurationManager *network_configuration_manager_;
 
-    /// List of available features
-    QList<bool> features_;
+    /// Map of available features
+    QMap<MobilityModule::DeviceFeature, bool> features_;
 
     /// Current battery level
     int battery_level_;

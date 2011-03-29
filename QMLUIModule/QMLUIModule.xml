@@ -1,0 +1,4 @@
+<config>
+    <entry>QMLUIModule</entry>
+    <dependency>UiServiceModule</dependency>
+</config>

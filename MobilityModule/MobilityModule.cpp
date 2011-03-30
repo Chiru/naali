@@ -38,7 +38,12 @@ QTM_USE_NAMESPACE
 std::string MobilityModule::type_name_static_ = "Mobility";
 
 MobilityModule::MobilityModule() :
-    IModule(type_name_static_)
+    IModule(type_name_static_),
+    system_info_(new QSystemInfo(this)),
+    system_device_info_(new QSystemDeviceInfo(this)),
+    system_network_info_(0),
+    system_display_info_(0),
+    network_configuration_manager_(new QNetworkConfigurationManager(this))
 {
 }
 
@@ -53,13 +58,6 @@ void MobilityModule::PreInitialize()
 void MobilityModule::Initialize()
 {
     LogInfo(Name() + " initializing...");
-
-    system_info_ = new QSystemInfo(this);
-    system_device_info_ = new QSystemDeviceInfo(this);
-    //system_network_info_ = new QSystemNetworkInfo(this);
-    //system_display_info_ = new QSystemDisplayInfo(this);
-
-    network_configuration_manager_ = new QNetworkConfigurationManager();
     
     framework_->RegisterDynamicObject("mobility", this);
 

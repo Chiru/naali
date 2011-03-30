@@ -17,6 +17,22 @@
 
 #include "MemoryLeakCheck.h"
 
+Q_DECLARE_METATYPE(MobilityModule*);
+Q_DECLARE_METATYPE(MobilityModule::DeviceFeature);
+Q_DECLARE_METATYPE(MobilityModule::NetworkState);
+Q_DECLARE_METATYPE(MobilityModule::NetworkMode);
+Q_DECLARE_METATYPE(MobilityModule::ScreenState);
+
+template<typename T> QScriptValue toScriptValueEnum(QScriptEngine *engine, const T &s)
+{
+    return QScriptValue((int)s);
+}
+
+template<typename T> void fromScriptValueEnum(const QScriptValue &obj, T &s)
+{
+    s = static_cast<T>(obj.toInt32());
+}
+
 QTM_USE_NAMESPACE
 
 std::string MobilityModule::type_name_static_ = "Mobility";
@@ -44,6 +60,8 @@ void MobilityModule::Initialize()
     //system_display_info_ = new QSystemDisplayInfo(this);
 
     network_configuration_manager_ = new QNetworkConfigurationManager();
+    
+    framework_->RegisterDynamicObject("mobility", this);
 
     initNetworkSession();
 
@@ -295,6 +313,14 @@ bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
         return features_.value(feature);
     else
         return false;
+}
+
+void MobilityModule::OnScriptEngineCreated(QScriptEngine* engine)
+{
+    qScriptRegisterMetaType(engine, toScriptValueEnum<MobilityModule::DeviceFeature>, fromScriptValueEnum<MobilityModule::DeviceFeature>);
+    qScriptRegisterMetaType(engine, toScriptValueEnum<MobilityModule::NetworkState>, fromScriptValueEnum<MobilityModule::NetworkState>);
+    qScriptRegisterMetaType(engine, toScriptValueEnum<MobilityModule::NetworkMode>, fromScriptValueEnum<MobilityModule::NetworkMode>);
+    qScriptRegisterMetaType(engine, toScriptValueEnum<MobilityModule::ScreenState>, fromScriptValueEnum<MobilityModule::ScreenState>);
 }
 
 extern "C" void POCO_LIBRARY_API SetProfiler(Foundation::Profiler *profiler);

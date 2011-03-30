@@ -20,17 +20,17 @@
 #include <QNetworkConfiguration>
 #include <QNetworkInterface>
 
+#include <QtScript>
+
 using namespace QtMobility;
-
-//class MobilityModule;
-
-
-
-
 
 class MobilityModule : public QObject, public IModule
 {
     Q_OBJECT
+    Q_ENUMS(DeviceFeature)
+    Q_ENUMS(NetworkState)
+    Q_ENUMS(NetworkMode)
+    Q_ENUMS(ScreenState)
 
 public:
     enum DeviceFeature
@@ -232,6 +232,9 @@ public slots:
     /// Used to circumvent the problem that QNetworkConfigurationManager can't determine
     /// the system online state reliably on linux platform
     void networkConfigurationChanged(const QNetworkConfiguration &networkConfig);
+    
+    /// Initialize datatypes for a script engine
+    void OnScriptEngineCreated(QScriptEngine* engine);
 
 signals:
 

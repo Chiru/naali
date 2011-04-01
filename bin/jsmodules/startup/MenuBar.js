@@ -135,12 +135,12 @@ if (!framework.IsHeadless())
     
     function OpenSceneWindow()
     {
-        framework.GetModuleQObj("SceneStructure").ShowSceneStructureWindow();
+        framework.GetModuleQObj("SceneStructure").ToggleSceneStructureWindow();
     }
 
     function OpenAssetsWindow()
     {
-        framework.GetModuleQObj("SceneStructure").ShowAssetsWindow();
+        framework.GetModuleQObj("SceneStructure").ToggleAssetsWindow();
     }
 
     function OpenProfilerWindow()

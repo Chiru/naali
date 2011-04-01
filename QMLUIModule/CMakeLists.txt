@@ -16,11 +16,11 @@ set (FILES_TO_TRANSLATE ${FILES_TO_TRANSLATE} ${H_FILES} ${CPP_FILES} PARENT_SCO
 # Qt4 Wrap
 QT4_WRAP_CPP(MOC_SRCS ${MOC_FILES})
 
-use_modules (Core Foundation Interfaces Input UiServiceModule)
+use_modules (Core Foundation Interfaces Input UiServiceModule MobilityModule)
 
 build_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${MOC_SRCS} ${QML_FILES})
 
-link_modules (Core Foundation Interfaces Input UiServiceModule)
+link_modules (Core Foundation Interfaces Input UiServiceModule MobilityModule)
 link_ogre()
 link_package_qtdeclarative()
 

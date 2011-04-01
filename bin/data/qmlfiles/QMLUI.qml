@@ -1,32 +1,125 @@
 import QtQuick 1.0
-import Qt3D 1.0
 
 Rectangle {
     id: uiRect
     color: "transparent"
     opacity: 1
     signal exit
-    function xmlfunction(xmlsource) { xmlModel.source = xmlsource }
+    property int usingbat: 0
+    //function xmlfunction(xmlsource) { xmlModel.source = xmlsource }
+    function networkstatechanged(networkstate) {
+        if (networkstate == 0)
+            networkText.text = "Network state: Invalid"
+        else if (networkstate == 1)
+            networkText.text = "Network state: Not Available"
+        else if (networkstate == 2)
+            networkText.text = "Network state: Connecting..."
+        else if (networkstate == 3)
+            networkText.text = "Network state: Connected"
+        else if (networkstate == 4)
+            networkText.text = "Network state: Closing..."
+        else if (networkstate == 5)
+            networkText.text = "Network state: Disconnected"
+        else if (networkstate == 6)
+            networkText.text = "Network state: Roaming..."
+        else
+            networkText.text = "Network state: Invalid"
+    }
+
+    function batterylevelchanged(batterylevel) {
+        pb.value = batterylevel
+        if (uiRect.usingbat == 1)
+        {
+            if (batterylevel < 21)
+                pb.ss = "critical"
+            else
+                 pb.ss = ""
+        }
+    }
+
+    function usingbattery(usbat) {
+        uiRect.usingbat = usbat
+        if (usbat == 0)
+        {
+            pb.ss = "notusingbattery"
+        }
+        else
+            if (pb.value < 21)
+                pb.ss = "critical"
+            else
+                pb.ss = ""
+
+    }
 
     QMLMenu {
         owner: parent
     }
+
+    Loader { id: loader1;  }
 
     QMLKeyboard {
         owner: parent
     }
 
     QMLKeyboard2 {
-        owner: parent
+        owner: uiRect
     }
+
 
     /*CIELogo {
         owner: parent
     }*/
 
+    Text {
+        id: networkText
+        text: "Network state: Unknown"
+        anchors.horizontalCenter: uiRect.horizontalCenter
+        anchors.top:  uiRect.top
+        anchors.topMargin: 30
+    }
+
+    Rectangle {
+        id: batteryRect
+        width:  150
+        height: 25
+        anchors { top: uiRect.top; topMargin: 30; right: uiRect.right; rightMargin: 10; }
+        opacity: 0.5
+        color: "black"
+
+        MouseArea {
+            id: testarea2
+            anchors.fill: parent
+            onClicked: loader1.source = "http://www.students.oamk.fi/~t8kool00/test.qml";
+        }
+
+    }
+
+    Rectangle {
+        id: batteryTip
+        width:  5
+        height: 19
+        anchors { right: batteryRect.left; verticalCenter: batteryRect.verticalCenter }
+        opacity: 0.5
+        color: "black"
+
+    }
 
 
-    XmlListModel {
+
+        ProgressBar {
+            id: pb
+            owner: parent
+    }
+
+        PathExample {
+
+        }
+
+
+
+
+
+    /*XmlListModel {
          id: xmlModel
          source: ""
          query: "/scene/entity"
@@ -42,50 +135,8 @@ Rectangle {
         anchors.right: uiRect.right
         model:  xmlModel
         delegate: Text { text: "EntityID:" + entityID; MouseArea { anchors.fill: parent } }
-    }
-    Rectangle {
-        id: trolol
-        x: 400
-        y: 400
-        width: 400
-        height: 400
-        color: "transparent"
+    }*/
 
 
-
-
-    Component {
-             id: delegate
-
-             Item {
-                 id: wrapper
-                 width: 150; height: 120
-                 scale: PathView.iconScale
-                 opacity: PathView.iconOpacity
-
-                 Column {
-
-                     Image { anchors.horizontalCenter: nameText.horizontalCenter; width: 100; height: 100; source: icon }
-                     Text { id: nameText; text: name; font.pointSize: 16; color: wrapper.PathView.isCurrentItem ? "red" : "black" }
-                 }
-             }
-              }
-
-
-         PathView {
-             anchors.fill: parent
-             model:   ContactModel {}
-             delegate: delegate
-             path: Path {
-                 startX: 120 ; startY: 100
-                 PathAttribute { name: "iconScale"; value: 1.0 }
-                 PathAttribute { name: "iconOpacity"; value: 1.0 }
-                 PathQuad { x: 120; y: 25; controlX: 260; controlY: 75 }
-                 PathAttribute { name: "iconScale"; value: 0.3 }
-                 PathAttribute { name: "iconOpacity"; value: 0.0 }
-                 PathQuad { x: 120; y: 100; controlX: -20; controlY: 75 }
-             }
-         }
-    }
 }
 

@@ -7,17 +7,13 @@ Item {
     Image {
             id: kbimg2
             source: "./images/keyboard.png"
-            anchors.horizontalCenter: owner.left
-            anchors.verticalCenter: owner.bottom
-            anchors.horizontalCenterOffset: 55
-            anchors.verticalCenterOffset: -30
             scale: 0.1
 
 
             MouseArea {
                 id: kbma2
                 anchors.fill: parent
-                drag.target: kbimg2; drag.axis: Drag.XAxis
+                drag.target: kbimg2; drag.axis: Drag.XandYAxis
                 onClicked: {
                     if (kbimg2.state == "")
                         kbimg2.state = "down"

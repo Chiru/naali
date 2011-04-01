@@ -52,7 +52,7 @@ Item {
     Text {
         id: oneMenu
         text: "oneMenu"
-        anchors.left: owner.left
+        //anchors.left: owner.left
         y: -100
         opacity: 0
         scale: 1
@@ -120,7 +120,7 @@ Item {
     Text {
         id: twoMenu
         text: "twoMenu"
-        anchors.left: owner.left
+        //anchors.left: owner.left
         y: -100
         opacity: 0
         font.pointSize: 24; font.bold: true
@@ -187,7 +187,7 @@ Item {
     Text {
         id: threeMenu
         text: "threeMenu"
-        anchors.left: owner.left
+        //anchors.left: owner.left
         y: -100
         opacity: 0
         font.pointSize: 24; font.bold: true

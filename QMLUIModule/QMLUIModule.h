@@ -4,6 +4,7 @@
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
 #include "SceneManager.h"
+#include "MobilityModule.h"
 
 #include <QtDeclarative>
 
@@ -77,13 +78,23 @@ private:
 
     QByteArray scenexml_;
     Scene::SceneManager *sceneMngr;
+    //QObject *mobilitymodule_;
+    MobilityModule *mobilitymodule_;
+
 
 private slots:
 
     void Exit();
+    void NetworkStateChanged(MobilityModule::NetworkState state);
+    void BatteryLevelChanged(int batterylevel);
+    void usingBattery(bool uB);
 
 signals:
+    void giveQMLNetworkState(QVariant);
+    void giveQMLBatteryLevel(QVariant);
+    void giveQMLUsingBattery(QVariant);
     void helloQML(QVariant text);
+
 
 };
 

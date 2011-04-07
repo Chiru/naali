@@ -64,6 +64,11 @@ void SyncManager::SetUpdatePeriod(float period)
     update_period_ = period;
 }
 
+void SyncManager::ProcessNewUserConnection(int ID, UserConnection* newuser)
+{
+    NewUserConnected(newuser);
+}
+
 void SyncManager::RegisterToScene(Scene::ScenePtr scene)
 {
     // Disconnect from previous scene if not expired

@@ -100,6 +100,9 @@ public:
     
     /// Return server
     const boost::shared_ptr<Server>& GetServer() const { return server_; }
+
+	// Return specific syncManager from scenemanagers_. For now used only server side.
+    SyncManager *GetSyncManagerForScene();
     
 private slots:
     void StartupSceneLoaded(AssetPtr asset);

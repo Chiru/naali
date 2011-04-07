@@ -101,6 +101,11 @@ bool Server::Start(unsigned short port)
         event_data.user_id_ = 0;
         framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_CONNECTED, &event_data);
         
+		// Because RegisterToScene() is disabled connection has to be made between UserCon-signal and syncManager's
+        // NewUserConnected()-method.
+        connect(this, SIGNAL(UserConnected(int,UserConnection*)), owner_->GetSyncManagerForScene(), 
+				SLOT(ProcessNewUserConnection(int,UserConnection*)));
+
         emit ServerStarted();
     }
     

@@ -68,6 +68,9 @@ public slots:
     
     //! Get update period
     float GetUpdatePeriod() { return update_period_; }
+
+	// Oma slotti testiin
+    void ProcessNewUserConnection(int, UserConnection*);
     
 private slots:
     //! Trigger EC sync because of component attributes changing

@@ -133,6 +133,12 @@ void TundraLogicModule::AttachSyncManagerToScene(const QString &name)
     syncManagers_.append(sm);
     LogInfo("Registered SyncManager to scene " + name.toStdString());
 }
+
+// This is hardcoded for now. Returns one and only syncManager from QList.
+SyncManager *TundraLogicModule::GetSyncManagerForScene()
+{
+    return syncManagers_[0];
+}
     
 void TundraLogicModule::Update(f64 frametime)
 {

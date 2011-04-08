@@ -1,7 +1,7 @@
 // For conditions of distribution and use, see copyright notice in license.txt
 
-#ifndef incl_EC_Movable_StableHeaders_h
-#define incl_EC_Movable_StableHeaders_h
+#ifndef incl_EC_ProximityTrigger_StableHeaders_h
+#define incl_EC_ProximityTrigger_StableHeaders_h
 
 #include "CoreStdIncludes.h"
 
@@ -14,7 +14,7 @@
 
 #include "Framework.h"
 
-#include <QtCore>
+#include <Ogre.h>
 
 #endif
 

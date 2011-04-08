@@ -14,6 +14,7 @@
 #include "ParticipantWindow.h"
 
 #include "Framework.h"
+#include "UiAPI.h"
 #include "EventManager.h"
 #include "ModuleManager.h"
 #include "ConsoleCommandServiceInterface.h"
@@ -26,7 +27,6 @@
 #include "NetworkMessages/NetInMessage.h"
 #include "NetworkMessages/NetMessageManager.h"
 #include "Renderer.h"
-#include "UiServiceInterface.h"
 #include "UiProxyWidget.h"
 #include "EC_OpenSimPresence.h"
 #include "ConsoleAPI.h"
@@ -77,11 +77,6 @@ void DebugStatsModule::PostInitialize()
 #endif
 
 #ifdef PROFILING
-/*
-    RegisterConsoleCommand(Console::CreateCommand("Prof", 
-        "Shows the profiling window.",
-        Console::Bind(this, &DebugStatsModule::ShowProfilingWindow)));
-*/
     framework_->Console()->RegisterCommand("prof", "Shows the profiling window.", this, SLOT(ShowProfilingWindow()));
 
     RegisterConsoleCommand(Console::CreateCommand("rin", 
@@ -146,9 +141,6 @@ void DebugStatsModule::AddProfilerWidgetToUi()
         return;
     }
 
-    /*UiServiceInterface *ui = framework_->GetService<UiServiceInterface>();
-    if (!ui)
-        return;*/
     UiAPI *ui = GetFramework()->Ui();
     if (!ui)
         return;
@@ -172,31 +164,23 @@ void DebugStatsModule::StartProfiling(bool visible)
         profilerWindow_->OnProfilerWindowTabChanged(-1); 
 }
 
-Console::CommandResult DebugStatsModule::ShowProfilingWindow(/*const StringVector &params*/)
+Console::CommandResult DebugStatsModule::ShowProfilingWindow()
 {
-    UiServicePtr ui = framework_->GetService<UiServiceInterface>(Service::ST_Gui).lock();
-    if (!ui)
-        return Console::ResultFailure("Failed to acquire UI service!");
-
     // If the window is already created, bring it to front.
     if (profilerWindow_)
     {
-        ui->BringWidgetToFront(profilerWindow_);
+        framework_->Ui()->BringWidgetToFront(profilerWindow_);
         return Console::ResultSuccess();
     }
     else
-        return Console::ResultFailure("Profiler window has not been initialised, something went wrong on startup!");
+        return Console::ResultFailure("Profiler window has not been initialized, something went wrong on startup!");
 }
 
 Console::CommandResult DebugStatsModule::ShowParticipantWindow(const StringVector &params)
 {
-    UiServicePtr ui = framework_->GetService<UiServiceInterface>(Service::ST_Gui).lock();
-    if (!ui)
-        return Console::ResultFailure("Failed to acquire UI service!");
-
     if (participantWindow_)
     {
-        ui->BringWidgetToFront(participantWindow_);
+        framework_->Ui()->BringWidgetToFront(participantWindow_);
         return Console::ResultSuccess();
     }
 
@@ -204,9 +188,8 @@ Console::CommandResult DebugStatsModule::ShowParticipantWindow(const StringVecto
     participantWindow_->move(100, 100);
     participantWindow_->setWindowFlags(Qt::Dialog);
 
-    /*QGraphicsProxyWidget *proxy = */ui->AddWidgetToScene(participantWindow_);
-    ui->BringWidgetToFront(participantWindow_);
-//    proxy->show();
+    framework_->Ui()->AddWidgetToScene(participantWindow_);
+    framework_->Ui()->BringWidgetToFront(participantWindow_);
 
     return Console::ResultSuccess();
 }

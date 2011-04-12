@@ -137,6 +137,9 @@ void TundraLogicModule::AttachSyncManagerToScene(const QString &name)
 // This is hardcoded for now. Returns one and only syncManager from QList.
 SyncManager *TundraLogicModule::GetSyncManagerForScene()
 {
+	// Check if there are any scenes in list.
+	if (!syncManagers_[0])
+		return;
     return syncManagers_[0];
 }
     

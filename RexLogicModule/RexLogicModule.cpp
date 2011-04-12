@@ -164,6 +164,10 @@
 #include "EC_ProximityTrigger.h"
 #endif
 
+#ifdef EC_Menu_ENABLED
+#include "EC_Menu.h"
+#endif
+
 #include <OgreManualObject.h>
 #include <OgreSceneManager.h>
 #include <OgreViewport.h>
@@ -274,6 +278,10 @@ void RexLogicModule::Load()
 
 #ifdef EC_ProximityTrigger_ENABLED
     DECLARE_MODULE_EC(EC_ProximityTrigger);
+#endif
+
+#ifdef EC_Menu_ENABLED
+    DECLARE_MODULE_EC(EC_Menu);
 #endif
 }
 

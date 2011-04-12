@@ -98,6 +98,7 @@ Item {
             opacity: 0
             font.pointSize: 18; font.bold: true
 
+
             states: State {
                 name: "open"
                 PropertyChanges {
@@ -160,10 +161,16 @@ Item {
 
         Text {
             id: submenu2
-            text: "submenu2"
+            text: "Load ListView"
             anchors.verticalCenter: parent.bottom
             opacity: 0
             font.pointSize: 18; font.bold: true
+
+            MouseArea {
+                id: submenuMA2
+                anchors.fill: parent
+                onClicked: loadxml()
+            }
 
             states: State {
                 name: "open"

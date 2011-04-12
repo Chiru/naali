@@ -5,6 +5,7 @@
 #include "ModuleLoggingFunctions.h"
 #include "SceneManager.h"
 #include "MobilityModule.h"
+#include "UiProxyWidget.h"
 
 #include <QtDeclarative>
 
@@ -76,24 +77,27 @@ private:
     event_category_id_t tundra_category_;
 
 
-    QByteArray scenexml_;
+    //QByteArray scenexml_;
     Scene::SceneManager *sceneMngr;
-    //QObject *mobilitymodule_;
+
     MobilityModule *mobilitymodule_;
+    UiProxyWidget *qmluiproxy_;
 
 
 private slots:
 
     void Exit();
     void NetworkStateChanged(MobilityModule::NetworkState state);
-    void BatteryLevelChanged(int batterylevel);
-    void usingBattery(bool uB);
+    void BatteryLevelChanged(int);
+    void usingBattery(bool);
+    void setQMLUIFocus(bool);
+    void loadXML();
 
 signals:
     void giveQMLNetworkState(QVariant);
     void giveQMLBatteryLevel(QVariant);
     void giveQMLUsingBattery(QVariant);
-    void helloQML(QVariant text);
+    void helloQML(QVariant);
 
 
 };

@@ -1,5 +1,4 @@
 <config>
     <entry>QMLUIModule</entry>
-    <dependency>UiServiceModule</dependency>
     <dependancy>MobilityModule</dependancy>
 </config>

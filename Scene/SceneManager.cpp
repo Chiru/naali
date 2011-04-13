@@ -103,7 +103,6 @@ namespace Scene
         event_category_id_t cat_id = framework_->GetEventManager()->QueryEventCategory("Scene");
         framework_->GetEventManager()->SendEvent(cat_id, Events::EVENT_ENTITY_ADDED, &event_data);
 
-        EmitEntityCreated(entity, change);
         return entity;
     }
 

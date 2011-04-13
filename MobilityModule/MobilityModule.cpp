@@ -17,6 +17,9 @@
 
 #include "MemoryLeakCheck.h"
 
+#include <QMapIterator>
+#include <QFlags>
+
 Q_DECLARE_METATYPE(MobilityModule*);
 Q_DECLARE_METATYPE(MobilityModule::DeviceFeature);
 Q_DECLARE_METATYPE(MobilityModule::NetworkState);
@@ -41,7 +44,7 @@ MobilityModule::MobilityModule() :
     IModule(type_name_static_),
     system_info_(new QSystemInfo(this)),
     system_device_info_(new QSystemDeviceInfo(this)),
-    system_network_info_(0),
+    system_network_info_(new QSystemNetworkInfo(this)),
     system_display_info_(0),
     network_configuration_manager_(new QNetworkConfigurationManager(this))
 {
@@ -58,44 +61,85 @@ void MobilityModule::PreInitialize()
 void MobilityModule::Initialize()
 {
     LogInfo(Name() + " initializing...");
-    
-    framework_->RegisterDynamicObject("mobility", this);
 
-    initNetworkSession();
+    /// \todo move these to a separate file?
+    // Map corresponding values from QSystemInfo::Feature to MobilityModule::DeviceFeature
+    deviceFeatureMap_[QSystemInfo::BluetoothFeature] = MobilityModule::BluetoothFeature;
+    deviceFeatureMap_[QSystemInfo::CameraFeature] = MobilityModule::CameraFeature;
+    deviceFeatureMap_[QSystemInfo::FmradioFeature] = MobilityModule::FmradioFeature;
+    deviceFeatureMap_[QSystemInfo::IrFeature] = MobilityModule::IrFeature;
+    deviceFeatureMap_[QSystemInfo::LedFeature] = MobilityModule::LedFeature;
+    deviceFeatureMap_[QSystemInfo::MemcardFeature] = MobilityModule::MemcardFeature;
+    deviceFeatureMap_[QSystemInfo::UsbFeature] = MobilityModule::UsbFeature;
+    deviceFeatureMap_[QSystemInfo::VibFeature] = MobilityModule::VibFeature;
+    deviceFeatureMap_[QSystemInfo::WlanFeature] = MobilityModule::WlanFeature;
+    deviceFeatureMap_[QSystemInfo::SimFeature] = MobilityModule::SimFeature;
+    deviceFeatureMap_[QSystemInfo::LocationFeature] = MobilityModule::LocationFeature;
+    deviceFeatureMap_[QSystemInfo::VideoOutFeature] = MobilityModule::VideoOutFeature;
+    deviceFeatureMap_[QSystemInfo::HapticsFeature] = MobilityModule::HapticsFeature;
 
-    const FEATUREMAP map[] = {
-        { QSystemInfo::BluetoothFeature, MobilityModule::BluetoothFeature },
-        { QSystemInfo::CameraFeature, MobilityModule::CameraFeature },
-        { QSystemInfo::FmradioFeature, MobilityModule::FmradioFeature },
-        { QSystemInfo::IrFeature, MobilityModule::IrFeature },
-        { QSystemInfo::LedFeature, MobilityModule::LedFeature },
-        { QSystemInfo::MemcardFeature, MobilityModule::MemcardFeature },
-        { QSystemInfo::UsbFeature, MobilityModule::UsbFeature },
-        { QSystemInfo::VibFeature, MobilityModule::VibFeature },
-        { QSystemInfo::WlanFeature, MobilityModule::WlanFeature },
-        { QSystemInfo::SimFeature, MobilityModule::SimFeature },
-        { QSystemInfo::LocationFeature, MobilityModule::LocationFeature },
-        { QSystemInfo::VideoOutFeature, MobilityModule::VideoOutFeature },
-        { QSystemInfo::HapticsFeature, MobilityModule::HapticsFeature }
-    };
+    // Map corresponding values from QSystemNetworkInfo::NetworkStatus to MobilityModule::NetworkState
+    networkStateMap_[QSystemNetworkInfo::UndefinedStatus] = MobilityModule::StateUndetermined;
+    networkStateMap_[QSystemNetworkInfo::NoNetworkAvailable] = MobilityModule::StateDisconnected;
+    networkStateMap_[QSystemNetworkInfo::Searching] = MobilityModule::StateConnecting;
+    networkStateMap_[QSystemNetworkInfo::Connected] = MobilityModule::StateConnected;
+    networkStateMap_[QSystemNetworkInfo::Roaming] = MobilityModule::StateRoaming;
 
-    // Query platform features from QtMobility
+    // Map corresponding values from QSystemNetworkInfo::NetworkMode to MobilityModule::NetworkMode
+    networkModeMap_[QSystemNetworkInfo::UnknownMode] = MobilityModule::ModeUnknown;
+    networkModeMap_[QSystemNetworkInfo::GsmMode] = MobilityModule::ModeGsm;
+    networkModeMap_[QSystemNetworkInfo::CdmaMode] = MobilityModule::ModeCdma;
+    networkModeMap_[QSystemNetworkInfo::WcdmaMode] = MobilityModule::ModeWcdma;
+    networkModeMap_[QSystemNetworkInfo::WlanMode] = MobilityModule::ModeWlan;
+    networkModeMap_[QSystemNetworkInfo::EthernetMode] = MobilityModule::ModeEthernet;
+    networkModeMap_[QSystemNetworkInfo::BluetoothMode] = MobilityModule::ModeBluetooth;
+    networkModeMap_[QSystemNetworkInfo::WimaxMode] = MobilityModule::ModeWimax;
+
+
+    // Query platform capabilities from QSystemInfo and QSystemDeviceInfo
     features_.clear();
-    for(int x = 0; x < ( sizeof(map)/sizeof(FEATUREMAP) ); x++)
+    QMapIterator<QSystemInfo::Feature, MobilityModule::DeviceFeature> iterator_(deviceFeatureMap_);
+    while(iterator_.hasNext())
     {
-        features_.insert(map[x].mfeature, system_info_->hasFeatureSupported(map[x].feature));
+        iterator_.next();
+        features_.insert(iterator_.value(), system_info_->hasFeatureSupported(iterator_.key()));
     }
 
-    // Set initial values for mobility related info by triggering the corresponding slots
+    QFlags<QSystemDeviceInfo::InputMethod> inputmethods_ = system_device_info_->inputMethodType();
+    features_.insert(MobilityModule::KeyboardFeature, inputmethods_.testFlag(QSystemDeviceInfo::Keyboard));
+    features_.insert(MobilityModule::SingleTouchFeature, inputmethods_.testFlag(QSystemDeviceInfo::SingleTouch));
+    features_.insert(MobilityModule::MultiTouchFeature, inputmethods_.testFlag(QSystemDeviceInfo::MultiTouch));
+    features_.insert(MobilityModule::MouseFeature, inputmethods_.testFlag(QSystemDeviceInfo::Mouse));
+
+
+    // Set initial values for mobility related data
     battery_critical_ = false;
     setBatteryCriticalValue(20);
+
+    // Getter for networkstate isn't properly implemented in QtMobility 1.2. Use own workaround for determining initial state.
+    network_state_ = getNetworkState();
+    network_mode_ = networkModeMap_.value(system_network_info_->currentMode());
+    network_quality_ = 100; // Default return value
+
     usingBatteryHandler(system_device_info_->currentPowerState());
     batteryLevelHandler(system_device_info_->batteryLevel());
-    //screenStateHandler();
 
-    connect(system_device_info_, SIGNAL(batteryLevelChanged(int)), this, SLOT(batteryLevelHandler(int)));
-    connect(system_device_info_, SIGNAL(powerStateChanged(QSystemDeviceInfo::PowerState)), this, SLOT(usingBatteryHandler(QSystemDeviceInfo::PowerState)));
-    connect(network_configuration_manager_, SIGNAL(configurationChanged(QNetworkConfiguration)), this, SLOT(networkConfigurationChanged(QNetworkConfiguration)));
+
+    connect(system_device_info_, SIGNAL(batteryLevelChanged(int)),
+            this, SLOT(batteryLevelHandler(int)));
+    connect(system_device_info_, SIGNAL(powerStateChanged(QSystemDeviceInfo::PowerState)),
+            this, SLOT(usingBatteryHandler(QSystemDeviceInfo::PowerState)));
+    connect(network_configuration_manager_, SIGNAL(configurationChanged(QNetworkConfiguration)),
+            this, SLOT(networkConfigurationChanged(QNetworkConfiguration)));
+
+    connect(system_network_info_, SIGNAL(networkModeChanged(QSystemNetworkInfo::NetworkMode)),
+            this, SLOT(networkModeHandler(QSystemNetworkInfo::NetworkMode)));
+    connect(system_network_info_, SIGNAL(networkStatusChanged(QSystemNetworkInfo::NetworkMode,QSystemNetworkInfo::NetworkStatus)),
+            this, SLOT(networkStateHandler(QSystemNetworkInfo::NetworkMode,QSystemNetworkInfo::NetworkStatus)));
+    connect(system_network_info_, SIGNAL(networkSignalStrengthChanged(QSystemNetworkInfo::NetworkMode,int)),
+            this, SLOT(networkQualityHandler(QSystemNetworkInfo::NetworkMode,int)));
+
+    framework_->RegisterDynamicObject("mobility", this);
 }
 
 void MobilityModule::PostInitialize()
@@ -152,48 +196,40 @@ void MobilityModule::usingBatteryHandler(QSystemDeviceInfo::PowerState powerStat
     emit usingBattery(using_battery_power_);
 }
 
-void MobilityModule::networkStateHandler(QNetworkSession::State networkState)
+void MobilityModule::networkStateHandler(QSystemNetworkInfo::NetworkMode mode, QSystemNetworkInfo::NetworkStatus status)
 {
-    QString connected_string_;
-
-    switch(networkState)
+    // Qt Mobility sometimes emits status changed signal twice, check if the status actually changed.
+    // Handle signal only if the state change affects current active network mode.
+    if(network_state_ != networkStateMap_.value(status) && (network_mode_ == networkModeMap_.value(mode) || network_mode_ == MobilityModule::ModeUnknown))
     {
-    case QNetworkSession::Invalid:
-        connected_string_ = "Invalid";
-    case QNetworkSession::NotAvailable:
-        connected_string_ = "NotAvailable";
-        break;
-    case QNetworkSession::Connecting:
-        connected_string_ = "Connecting";
-        break;
-    case QNetworkSession::Connected:
-        connected_string_ = "Connected";
-        break;
-    case QNetworkSession::Closing:
-        connected_string_ = "Closing";
-        break;
-    case QNetworkSession::Disconnected:
-        connected_string_ = "Disconnected";
-        break;
-    case QNetworkSession::Roaming:
-        connected_string_ = "Roaming";
-        break;
-    default:
-        connected_string_ = "Unknown";
-        break;
+        if(networkStateMap_.contains(status))
+            network_state_ = networkStateMap_.value(status);
+        else
+            network_state_ = MobilityModule::StateUndetermined;
+
+        switch(network_state_)
+        {
+        case MobilityModule::StateUndetermined:
+            LogInfo("Network state changed to: Undertermined");
+            break;
+        case MobilityModule::StateConnecting:
+            LogInfo("Network state changed to: Connecting");
+            break;
+        case MobilityModule::StateConnected:
+            LogInfo("Network state changed to: Connected");
+            break;
+        case MobilityModule::StateDisconnected:
+            LogInfo("Network state changed to: Disconnected");
+            break;
+        case MobilityModule::StateRoaming:
+            LogInfo("Network state changed to: Roaming");
+            break;
+        default:
+            break;
+        }
+
+        emit networkStateChanged(network_state_);
     }
-
-    LogInfo("Network state changed to: " + connected_string_.toStdString());
-
-    // Straight cast from QNetworkSession::State to MobilityModule::NetworkState, this needs to be handled differently if either is modified.
-    // This is done because the source of the information might change in future implementations (when QNetworkInfo works properly?) but
-    // the mobility interface needs to stay intact.
-    network_state_ = (MobilityModule::NetworkState)networkState;
-
-    /*if(networkState == QNetworkSession::Connected)
-        initNetworkSession();*/
-
-    emit networkStateChanged(network_state_);
 }
 
 
@@ -204,28 +240,57 @@ void MobilityModule::screenStateHandler(int screenState)
 
 void MobilityModule::networkModeHandler(QSystemNetworkInfo::NetworkMode networkMode)
 {
-    // Temporary solution, query the network mode from active network configuration.
-
-    if(network_session_)
+    if(network_mode_ != networkModeMap_.value(networkMode))
     {
-        LogInfo("Network mode changed to: " + network_session_->configuration().bearerTypeName().toStdString());
-        network_mode_ = (MobilityModule::NetworkMode)network_session_->configuration().bearerType();
-    }
-    else
-    {
-        LogInfo("Network mode changed to: Unknown");
-        network_mode_ = MobilityModule::ModeUnknown;
-    }
+        if(networkModeMap_.contains(networkMode))
+            network_mode_ = networkModeMap_.value(networkMode);
+        else
+            network_mode_ = MobilityModule::ModeUnknown;
 
-    emit networkModeChanged((MobilityModule::NetworkMode)network_mode_);
+        switch(network_mode_)
+        {
+        case MobilityModule::ModeUnknown:
+            LogInfo("Networkmode changed to: Unkwnown");
+            break;
+        case MobilityModule::ModeGsm:
+            LogInfo("Networkmode changed to: Gsm");
+            break;
+        case MobilityModule::ModeCdma:
+            LogInfo("Networkmode changed to: Cdma");
+            break;
+        case MobilityModule::ModeWcdma:
+            LogInfo("Networkmode changed to: Wcdma");
+            break;
+        case MobilityModule::ModeWlan:
+            LogInfo("Networkmode changed to: Wlan");
+            break;
+        case MobilityModule::ModeEthernet:
+            LogInfo("Networkmode changed to: Ethernet");
+            break;
+        case MobilityModule::ModeBluetooth:
+            LogInfo("Networkmode changed to: Bluetooth");
+            break;
+        case MobilityModule::ModeWimax:
+            LogInfo("Networkmode changed to: Wimax");
+            break;
+        default:
+            LogDebug("Catched QSystemNetworkInfo::networkModeChanged() but was unable to determine the mode.");
+            break;
+        }
 
+        emit networkModeChanged(network_mode_);
+    }
 }
 
-void MobilityModule::networkConfigurationChanged(const QNetworkConfiguration &networkConfig)
+void MobilityModule::networkQualityHandler(QSystemNetworkInfo::NetworkMode mode, int strength)
 {
-    if(networkConfig.state() == QNetworkConfiguration::Active) initNetworkSession();
+    if(network_quality_ != strength && network_mode_ == networkModeMap_.value(mode))
+    {
+        network_quality_ = strength;
+        LogInfo("Network quality changed to: " + ToString(network_quality_));
+        emit networkQualityChanged(network_quality_);
+    }
 }
-
 
 int MobilityModule::batteryLevel()
 {
@@ -259,8 +324,7 @@ MobilityModule::ScreenState MobilityModule::screenState()
 
 int MobilityModule::networkQuality()
 {
-    /// \todo Change this when actual implementation of networkquality is made
-    return 100;
+    return network_quality_;
 }
 
 void MobilityModule::setBatteryCriticalValue(int criticalValue)
@@ -269,11 +333,19 @@ void MobilityModule::setBatteryCriticalValue(int criticalValue)
         battery_critical_value_ = criticalValue;
 }
 
-void MobilityModule::initNetworkSession()
+bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
 {
-    // QNetworkConfigurationManager counts interfaces as active configurations (atleast with NetworkManager and Connman backends), these need to be removed.
+    if(features_.contains(feature))
+        return features_.value(feature);
+    else
+        return false;
+}
+
+MobilityModule::NetworkState MobilityModule::getNetworkState()
+{
     QList<QNetworkConfiguration> configs_ = network_configuration_manager_->allConfigurations(QNetworkConfiguration::Active);
 
+    // QNetworkConfigurationManager counts interfaces as active configurations (atleast with NetworkManager and Connman backends), these need to be removed.
     foreach(const QNetworkInterface iface, QNetworkInterface::allInterfaces())
     {
         for(int x = 0; x < configs_.size(); x++)
@@ -286,31 +358,11 @@ void MobilityModule::initNetworkSession()
         }
     }
 
-    // There's a configuration in active state, set QNetworkSession to track it.
+    // If one or more (non-interface) configurations are active, system is considered to be in online state.
     if(configs_.size() > 0)
-    {
-        network_session_ = new QNetworkSession(configs_.at(0));
-        connect(network_session_, SIGNAL(stateChanged(QNetworkSession::State)), SLOT(networkStateHandler(QNetworkSession::State)));
-
-        LogInfo("Active network configuration found, network session attached to: " + configs_.at(0).name().toStdString());
-        if(configs_.size() > 1) LogDebug("Found multiple active configurations.");
-
-        networkStateHandler(network_session_->state());
-        networkModeHandler(QSystemNetworkInfo::UnknownMode);
-    }
-    // No active configuration found. The possibility to connect to a user defined access point can be implemented here.
-    else if(configs_.size() == 0)
-    {
-        LogWarning("No active network configuration found, network state information disabled.");
-    }
-}
-
-bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
-{
-    if(features_.contains(feature))
-        return features_.value(feature);
+        return MobilityModule::StateConnected;
     else
-        return false;
+        return MobilityModule::StateDisconnected;
 }
 
 void MobilityModule::OnScriptEngineCreated(QScriptEngine* engine)

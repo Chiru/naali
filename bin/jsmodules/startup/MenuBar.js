@@ -51,17 +51,10 @@ if (!framework.IsHeadless())
     
     function mobilitySignalHandler(value)
     {
-        print("Emitted and catched MobilityModule signal with value: " + value);
+        //print("Emitted and catched MobilityModule signal with value: " + value);
     }
 
     
-    if (framework.GetModuleQObj("CAVEStereo"))
-    {
-        var caveMenu = viewMenu.addMenu("&CAVE and Stereo");
-        caveMenu.addAction("CAVE").triggered.connect(OpenCaveWindow);
-        caveMenu.addAction("Stereoscopy").triggered.connect(OpenStereoscopyWindow);
-    }
-
     if (framework.GetModuleQObj("SceneStructure"))
     {
         viewMenu.addAction("Assets").triggered.connect(OpenAssetsWindow);
@@ -70,7 +63,7 @@ if (!framework.IsHeadless())
 
     if (framework.GetModuleQObj("Console"))
     {
-        viewMenu.addAction("Console").triggered.connect(OpenConsoleWindow);
+        viewMenu.addAction("Console").triggered.connect(OpenConsoleWindow);  
     }
 
     //var eceditorAction = viewMenu.addAction("EC Editor");
@@ -79,10 +72,7 @@ if (!framework.IsHeadless())
         viewMenu.addAction("Profiler").triggered.connect(OpenProfilerWindow);
 
     if (framework.GetModuleQObj("Environment"))
-    {
         viewMenu.addAction("Terrain Editor").triggered.connect(OpenTerrainEditor);
-        viewMenu.addAction("Post-processing").triggered.connect(OpenPostProcessWindow);
-    }
 
     if (framework.GetModuleQObj("PythonScript"))
         viewMenu.addAction("Python Console").triggered.connect(OpenPythonConsole);
@@ -92,72 +82,84 @@ if (!framework.IsHeadless())
     helpMenu.addAction(new QIcon("./data/ui/images/icon/browser.ico"), "Doxygen").triggered.connect(OpenDoxygenUrl);
     helpMenu.addAction(new QIcon("./data/ui/images/icon/browser.ico"), "Mailing list").triggered.connect(OpenMailingListUrl);
 
-    function NewScene() {
+    function NewScene()
+    {
         scene.RemoveAllEntities();
     }
 
-    function Reconnect() {
+    function Reconnect()
+    {
         client.Reconnect();
     }
 
-    function Disconnect() {
+    function Disconnect()
+    {
         client.Logout();
     }
 
-    function Connected() {
+    function Connected()
+    {
         disconnectAction.setEnabled(true);
     }
 
-    function Disconnected() {
+    function Disconnected()
+    {
         disconnectAction.setEnabled(false);
     }
 
-    function Quit() {
+    function Quit()
+    {
         framework.Exit();
     }
 
-    function CheckForUpdates() {
+    function CheckForUpdates()
+    {
         if (framework.GetModuleQObj("UpdateModule"))
             framework.GetModuleQObj("UpdateModule").RunUpdater("/checknow");
     }
-
-    function OpenMailingListUrl() {
+       
+    function OpenMailingListUrl()
+    {
         QDesktopServices.openUrl(new QUrl("http://groups.google.com/group/realxtend/"));
     }
     
-    function OpenWikiUrl() {
+    function OpenWikiUrl()
+    {
         QDesktopServices.openUrl(new QUrl("http://wiki.realxtend.org/"));
     }
-
-    function OpenDoxygenUrl() {
+    
+    function OpenDoxygenUrl()
+    {
         QDesktopServices.openUrl(new QUrl("http://www.realxtend.org/doxygen/"));
     }
-
-    function OpenSceneWindow() {
+    
+    function OpenSceneWindow()
+    {
         framework.GetModuleQObj("SceneStructure").ToggleSceneStructureWindow();
     }
 
-    function OpenAssetsWindow() {
+    function OpenAssetsWindow()
+    {
         framework.GetModuleQObj("SceneStructure").ToggleAssetsWindow();
     }
 
-    function OpenProfilerWindow() {
+    function OpenProfilerWindow()
+    {
         console.ExecuteCommand("prof");
     }
 
-    function OpenTerrainEditor() {
-        framework.GetModuleQObj("Environment").ShowTerrainWeightEditor();
+    function OpenTerrainEditor()
+    {
+        console.ExecuteCommand("TerrainTextureEditor");
     }
 
-    function OpenPostProcessWindow() {
-        framework.GetModuleQObj("Environment").ShowPostProcessWindow();
-    }
-
-    function OpenPythonConsole() {
+    function OpenPythonConsole()
+    {
         console.ExecuteCommand("pythonconsole");
     }
 
-    function OpenConsoleWindow() {
+    function OpenConsoleWindow()
+    {
         framework.GetModuleQObj("Console").ToggleConsole();
     }
 
@@ -178,14 +180,11 @@ if (!framework.IsHeadless())
     {      
         var options = new Array();
         
-        options[0] = "Invalid";
-        options[1] = "NotAvailable";
-        options[2] = "Connecting";
-        options[3] = "Connected";
-        options[4] = "Closing";
-        options[5] = "Disconnected";
-        options[6] = "Roaming";
-        options[7] = "Unknown";
+        options[0] = "Undetermined";
+        options[1] = "Connecting";
+        options[2] = "Connected";
+        options[3] = "Disconnected";
+        options[4] = "Roaming";
         
         var value = QInputDialog.getItem(0, "networkStateChanged(bool)", "value:", options, 0, false, 0);
         
@@ -201,14 +200,13 @@ if (!framework.IsHeadless())
         var options = new Array();
         
         options[0] = "Unknown";
-        options[1] = "Ethernet";
-        options[2] = "WLAN";
-        options[3] = "2G";
-        options[4] = "CDMA2000";
-        options[5] = "WCDMA";
-        options[6] = "HSPA";
-        options[7] = "Bluetooth";
-        options[8] = "WiMax";
+        options[1] = "Gsm";
+        options[2] = "Cdma";
+        options[3] = "Wcdma";
+        options[4] = "Wlan";
+        options[5] = "Ethernet";
+        options[6] = "Bluetooth";
+        options[7] = "Wimax";
         
         var value = QInputDialog.getItem(0, "networkModeChanged(bool)", "value:", options, 0, false, 0);
         
@@ -270,12 +268,4 @@ if (!framework.IsHeadless())
         if(value) mobilityModule.batteryLevelChanged(value);
     }
     
-
-    function OpenStereoscopyWindow() {
-        framework.GetModuleQObj("CAVEStereo").ShowStereoscopyWindow();
-    }
-
-    function OpenCaveWindow() {
-        framework.GetModuleQObj("CAVEStereo").ShowCaveWindow();
-    }
 }

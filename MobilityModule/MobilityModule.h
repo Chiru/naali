@@ -47,31 +47,32 @@ public:
         SimFeature	= 9,
         LocationFeature = 10,
         VideoOutFeature = 11,
-        HapticsFeature = 12
+        HapticsFeature = 12,
+        KeyboardFeature = 13,
+        SingleTouchFeature = 14,
+        MultiTouchFeature = 15,
+        MouseFeature = 16
     };
 
     enum NetworkState
     {
-        StateInvalid = 0,
-        StateNotAvailable = 1,
-        StateConnecting = 2,
-        StateConnected = 3,
-        StateClosing = 4,
-        StateDisconnected = 5,
-        StateRoaming = 6
+        StateUndetermined = 0,
+        StateConnecting = 1,
+        StateConnected = 2,
+        StateDisconnected = 3,
+        StateRoaming = 4
     };
 
     enum NetworkMode
     {
         ModeUnknown = 0,
-        ModeEthernet = 1,
-        ModeWLAN = 2,
-        Mode2G = 3,
-        ModeCDMA2000 = 4,
-        ModeWCDMA = 5,
-        ModeHSPA = 6,
-        ModeBluetooth = 7,
-        ModeWiMax = 8
+        ModeGsm = 1,
+        ModeCdma = 2,
+        ModeWcdma = 3,
+        ModeWlan = 4,
+        ModeEthernet = 5,
+        ModeBluetooth = 6,
+        ModeWimax = 7,
     };
 
     enum ScreenState
@@ -83,11 +84,7 @@ public:
         ScreenSaver = 4
     };
 
-    /// Mapping for QSystemDeviceInfo::Feature <-> MobilityModule::DeviceFeature
-    typedef struct _featuremap {
-        QSystemInfo::Feature feature;
-        MobilityModule::DeviceFeature mfeature;
-    }FEATUREMAP;
+    MODULE_LOGGING_FUNCTIONS
 
     /// Default constructor.
     MobilityModule();
@@ -113,8 +110,6 @@ public:
     /// IModule override.
     bool HandleEvent(event_category_id_t category_id, event_id_t event_id, IEventData* data);
 
-    MODULE_LOGGING_FUNCTIONS
-
     /// Returns name of this module. Needed for logging.
     static const std::string &NameStatic() { return type_name_static_; }
 
@@ -137,26 +132,23 @@ public:
     /// \return Current network quality percentage (0-100)
     int networkQuality();
 
+    /// \return Current screen state as defined in MobilityModule::ScreenState
+    MobilityModule::ScreenState screenState();
+
     /// Checks if platform has a feature available
     /// \param feature Feature defined in MobilityModule::DeviceFeature
     /// \return Boolean for availability of the given feature
     bool featureAvailable(MobilityModule::DeviceFeature feature);
-
-    /// \return Current screen state as defined in MobilityModule::ScreenState
-    MobilityModule::ScreenState screenState();
 
     /// \param Critical level for battery power in percentage (1-100)
     void setBatteryCriticalValue(int criticalValue);
 
 private:
 
-    /// Open network session to monitor connection state
-    /// \note Contais work-around for bug in QNetworkConfigurationManager which lists interfaces as
-    /// active devices. Once the bug in Qt is fixed this can be changed.
-    /// \bug If the current session changes state to inactive and new connection is made with different
-    /// network configuration, network_session_ becomes invalid and connection state monitoring fails.
-    /// Bugs in Qt bearer API makes it difficult to switch to new configuration.
-    void initNetworkSession();
+    /// QSystemNetworkInfo::networkStatus() has only been implemented for a few connection types
+    /// in Qt Mobility 1.2. Changes in connection status propagate correctly for all connection types
+    /// though. Use this workaround function to determine the initial connection status.
+    MobilityModule::NetworkState getNetworkState();
 
     /// Type name of the module.
     static std::string type_name_static_;
@@ -185,7 +177,7 @@ private:
     /// Current battery critical state
     bool battery_critical_;
 
-    /// Value after which battery is considered to be in critical state (current default 20)
+    /// Value after which battery is considered to be in critical state
     int battery_critical_value_;
 
     /// Current power source (true for battery, false for wall)
@@ -206,8 +198,16 @@ private:
     /// Active network session
     QNetworkSession *network_session_;
 
+    /// Mapping from QSystemNetworkInfo::NetworkStatus to MobilityModule::NetworkState
+    QMap<QSystemNetworkInfo::NetworkStatus, MobilityModule::NetworkState> networkStateMap_;
 
-public slots:
+    /// Mapping from QSystemNetworkInfo::NetworkMode to MobilityModule::NetworkMode
+    QMap<QSystemNetworkInfo::NetworkMode, MobilityModule::NetworkMode> networkModeMap_;
+
+    /// Mapping from QSystemInfo::Feature to MobilityModule::DeviceFeature
+    QMap<QSystemInfo::Feature, MobilityModule::DeviceFeature> deviceFeatureMap_;
+
+private slots:
 
     /// Handler for battery level information
     void batteryLevelHandler(int batteryLevel);
@@ -216,23 +216,22 @@ public slots:
     void usingBatteryHandler(QSystemDeviceInfo::PowerState powerState);
 
     /// Handler for network state information
-    void networkStateHandler(QNetworkSession::State networkState);
+    void networkStateHandler(QSystemNetworkInfo::NetworkMode mode, QSystemNetworkInfo::NetworkStatus status);
 
     /// Handler for screen state information
     /// \todo Implement when MCE daemon becomes part of MeeGo or QSystemDeviceInfo provides the required data.
     void screenStateHandler(int screenState);
 
     /// Handler for network mode information
-    /// \note Partially implemented so we can query the mode with networkMode(),
-    /// actual signal is not yet emitted
-    /// \todo Implement when QSystemNetworkInfo is patched to work properly with ConnMan or
-    /// NetworkConfigurationManager works properly on MeeGo.
     void networkModeHandler(QSystemNetworkInfo::NetworkMode networkMode);
 
-    /// Used to circumvent the problem that QNetworkConfigurationManager can't determine
-    /// the system online state reliably on linux platform
-    void networkConfigurationChanged(const QNetworkConfiguration &networkConfig);
+    /// Handler for network signal strength
+    /// \note Qt Mobility 1.2 doesn't properly implement signaling for network quality changes,
+    /// so this is mainly for future use (we do get quality data when network mode changes though).
+    void networkQualityHandler(QSystemNetworkInfo::NetworkMode mode, int strength);
     
+public slots:
+
     /// Initialize datatypes for a script engine
     void OnScriptEngineCreated(QScriptEngine* engine);
 

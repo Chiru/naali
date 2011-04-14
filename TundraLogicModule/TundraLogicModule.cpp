@@ -72,11 +72,11 @@ void TundraLogicModule::PostInitialize()
         ConsoleBind(this, &TundraLogicModule::ConsoleStartServer)));
     framework_->Console()->RegisterCommand(CreateConsoleCommand("stopserver", 
         "Stops the server",
-        Console::Bind(this, &TundraLogicModule::ConsoleStopServer)));
-    RegisterConsoleCommand(Console::CreateCommand("connect", 
+        ConsoleBind(this, &TundraLogicModule::ConsoleStopServer)));
+    framework_->Console()->RegisterCommand(CreateConsoleCommand("connect",
         "Connects to a server. Usage: connect(address,port,username,password,protocol)",
-        Console::Bind(this, &TundraLogicModule::ConsoleConnect)));
-    RegisterConsoleCommand(Console::CreateCommand("disconnect", 
+        ConsoleBind(this, &TundraLogicModule::ConsoleConnect)));
+    framework_->Console()->RegisterCommand(CreateConsoleCommand("disconnect",
         "Disconnects from a server.",
         ConsoleBind(this, &TundraLogicModule::ConsoleDisconnect)));
     

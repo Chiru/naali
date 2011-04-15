@@ -12,7 +12,7 @@
 
 #include "MobilityModule.h"
 
-#include "ConsoleCommandServiceInterface.h"
+//#include "ConsoleCommandServiceInterface.h"
 #include "EventManager.h"
 
 #include "MemoryLeakCheck.h"

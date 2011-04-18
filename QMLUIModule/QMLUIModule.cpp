@@ -27,8 +27,8 @@ QMLUIModule::QMLUIModule() :
 
 {
     //For QML-debugging
-    QByteArray data = "1";
-    qputenv("QML_IMPORT_TRACE", data);
+    //QByteArray data = "1";
+    //qputenv("QML_IMPORT_TRACE", data);
 }
 
 QMLUIModule::~QMLUIModule()
@@ -45,39 +45,9 @@ void QMLUIModule::Initialize()
 
 void QMLUIModule::PostInitialize()
 {
-
-    mobilitymodule_ = framework_->GetModule<MobilityModule>();
-
-
     window_ = new QMLWidget();
-
-
-    qmluiproxy_ = new UiProxyWidget(window_, Qt::Widget);
-    framework_->Ui()->AddProxyWidgetToScene(qmluiproxy_);
-    qmluiproxy_->setVisible(true);
-    qmluiproxy_->setFocusPolicy(Qt::NoFocus);
-
-    QObject *QMLUI = dynamic_cast<QObject*>(window_->rootObject());
-    QObject::connect(QMLUI, SIGNAL(exit()), this, SLOT(Exit()));
-
-    QObject::connect(mobilitymodule_, SIGNAL(networkStateChanged(MobilityModule::NetworkState)), this, SLOT(NetworkStateChanged(MobilityModule::NetworkState)));
-    QObject::connect(this, SIGNAL(giveQMLNetworkState(QVariant)), QMLUI, SLOT(networkstatechanged(QVariant)));
-
-    QObject::connect(mobilitymodule_, SIGNAL(batteryLevelChanged(int)), this, SLOT(BatteryLevelChanged(int)));
-    QObject::connect(this, SIGNAL(giveQMLBatteryLevel(QVariant)), QMLUI, SLOT(batterylevelchanged(QVariant)));
-
-    QObject::connect(mobilitymodule_, SIGNAL(usingBattery(bool)), this, SLOT(usingBattery(bool)));
-    QObject::connect(this, SIGNAL(giveQMLUsingBattery(QVariant)), QMLUI,SLOT(usingbattery(QVariant)));
-
-    QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(setQMLUIFocus(bool)));
-
-    QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(loadXML()));
-    QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
-
-    emit giveQMLNetworkState((QVariant)mobilitymodule_->networkState());
-    emit giveQMLBatteryLevel((QVariant)mobilitymodule_->batteryLevel());
-    usingBattery(mobilitymodule_->usingBattery());
-
+    QObject::connect(window_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
+    QMLStatus(window_->status());
 }
 
 void QMLUIModule::Uninitialize()
@@ -96,6 +66,55 @@ bool QMLUIModule::HandleEvent(event_category_id_t category_id, event_id_t event_
     return false;
 }
 
+void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
+{
+    if (framework_->IsHeadless())
+        return;
+    if (qmlstatus == QDeclarativeView::Ready)
+    {
+        LogInfo("QDeclarativeView has loaded and created the QML component.");
+        qmluiproxy_ = new UiProxyWidget(window_, Qt::Widget);
+        framework_->Ui()->AddProxyWidgetToScene(qmluiproxy_);
+        qmluiproxy_->setVisible(true);
+        qmluiproxy_->setFocusPolicy(Qt::NoFocus);
+
+        QMLUI = dynamic_cast<QObject*>(window_->rootObject());
+        QObject::connect(QMLUI, SIGNAL(exit()), this, SLOT(Exit()));
+
+        QObject::connect(this, SIGNAL(giveQMLNetworkState(QVariant)), QMLUI, SLOT(networkstatechanged(QVariant)));
+
+        QObject::connect(this, SIGNAL(giveQMLBatteryLevel(QVariant)), QMLUI, SLOT(batterylevelchanged(QVariant)));
+
+        QObject::connect(this, SIGNAL(giveQMLUsingBattery(QVariant)), QMLUI,SLOT(usingbattery(QVariant)));
+
+        QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(setQMLUIFocus(bool)));
+
+        QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(loadXML()));
+        QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
+
+        QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
+    }
+    else if (qmlstatus == QDeclarativeView::Null)
+    {
+        LogInfo("QDeclarativeView has no source set.");
+    }
+    else if (qmlstatus == QDeclarativeView::Loading)
+    {
+        LogInfo("QDeclarativeView is loading network data.");
+    }
+    else if (qmlstatus == QDeclarativeView::Error)
+    {
+        LogInfo("One or more errors has occurred.");
+        //window_->errors();
+    }
+    else
+    {
+
+    }
+
+
+}
+
 void QMLUIModule::setQMLUIFocus(bool focus)
 {
     if (focus)
@@ -108,11 +127,15 @@ void QMLUIModule::setQMLUIFocus(bool focus)
     }
 }
 
+void QMLUIModule::NetworkModeChanged(int mode)
+{
+    QVariant modee = (QVariant)mode;
+    emit giveQMLNetworkMode(modee);
+}
+
 void QMLUIModule::loadXML()
 {
     sceneMngr = framework_->Scene()->GetDefaultScene().get();
-
-    //scenexml_ = sceneMngr->GetSceneXML(true, true);
     sceneMngr->SaveSceneXML(("testingxmlscene.xml"));
     emit helloQML("../../bin/testingxmlscene.xml");
 }
@@ -121,15 +144,9 @@ void QMLUIModule::loadXML()
 void QMLUIModule::Exit()
 {
      framework_->Exit();
-
-     //sceneMngr = framework_->Scene()->GetDefaultScene().get();
-
-     //scenexml_ = sceneMngr->GetSceneXML(true, true);
-     //sceneMngr->SaveSceneXML(("testingxmlscene.xml"));
-     //emit helloQML("../../testingxmlscene.xml");
 }
 
-void QMLUIModule::NetworkStateChanged(MobilityModule::NetworkState state)
+void QMLUIModule::NetworkStateChanged(int state)
 {
     QVariant nstate = (QVariant)state;
     emit giveQMLNetworkState(nstate);

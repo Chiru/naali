@@ -1,7 +1,7 @@
 import Qt 4.7
 
 Rectangle {
-    width: 600; height: 250
+    width: 660; height: 180
     color: "transparent"
 
     Component {
@@ -9,7 +9,9 @@ Rectangle {
         Item {
             width: grid.cellWidth; height: grid.cellHeight
             Column {
+                id: column
                 anchors.fill: parent
+
 
                 Rectangle {
                     id: buttonShadow;
@@ -34,7 +36,10 @@ Rectangle {
 
                     MouseArea {
                         anchors.fill: parent
-                        onPressed: parent.state = "down"
+                        onPressed: {
+                            parent.state = "down"
+                            getChar(name)
+                        }
                         onReleased: parent.state = ""
                     }
 

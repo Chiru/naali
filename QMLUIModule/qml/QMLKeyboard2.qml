@@ -1,8 +1,9 @@
-import QtQuick 1.0
+import Qt 4.7
 
 Item {
 
     property alias owner: kbimg2.parent
+    property alias visiblee: kbimg2.visible
 
     Image {
             id: kbimg2

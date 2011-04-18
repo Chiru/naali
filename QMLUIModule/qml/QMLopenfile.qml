@@ -2,16 +2,19 @@ import Qt 4.7
 
 Item {
 
+    property alias edtext: textEdit.text
     FocusScope {
         id: focusScope
         width: borderRect.width
         height: borderRect.height
         x: 100
-        y: 100
+        y: 300
 
         Rectangle {
             id: borderRect
             property int widthDest: 20 + textEdit.width
+
+
             width: widthDest
 
             height: 30
@@ -28,7 +31,7 @@ Item {
 
             Rectangle {
                 id: textRect
-                color: white
+                color: "white"
                 width:  borderRect.width - 4
                 height: borderRect.height - 4
                 anchors.centerIn: parent
@@ -38,8 +41,8 @@ Item {
                      id: textEdit
                      text: ""
                      cursorVisible: false
-                     focus: true
                      anchors.centerIn: parent
+
                  }
              }
 
@@ -47,18 +50,18 @@ Item {
                 anchors.fill: parent
                 drag.target: focusScope; drag.axis: Drag.XandYAxis
                 onClicked:  {
-                    setFocus(true); focusScope.focus = true; textEdit.selectAll()
+
+                    /*setFocus(true); focusScope.focus = true; textEdit.selectAll()
                     if (textEdit.focus)
                     {
                         textRect.color = "lightgreen"
                         textEdit.cursorVisible = true
-                        textEdit.openSoftwareInputPanel();
                     }
                     else
                     {
                         textRect.color = "white"
                         textEdit.cursorVisible = false
-                    }
+                    }*/
                 }
             }
      }

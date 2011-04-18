@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import Qt 4.7
 
  Item {
      id: progressbar
@@ -6,6 +6,7 @@ import QtQuick 1.0
      property int minimum: 0
      property int maximum: 100
      property int value: 0
+     property alias visiblee: batteryRect.visible
 
      property alias owner: batteryRect.parent
      property alias ss: highlight.state

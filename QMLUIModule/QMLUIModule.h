@@ -80,24 +80,28 @@ private:
     //QByteArray scenexml_;
     Scene::SceneManager *sceneMngr;
 
-    MobilityModule *mobilitymodule_;
     UiProxyWidget *qmluiproxy_;
+    QObject *QMLUI;
 
 
-private slots:
+public slots:
 
     void Exit();
-    void NetworkStateChanged(MobilityModule::NetworkState state);
+    void NetworkStateChanged(int);
     void BatteryLevelChanged(int);
+    void NetworkModeChanged(int);
     void usingBattery(bool);
     void setQMLUIFocus(bool);
     void loadXML();
+    void QMLStatus(QDeclarativeView::Status);
 
 signals:
     void giveQMLNetworkState(QVariant);
     void giveQMLBatteryLevel(QVariant);
     void giveQMLUsingBattery(QVariant);
+    void giveQMLNetworkMode(QVariant);
     void helloQML(QVariant);
+
 
 
 };

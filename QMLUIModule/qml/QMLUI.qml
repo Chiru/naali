@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import Qt 4.7
 
 Rectangle {
     id: uiRect
@@ -7,25 +7,95 @@ Rectangle {
     signal exit
     signal loadxml
     signal setFocus(bool focus)
+    //signal setVisible
     property int usingbat: 0
+
+    function networkmodechanged(mode) {
+        if (mode  == 0)
+            networkMode.text = "Network mode: Unknown"
+        else if (mode == 1)
+            networkMode.text = "Network mode: Gsm"
+        else if (mode == 2)
+            networkMode.text = "Network mode: Cdma"
+        else if (mode == 3)
+            networkMode.text = "Network mode: Wcdma"
+        else if (mode == 4)
+            networkMode.text = "Network mode: Wlan"
+        else if (mode == 5)
+            networkMode.text = "Network mode: Ethernet"
+        else if (mode == 6)
+            networkMode.text = "Network mode: Bluetooth"
+        else if (mode == 7)
+            networkMode.text = "Network mode: Wimax"
+        else
+            networkMode.text = "Network mode: Invalid"
+
+    }
+
+    function setVisible() {
+        if (gdKeyboard.visible == true)
+            gdKeyboard.visible = false
+        else
+            gdKeyboard.visible = true
+    }
+    function setKeyboard1() {
+        if (keyboard1.visiblee == true)
+            keyboard1.visiblee = false
+        else
+            keyboard1.visiblee = true
+    }
+    function setKeyboard2() {
+        if (keyboard2.visiblee == true)
+            keyboard2.visiblee = false
+        else
+            keyboard2.visiblee = true
+    }
+    function setPathview() {
+        if (pathexample.visible == true)
+            pathexample.visible = false
+        else
+            pathexample.visible = true
+    }
+    function setnetworktext() {
+        if (networkText.visible == true) {
+            networkText.visible = false
+            networkmodechanged.visible = false }
+        else {
+            networkText.visible = true
+            networkMode.visible = true }
+    }
+    function setpb() {
+        if (pb.visiblee == true)
+            pb.visiblee = false
+        else
+            pb.visiblee = true
+    }
+    function settedit() {
+        if (textEdit.visible == true)
+            textEdit.visible = false
+        else
+            textEdit.visible = true
+    }
+    function setlogo() {
+        if (cielogo.visible == true)
+            cielogo.visible = false
+        else
+            cielogo.visible = true
+    }
     function xmlfunction(xmlsource) { xmlModel.source = xmlsource }
     function networkstatechanged(networkstate) {
         if (networkstate == 0)
-            networkText.text = "Network state: Invalid"
+            networkText.text = "Network state: Undetermined"
         else if (networkstate == 1)
-            networkText.text = "Network state: Not Available"
+            networkText.text = "Network state: Connecting"
         else if (networkstate == 2)
-            networkText.text = "Network state: Connecting..."
-        else if (networkstate == 3)
             networkText.text = "Network state: Connected"
-        else if (networkstate == 4)
-            networkText.text = "Network state: Closing..."
-        else if (networkstate == 5)
+        else if (networkstate == 3)
             networkText.text = "Network state: Disconnected"
-        else if (networkstate == 6)
-            networkText.text = "Network state: Roaming..."
+        else if (networkstate == 4)
+            networkText.text = "Network state: Roaming"
         else
-            networkText.text = "Network state: Invalid"
+            networkText.text = "Network state: Undetermined"
     }
 
     function batterylevelchanged(batterylevel) {
@@ -64,6 +134,16 @@ Rectangle {
 
     }
 
+    function getChar(text) {
+        if (text == "+")
+            textEdit.edtext = textEdit.edtext + " "
+        else if (text == "-") {
+            textEdit.edtext = "" }
+        else
+            textEdit.edtext = textEdit.edtext + text
+    }
+
+
     MouseArea {
         anchors.fill: parent
 
@@ -71,23 +151,30 @@ Rectangle {
     }
 
     QMLMenu {
+        id: qmlmenu
         owner: parent
     }
 
     Loader { id: loader1;  }
 
     QMLKeyboard {
+        id: keyboard1
         owner: parent
+        visiblee: false
+
     }
 
     QMLKeyboard2 {
+        id: keyboard2
         owner: uiRect
+        visiblee: false
     }
 
 
-    /*CIELogo {
-        owner: parent
-    }*/
+    CIELogo {
+        id: cielogo
+        visible: false
+    }
 
     Text {
         id: networkText
@@ -95,51 +182,43 @@ Rectangle {
         anchors.horizontalCenter: uiRect.horizontalCenter
         anchors.top:  uiRect.top
         anchors.topMargin: 30
+        visible: false
+    }
+    Text {
+        id: networkMode
+        text: "Network mode: Unknown"
+        anchors.horizontalCenter: networkText.horizontalCenter
+        anchors.top: networkText.bottom
+        anchors.topMargin: 5
+        visible: false
     }
 
         ProgressBar {
             id: pb
             owner: parent
+            visiblee: false
     }
 
         PathExample {
+            id: pathexample
+            visible: false
 
         }
 
         QMLopenfile {
-
+            id: textEdit
+            visible: false
         }
-
-        Rectangle {
-            id: shadowRect
-            width: 50
-            height: 50
-            color: "black"
-            opacity: 0.2
-            anchors.verticalCenter: buttonRect.verticalCenter
-            anchors.horizontalCenter: buttonRect.horizontalCenter
-
-            anchors.horizontalCenterOffset: 5
-            anchors.verticalCenterOffset: 5
-            }
 
         GridViewKeyboard {
+            id: gdKeyboard
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
-
-
+            anchors.bottomMargin: 50
+            visible: false
         }
 
-
-
-
-
-
-
-
-
-
-    XmlListModel {
+    /*XmlListModel {
          id: xmlModel
          source: ""
          query: "/scene/entity"
@@ -156,61 +235,9 @@ Rectangle {
         anchors.rightMargin: 100
         model:  xmlModel
         delegate: Text { text: "EntityID:" + entityID; MouseArea { anchors.fill: parent } }
-    }
-
-        /*Rectangle {
-            id: messagebox
-            width: 182
-            height: 82
-            radius:  10
-            color:  "black"
-            x: 500
-            y: 200
-
-            MouseArea {
-                anchors.fill: parent
-                drag.target: messagebox; drag.axis: Drag.XandYAxis
-            }
+    }*/
 
 
-
-            Rectangle {
-                id: msgbox
-                width:  180
-                height: 80
-                radius: 10
-                clip: true
-                color: "white"
-                anchors.centerIn: parent
-
-                Text {
-                    text: "Hello from QML!"
-                    id: textHello
-                    anchors.horizontalCenter: msgbox.horizontalCenter
-                    anchors.verticalCenter: msgbox.verticalCenter
-                    anchors.verticalCenterOffset: -10
-                }
-
-                Rectangle {
-                    id: okButton
-                    color:  "gray"
-                    width: 40; height: 20
-                    anchors.horizontalCenter: parent.horizontalCenter
-                    anchors.top: textHello.bottom
-                    anchors.topMargin: 10
-
-                    MouseArea {
-                        anchors.fill: parent
-                        onClicked: messagebox.visible = false
-                    }
-
-                    Text {
-                        text: "OK"
-                        anchors.centerIn: parent
-                    }
-                }
-            }
-        }*/
 
 
 }

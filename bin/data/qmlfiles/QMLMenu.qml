@@ -1,6 +1,7 @@
-import QtQuick 1.0
+import Qt 4.7
 Item {
     property alias owner: openMenu.parent
+    signal onSetVisible
     Text {
         id: openMenu
         text: "Open Menu"
@@ -93,10 +94,121 @@ Item {
 
         Text {
             id: submenu1
-            text: "submenu1"
+            text: "Keyboard"
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 18; font.bold: true
+            font.pointSize: 12; font.bold: true
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: setVisible()
+            }
+
+            Text {
+                id: kb1
+                text: "Keyboard1"
+                anchors.verticalCenter: parent.verticalCenter
+                anchors.left: parent.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setKeyboard1()
+                }
+            }
+
+            Text {
+                id: kb2
+                text: "Keyboard2"
+                anchors.verticalCenter: kb1.verticalCenter
+                anchors.left: kb1.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setKeyboard2()
+                }
+            }
+
+            Text {
+                id: pathview
+                text: "Pathview"
+                anchors.verticalCenter: kb2.verticalCenter
+                anchors.left: kb2.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setPathview()
+                }
+            }
+
+            Text {
+                id: battery
+                text: "Battery"
+                anchors.verticalCenter: pathview.verticalCenter
+                anchors.left: pathview.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setpb()
+                }
+            }
+
+            Text {
+                id: network
+                text: "Network"
+                anchors.verticalCenter: battery.verticalCenter
+                anchors.left: battery.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setnetworktext()
+                }
+            }
+
+            Text {
+                id: logo
+                text: "Logo"
+                anchors.verticalCenter: network.verticalCenter
+                anchors.left: network.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: setlogo()
+                }
+            }
+
+            Text {
+                id: tedit
+                text: "TextEdit"
+                anchors.verticalCenter: logo.verticalCenter
+                anchors.left: logo.right
+                anchors.leftMargin: 5
+                opacity: 1
+                font.pointSize: 12; font.bold: true
+
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: settedit()
+                }
+            }
+
 
             states: State {
                 name: "open"
@@ -160,10 +272,16 @@ Item {
 
         Text {
             id: submenu2
-            text: "submenu2"
+            text: "Load ListView"
             anchors.verticalCenter: parent.bottom
             opacity: 0
             font.pointSize: 18; font.bold: true
+
+            /*MouseArea {
+                id: submenuMA2
+                anchors.fill: parent
+                onClicked: loadxml()
+            }*/
 
             states: State {
                 name: "open"

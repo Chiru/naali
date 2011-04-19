@@ -90,9 +90,9 @@ public slots:
     void NetworkStateChanged(int);
     void BatteryLevelChanged(int);
     void NetworkModeChanged(int);
-    void usingBattery(bool);
-    void setQMLUIFocus(bool);
-    void loadXML();
+    void UsingBattery(bool);
+    void SetQMLUIFocus(bool);
+    void LoadXML();
     void QMLStatus(QDeclarativeView::Status);
 
 signals:

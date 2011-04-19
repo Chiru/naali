@@ -192,8 +192,5 @@ endif()
 # Only useful for msi installer builds
 #add_subdirectory(UpdateModule)
 
-<<<<<<< .merge_file_uzOCGT
-=======
 # CameraInputModule is an optional module
 #add_subdirectory(CameraInputModule)
->>>>>>> .merge_file_ru0Y2Q

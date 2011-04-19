@@ -17,6 +17,7 @@
 
 
 #include "SceneFwd.h"
+#include "InputFwd.h"
 
 #include <QString>
 #include <QSize>
@@ -24,7 +25,7 @@
 #include <QPoint>
 #include <QTimer>
 #include <QMenu>
-
+#include <QList>
 #include <QPointer>
 
 #include "EC_3DCanvas.h"
@@ -64,6 +65,7 @@ class EC_3DCanvas;
 class EC_Placeable;
 class EC_OgreCamera;
 class QListView;
+class QMouseEvent;
 
 class EC_Menu : public IComponent
 {
@@ -77,12 +79,20 @@ private:
     EC_Placeable *cameraPlaceable;
     Vector3df ownEntityPos;
     Vector3df distance;
-
-    //! Internal QWebView for rendering the web page.
     QPointer<QListView> listview_;
+
+    QList<EC_Mesh *> MeshList_;
+    bool ent_clicked_;
+    bool save_start_position_;
+    Vector3df startPosition_;
+
+    QPoint acceleratorVector_;
+    InputContextPtr input_;
 
     //QDeclarativeView *view_;
     void SetEntityPosition();
+
+    void kinecticScroller(QPoint);
 
     //! Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
@@ -100,6 +110,9 @@ public:
 public slots:
     /// \todo Add public slots here
     void Render();
+    void OnClick();
+    void mouseMoveEvent(QMouseEvent *event);
+    void HandleMouseInputEvent(MouseEvent *mouse);
 
 
 private slots:
@@ -118,8 +131,11 @@ private slots:
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
-    //! Get parent entitys EC_Mesh. Return 0 if not present.
-    EC_Mesh *GetOrCreateMeshComponent();
+    // /! Get parent entitys EC_Mesh. Return 0 if not present.
+    //EC_Mesh *GetOrCreateMeshComponent();
+
+    //! Create as many EC_Mesh components to the parent entity as given in input. Returns empty QList if parent entity is not present
+    QList<EC_Mesh*> CreateMeshComponents(int);
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
     EC_3DCanvas *GetOrCreateSceneCanvasComponent();
@@ -130,8 +146,10 @@ private slots:
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
 
-private:
-    /// \todo Add Private functions here
+
+
+//signals:
+    //EC_Menu::OnAttributeChanged(IAttribute*, AttributeChange::Type);
 
 };
 

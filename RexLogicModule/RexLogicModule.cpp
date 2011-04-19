@@ -285,13 +285,12 @@ void RexLogicModule::Load()
     DECLARE_MODULE_EC(EC_ProximityTrigger);
 #endif
 
-<<<<<<< .merge_file_x0qQOW
 #ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_Menu);
-=======
+#endif
+
 #ifdef EC_LaserPointer_ENABLED
     DECLARE_MODULE_EC(EC_LaserPointer);
->>>>>>> .merge_file_8mrXBW
 #endif
 }
 

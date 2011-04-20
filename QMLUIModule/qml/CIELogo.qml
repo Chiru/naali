@@ -39,7 +39,7 @@ Item {
              onPressed:  flipable.opacity = 0.5
              onReleased:  flipable.opacity = 1
 
-             drag.target: flipable; drag.axis: drag.XandYAxis
+             drag.target: flipable; drag.axis: Drag.XandYAxis
 
 
 

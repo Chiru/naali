@@ -1,8 +1,9 @@
-import QtQuick 1.0
+import Qt 4.7
 
 Item {
 
     property alias owner: kbimg.parent
+    property alias visiblee: kbimg.visible
 
 Image {
     id: kbimg
@@ -11,6 +12,7 @@ Image {
     y: owner.height - 30
     scale: 1
     opacity: 1
+
 
     MouseArea {
         id: kbma

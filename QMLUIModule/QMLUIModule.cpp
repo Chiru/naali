@@ -87,9 +87,9 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 
         QObject::connect(this, SIGNAL(giveQMLUsingBattery(QVariant)), QMLUI,SLOT(usingbattery(QVariant)));
 
-        QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(setQMLUIFocus(bool)));
+        QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(SetQMLUIFocus(bool)));
 
-        QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(loadXML()));
+        QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(LoadXML()));
         QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
 
         QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
@@ -115,7 +115,7 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 
 }
 
-void QMLUIModule::setQMLUIFocus(bool focus)
+void QMLUIModule::SetQMLUIFocus(bool focus)
 {
     if (focus)
     {
@@ -133,7 +133,7 @@ void QMLUIModule::NetworkModeChanged(int mode)
     emit giveQMLNetworkMode(modee);
 }
 
-void QMLUIModule::loadXML()
+void QMLUIModule::LoadXML()
 {
     sceneMngr = framework_->Scene()->GetDefaultScene().get();
     sceneMngr->SaveSceneXML(("testingxmlscene.xml"));
@@ -158,7 +158,7 @@ void QMLUIModule::BatteryLevelChanged(int batterylevel)
     emit giveQMLBatteryLevel(batterylevel);
 }
 
-void QMLUIModule::usingBattery(bool uB)
+void QMLUIModule::UsingBattery(bool uB)
 {
     if (uB)
         emit giveQMLUsingBattery((QVariant)1);

@@ -66,6 +66,7 @@ class EC_Placeable;
 class EC_OgreCamera;
 class QListView;
 class QMouseEvent;
+class RaycastResult;
 
 class EC_Menu : public IComponent
 {
@@ -81,10 +82,12 @@ private:
     Vector3df distance;
     QPointer<QListView> listview_;
 
+    Foundation::RenderServiceInterface *renderer_;
+
     QList<EC_Mesh *> MeshList_;
     bool ent_clicked_;
     bool save_start_position_;
-    Vector3df startPosition_;
+    QPoint startPosition_;
 
     QPoint acceleratorVector_;
     InputContextPtr input_;
@@ -102,23 +105,22 @@ public:
     ~EC_Menu();
 
     //! Rendering target submesh index.
-    //Q_PROPERTY(int renderSubmeshIndex READ getrenderSubmeshIndex WRITE setrenderSubmeshIndex);
-    //DEFINE_QPROPERTY_ATTRIBUTE(int, renderSubmeshIndex);
+    Q_PROPERTY(int renderSubmeshIndex READ getrenderSubmeshIndex WRITE setrenderSubmeshIndex);
+    DEFINE_QPROPERTY_ATTRIBUTE(int, renderSubmeshIndex);
 
-    /// \todo Add public functions here
+    //! Boolean for interactive mode, if true it will show context menus on mouse click events.
+    Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
+
 
 public slots:
-    /// \todo Add public slots here
     void Render();
-    void OnClick();
-    void mouseMoveEvent(QMouseEvent *event);
+
+    //! Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
 
 
 private slots:
-    //! Monitors entity mouse clicks.
-    void EntityClicked(Scene::Entity *entity, Qt::MouseButton button);
-
     //! Prepares everything related to the parent widget and other needed components.
     void PrepareMenu();
 
@@ -130,9 +132,6 @@ private slots:
 
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
-
-    // /! Get parent entitys EC_Mesh. Return 0 if not present.
-    //EC_Mesh *GetOrCreateMeshComponent();
 
     //! Create as many EC_Mesh components to the parent entity as given in input. Returns empty QList if parent entity is not present
     QList<EC_Mesh*> CreateMeshComponents(int);
@@ -146,10 +145,8 @@ private slots:
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
 
-
-
-//signals:
-    //EC_Menu::OnAttributeChanged(IAttribute*, AttributeChange::Type);
+signals:
+    void OnAttributeChanged(IAttribute*, AttributeChange::Type);
 
 };
 

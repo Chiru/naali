@@ -13,15 +13,18 @@
 #include "IModule.h"
 #include "Entity.h"
 #include "LoggingFunctions.h"
+
 #include <Ogre.h>
-//#include <QVector3D>
 #include <EC_OgreCamera.h>
+#include "RenderServiceInterface.h"
 
 #include <QStringListModel>
 #include <QListView>
 //#include <QMouseEvent>
 //#include "MouseEvent.h"
 #include "InputAPI.h"
+
+#include "SceneInteract.h"
 
 #include "SceneManager.h"
 #include "UiAPI.h"
@@ -34,7 +37,9 @@
 DEFINE_POCO_LOGGING_FUNCTIONS("EC_Menu")
 
 EC_Menu::EC_Menu(IModule *module) :
-            IComponent(module->GetFramework())
+    IComponent(module->GetFramework()),
+    renderSubmeshIndex(this, "Render Submesh", 0),
+    interactive(this, "Interactive", false)
 {
 
     renderTimer_ = new QTimer();
@@ -46,11 +51,7 @@ EC_Menu::EC_Menu(IModule *module) :
     renderTimer_->setInterval(40);
     renderTimer_->start();
 
-    SceneInteractWeakPtr sceneInteract = GetFramework()->Scene()->GetSceneIteract();
-    if (!sceneInteract.isNull())
-    {
-        //connect(sceneInteract.data(), SIGNAL(EntityClicked(Scene::Entity*, Qt::MouseButton)), SLOT(EntityClicked(Scene::Entity*, Qt::MouseButton)));
-    }
+    renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
 
     //Create a new input context that menu will use to fetch input.
     input_ = module->GetFramework()->Input()->RegisterInputContext("MenuInput", 100);
@@ -73,33 +74,6 @@ EC_Menu::~EC_Menu()
     SAFE_DELETE_LATER(listview_);
 }
 
-/*
-Object::connect: No such signal EC_Menu::OnAttributeChanged(IAttribute*, AttributeChange::Type) in /home/juha/src/chiru/EntityComponents/EC_Menu/EC_Menu.cpp:41
-Object::connect: No such signal SceneInteract::EntityClicked(Scene::Entity*, Qt::MouseButton) in /home/juha/src/chiru/EntityComponents/EC_Menu/EC_Menu.cpp:50
-*/
-/*void EC_Menu::EntityClicked(Scene::Entity *entity, Qt::MouseButton button)
-{
-    //if (!getinteractive() || !GetParentEntity())
-    //    return;
-
-    // We are only interested in left clicks on our entity.
-    //if (!raycastResult)
-      //  return;
-    if (button != Qt::LeftButton)
-        return;
-
-    if (entity == GetParentEntity())
-    {
-        // We are only interested in clicks to our target submesh index.
-        //if (raycastResult->submesh_ != (unsigned)getrenderSubmeshIndex())
-          //  return;
-
-        // Entities have EC_Selected if it is being manipulated.
-        // At this situation we don't want to show any ui.
-        if (entity->HasComponent("EC_Selected"))
-            return;
-    }
-}*/
 
 void EC_Menu::PrepareMenu()
 {    
@@ -112,8 +86,6 @@ void EC_Menu::PrepareMenu()
     assert(parent);
     if (parent)
     {
-        parent->ConnectAction("MousePress", this, SLOT(OnClick()));
-        //parent->ConnectAction("MouseMove", this, SLOT(mouseMoveEvent(QMouseEvent *event)));
         connect(parent, SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
     }
     else
@@ -184,92 +156,76 @@ void EC_Menu::PrepareMenu()
     }
 }
 
-
 void EC_Menu::HandleMouseInputEvent(MouseEvent *mouse)
 {
+    QPoint mousePosition;
+    mousePosition.setX(mouse->X());
+    mousePosition.setY(mouse->Y());
 
-    if(ent_clicked_ && save_start_position_)
+    RaycastResult* result;
+    if (renderer_)
     {
-        startPosition_.x = mouse->X();
-        startPosition_.y = mouse->Y();
-        save_start_position_ = false;
+        result = renderer_->Raycast(mouse->X(), mouse->Y());
+        if(result->entity_==GetParentEntity() && mouse->IsLeftButtonDown() && save_start_position_)
+        {
+            startPosition_.setX(mouse->X());
+            startPosition_.setY(mouse->Y());
+            save_start_position_ = false;
+            ent_clicked_ = true;
+        }
     }
 
-    if(mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
+    if(ent_clicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
         int i;
-        if(!ent_clicked_)
-            return;
-        LogInfo("relative movement: " + ToString(mouse->RelativeX()) +"," + ToString(mouse->RelativeY()));
+        //LogInfo("relative movement: " + ToString(mouse->RelativeX()) +"," + ToString(mouse->RelativeY()));
         //LogInfo("HandleMouseInputEvent");
-
-        Vector3df position = Vector3df(0.0,0.0,0.0);
-        for(i=0;i<MeshList_.count();i++)
+        if((mousePosition-startPosition_).manhattanLength()>15)
         {
-            position.x=0 + 2 * cos( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x)/150));
-            position.z=4 + 2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x)/150));
+            Vector3df position = Vector3df(0.0,0.0,0.0);
+            for(i=0;i<MeshList_.count();i++)
+            {
+                position.x=0 + 2 * cos( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x())/150));
+                position.z=4 + 2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x())/150));
 
-            MeshList_.at(i)->SetAdjustPosition(position);
+                MeshList_.at(i)->SetAdjustPosition(position);
+            }
         }
     }
     if(mouse->eventType == MouseEvent::MouseReleased)
     {
         ent_clicked_ = false;
         save_start_position_ = true;
-        acceleratorVector_.setX(mouse->RelativeX());
-        acceleratorVector_.setY(mouse->RelativeY());
-        kinecticScroller(acceleratorVector_);
+        //acceleratorVector_.setX(mouse->RelativeX());
+        //acceleratorVector_.setY(mouse->RelativeY());
+        //kinecticScroller(acceleratorVector_);
     }
+    /*void EC_Menu::mouseMoveEvent(QMouseEvent *event)
+    {
+        if (!(event->buttons() & Qt::LeftButton))
+            return;
+        if ((event->pos() - dragStartPosition).manhattanLength() < 30)
+            return;
 
+        //QDrag *drag = new QDrag(this);
+        //QMimeData *mimeData = new QMimeData;
+
+        //mimeData->setData(mimeType, data);
+        //drag->setMimeData(mimeData);
+
+        //Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
+
+    }*/
 }
 void EC_Menu::kinecticScroller(QPoint a)
 {
+
     LogInfo("kinectic");
 }
 
 void EC_Menu::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)
 {
 }
-
-void EC_Menu::OnClick()
-{
-    //int i;
-    LogInfo("Entity clicked");
-
-    ent_clicked_ = true;
-
-    /*
-    Vector3df tempPosition = Vector3df(0.0,0.0,0.0);
-
-    tempPosition = MeshList_.at(0)->GetAdjustPosition();
-    for(i=0;i<MeshList_.count()-1;i++)
-    {
-        MeshList_.at(i)->SetAdjustPosition(MeshList_.at(i+1)->GetAdjustPosition());
-    }
-    MeshList_.at(MeshList_.count()-1)->SetAdjustPosition(tempPosition);
-    //dragStartPosition = event->pos();
-    */
-
-}
-
-/*void EC_Menu::mouseMoveEvent(QMouseEvent *event)
-{
-    if (!(event->buttons() & Qt::LeftButton))
-        return;
-    if ((event->pos() - dragStartPosition).manhattanLength() < 30)
-        return;
-
-    //QDrag *drag = new QDrag(this);
-    //QMimeData *mimeData = new QMimeData;
-
-    //mimeData->setData(mimeType, data);
-    //drag->setMimeData(mimeData);
-
-    LogInfo("mouseMoveEvent");
-
-    //Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
-
-}*/
 
 
 void EC_Menu::Render()
@@ -392,17 +348,6 @@ QList<EC_Mesh *> EC_Menu::CreateMeshComponents(int NumberOfMenuObjects)
         LogError("Couldn't get parent entity, returning empty QList");
     return MeshList_;
 }
-
-/*EC_Mesh *EC_Menu::GetOrCreateMeshComponent()
-{
-    //
-    if (!GetParentEntity())
-        return 0;
-    IComponent *iComponent =  GetParentEntity()->GetComponent("EC_Mesh").get();
-    EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
-
-    return mesh;
-}*/
 
 EC_3DCanvas *EC_Menu::GetOrCreateSceneCanvasComponent()
 {

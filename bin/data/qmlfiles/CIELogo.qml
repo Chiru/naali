@@ -1,17 +1,11 @@
-import QtQuick 1.0
+import Qt 4.7
 
 Item {
-
-    property alias owner: flipable.parent
 
     Flipable {
          id: flipable
          width: frontimg.width
          height: frontimg.height
-
-         anchors.top: owner.top
-         anchors.topMargin: 30
-         anchors.right: owner.right
 
          property bool flipped: false
 
@@ -42,6 +36,13 @@ Item {
          MouseArea {
              anchors.fill: parent
              onClicked: flipable.flipped = !flipable.flipped
+             onPressed:  flipable.opacity = 0.5
+             onReleased:  flipable.opacity = 1
+
+             drag.target: flipable; drag.axis: Drag.XandYAxis
+
+
+
          }
      }
 

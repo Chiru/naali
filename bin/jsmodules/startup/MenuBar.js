@@ -7,6 +7,8 @@ if (!framework.IsHeadless())
     var assetAction = null;
     
     var mainwin = ui.MainWindow();
+    
+    print("MAINWINDOW TYPE: " + typeof mainwin);
 
     var fileMenu = mainwin.AddMenu("&File");
     
@@ -42,7 +44,7 @@ if (!framework.IsHeadless())
     }
 
     // Chiru demonstration and mobility menu:
-    var demoMenu = menu.addMenu("&Demo");
+    var demoMenu = mainwin.AddMenu("&Demo");
     var connectMenu = demoMenu.addMenu("&Connect");
     connectMenu.addAction("Chiru world").triggered.connect(ConnectRemote);
     connectMenu.addAction("Local world").triggered.connect(ConnectLocal);

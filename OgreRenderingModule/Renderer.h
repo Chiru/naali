@@ -116,10 +116,16 @@ namespace OgreRenderer
         //! Reset the texture
         void ResetImageRendering();
 
+        //! Enable or disable rendering
+        void SetRenderingEnabled(bool state);
+
         QImage CreateQImageFromTexture(Ogre::RenderTexture *render_texture, int width, int height);
 
         //! Performs a full UI repaint with Qt and re-fills the GPU surface accordingly.
         void DoFullUIRedraw();
+
+        /// Specifies a new fps limit to use for the main loop. Pass in a value of 0 to remove fps limiting altogether.
+        void SetTargetFPSLimit(float fpsLimit) { targetFpsLimit = fpsLimit; if (targetFpsLimit <= 1.f) targetFpsLimit = 0.f; }
         
     public:
         //! Constructor
@@ -233,8 +239,7 @@ namespace OgreRenderer
 
         RenderWindow *GetRenderWindow() const { return renderWindow; }
 
-        /// Specifies a new fps limit to use for the main loop. Pass in a value of 0 to remove fps limiting altogether.
-        void SetTargetFPSLimit(float fpsLimit) { targetFpsLimit = fpsLimit; if (targetFpsLimit <= 1.f) targetFpsLimit = 0.f; }
+
 
         /// Returns the current fps limit.
         float TargetFPSLimit() const { return targetFpsLimit; }
@@ -361,6 +366,8 @@ namespace OgreRenderer
         tick_t timerFrequency;
         /// Specifies the target fps to run the system at. By default 60. Setting this to zero means no limit.
         float targetFpsLimit;
+
+        bool render_enabled_;
     };
 }
 

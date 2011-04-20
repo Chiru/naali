@@ -24,6 +24,10 @@
 
 using namespace QtMobility;
 
+/// Acts as an proxy between mobility related data and rest of the modules.
+/// \todo Interface MCE daemon once it becomes part of MeeGo.
+/// \todo Move enums and value mappings outside the module to remove compile
+/// time dependencies to these values.
 class MobilityModule : public QObject, public IModule
 {
     Q_OBJECT
@@ -112,36 +116,6 @@ public:
 
     /// Returns name of this module. Needed for logging.
     static const std::string &NameStatic() { return type_name_static_; }
-
-    /// \return Current battery level percentage (0-100)
-    int batteryLevel();
-
-    /// \return Is the system using battery or wall power (true for battery, false for wall)
-    bool usingBattery();
-
-    /// \return Boolean for battery critical state
-    /// \note Always returns false when on battery power
-    bool batteryCritical();
-
-    /// \return Current network state as defined in MobilityModule::NetworkState
-    MobilityModule::NetworkState networkState();
-
-    /// \return Current network mode as defined in MobilityModule::NetworkMode
-    MobilityModule::NetworkMode networkMode();
-
-    /// \return Current network quality percentage (0-100)
-    int networkQuality();
-
-    /// \return Current screen state as defined in MobilityModule::ScreenState
-    MobilityModule::ScreenState screenState();
-
-    /// Checks if platform has a feature available
-    /// \param feature Feature defined in MobilityModule::DeviceFeature
-    /// \return Boolean for availability of the given feature
-    bool featureAvailable(MobilityModule::DeviceFeature feature);
-
-    /// \param Critical level for battery power in percentage (1-100)
-    void setBatteryCriticalValue(int criticalValue);
 
 private:
 
@@ -235,7 +209,40 @@ public slots:
     /// Initialize datatypes for a script engine
     void OnScriptEngineCreated(QScriptEngine* engine);
 
+    /// \return Current battery level percentage (0-100)
+    int GetBatteryLevel() const;
+
+    /// \return Is the system using battery or wall power (true for battery, false for wall)
+    bool GetUsingBattery() const;
+
+    /// \return Boolean for battery critical state
+    /// \note Always returns false when on battery power
+    bool GetBatteryCritical() const;
+
+    /// \return Current network state as defined in MobilityModule::NetworkState
+    MobilityModule::NetworkState GetNetworkState() const;
+
+    /// \return Current network mode as defined in MobilityModule::NetworkMode
+    MobilityModule::NetworkMode GetNetworkMode() const;
+
+    /// \return Current network quality percentage (0-100)
+    int GetNetworkQuality() const;
+
+    /// \return Current screen state as defined in MobilityModule::ScreenState
+    MobilityModule::ScreenState GetScreenState() const;
+
+    /// Checks if platform has a feature available
+    /// \param feature Feature defined in MobilityModule::DeviceFeature
+    /// \return Boolean for availability of the given feature
+    bool GetFeatureAvailable(MobilityModule::DeviceFeature feature) const;
+
+    /// \param Critical level for battery power in percentage (1-100)
+    void SetBatteryCriticalValue(int criticalValue);
+
 signals:
+
+    /// Emitted when power state changes from wall to battery or vice versa
+    void usingBattery(bool state);
 
     /// Emitted when battery level changes
     /// \note Only emitted when using battery power
@@ -245,9 +252,6 @@ signals:
     /// \note Only emitted once when battery level drops below critical threshold
     /// \note Not emitted when on wall power (shouldn't happen anyways)
     void batteryLevelCritical();
-
-    /// Emitted when power state changes from wall to battery or vice versa
-    void usingBattery(bool state);
 
     /// Emitted when network status changes (offline/online/roaming...)
     /// \note Not tested on ConnMan backend. On NetworkManager, only signals Connected and Disconnected states.

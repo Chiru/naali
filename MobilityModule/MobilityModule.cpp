@@ -114,9 +114,9 @@ void MobilityModule::Initialize()
 
     // Set initial values for mobility related data
     battery_critical_ = false;
-    setBatteryCriticalValue(20);
+    SetBatteryCriticalValue(20);
 
-    // Getter for networkstate isn't properly implemented in QtMobility 1.2. Use own workaround for determining initial state.
+    // Getter for networkstate isn't properly implemented in QtMobility 1.2. Use workaround for determining initial state.
     network_state_ = getNetworkState();
     network_mode_ = networkModeMap_.value(system_network_info_->currentMode());
     network_quality_ = 100; // Default return value
@@ -129,8 +129,7 @@ void MobilityModule::Initialize()
             this, SLOT(batteryLevelHandler(int)));
     connect(system_device_info_, SIGNAL(powerStateChanged(QSystemDeviceInfo::PowerState)),
             this, SLOT(usingBatteryHandler(QSystemDeviceInfo::PowerState)));
-    connect(network_configuration_manager_, SIGNAL(configurationChanged(QNetworkConfiguration)),
-            this, SLOT(networkConfigurationChanged(QNetworkConfiguration)));
+
 
     connect(system_network_info_, SIGNAL(networkModeChanged(QSystemNetworkInfo::NetworkMode)),
             this, SLOT(networkModeHandler(QSystemNetworkInfo::NetworkMode)));
@@ -161,8 +160,6 @@ void MobilityModule::Update(f64 frametime)
 
 void MobilityModule::batteryLevelHandler(int batteryLevel)
 {
-    emit batteryLevelChanged(batteryLevel);
-
     // Battery critical signal only gets emitted once when using battery power and battery level drops below set critical.
     if(using_battery_power_)
     {
@@ -175,6 +172,9 @@ void MobilityModule::batteryLevelHandler(int batteryLevel)
     }
 
     battery_level_ = batteryLevel;
+
+    emit batteryLevelChanged(battery_level_);
+
     LogInfo("Battery level changed to: " + ToString(battery_level_));
 }
 
@@ -292,48 +292,48 @@ void MobilityModule::networkQualityHandler(QSystemNetworkInfo::NetworkMode mode,
     }
 }
 
-int MobilityModule::batteryLevel()
+int MobilityModule::GetBatteryLevel() const
 {
     return battery_level_;
 }
 
-bool MobilityModule::usingBattery()
+bool MobilityModule::GetUsingBattery() const
 {
     return using_battery_power_;
 }
 
-bool MobilityModule::batteryCritical()
+bool MobilityModule::GetBatteryCritical() const
 {
     return battery_critical_;
 }
 
-MobilityModule::NetworkState MobilityModule::networkState()
+MobilityModule::NetworkState MobilityModule::GetNetworkState() const
 {
     return network_state_;
 }
 
-MobilityModule::NetworkMode MobilityModule::networkMode()
+MobilityModule::NetworkMode MobilityModule::GetNetworkMode() const
 {
     return network_mode_;
 }
 
-MobilityModule::ScreenState MobilityModule::screenState()
+MobilityModule::ScreenState MobilityModule::GetScreenState() const
 {
     return MobilityModule::ScreenOn;
 }
 
-int MobilityModule::networkQuality()
+int MobilityModule::GetNetworkQuality() const
 {
     return network_quality_;
 }
 
-void MobilityModule::setBatteryCriticalValue(int criticalValue)
+void MobilityModule::SetBatteryCriticalValue(int criticalValue)
 {
     if(criticalValue >= 0 && criticalValue <= 100)
         battery_critical_value_ = criticalValue;
 }
 
-bool MobilityModule::featureAvailable(MobilityModule::DeviceFeature feature)
+bool MobilityModule::GetFeatureAvailable(MobilityModule::DeviceFeature feature) const
 {
     if(features_.contains(feature))
         return features_.value(feature);
@@ -345,7 +345,7 @@ MobilityModule::NetworkState MobilityModule::getNetworkState()
 {
     QList<QNetworkConfiguration> configs_ = network_configuration_manager_->allConfigurations(QNetworkConfiguration::Active);
 
-    // QNetworkConfigurationManager counts interfaces as active configurations (atleast with NetworkManager and Connman backends), these need to be removed.
+    // QNetworkConfigurationManager counts interfaces as active configurations (atleast on Linux), these need to be removed.
     foreach(const QNetworkInterface iface, QNetworkInterface::allInterfaces())
     {
         for(int x = 0; x < configs_.size(); x++)

@@ -151,7 +151,8 @@ namespace OgreRenderer
         shadowquality_(Shadows_High),
         texturequality_(Texture_Normal),
         c_handler_(new CompositionHandler),
-        targetFpsLimit(60.f) // The default FPS to aim at is 60fps.
+        targetFpsLimit(60.f), // The default FPS to aim at is 60fps.
+        render_enabled_(true)
     {
         InitializeEvents();
         timerFrequency = GetCurrentClockFreq();
@@ -594,7 +595,7 @@ namespace OgreRenderer
         if (!initialized_) 
             return;
 
-        if (framework_->IsHeadless())
+        if (framework_->IsHeadless() || !render_enabled_)
         {
             // In headless mode, do frame time limiting here to avoid busy-spinning in the main loop and taking up 100% CPU. In headless mode this could
             // also be safely done using Qt timers, which might be a slightly better approach.
@@ -1357,6 +1358,11 @@ namespace OgreRenderer
         if (image.isNull())
             OgreRenderingModule::LogError("Capturing render texture to a image failed");
         return image;
+    }
+
+    void Renderer::SetRenderingEnabled(bool state)
+    {
+        render_enabled_ = state;
     }
 
     void Renderer::AddResourceDirectory(const QString &qdirectory)

@@ -3,7 +3,7 @@
 #include "StableHeaders.h"
 
 #include "CameraInputModule.h"
-#include "CameraAPI.h"
+#include "CameraInput.h"
 
 #include "LoggingFunctions.h"
 DEFINE_POCO_LOGGING_FUNCTIONS("CameraInputModule")
@@ -15,9 +15,9 @@ DEFINE_POCO_LOGGING_FUNCTIONS("CameraInputModule")
 
 CameraInputModule::CameraInputModule() :
     IModule("CameraInputModule"),
-    camera_(0),
     updateBuildup_(0.0),
-    updateInterval_(25.0 / 1000.0), // 25 fps
+    updateInterval_(1.0 / 15.0), // 15 fps
+    openCvCamera_(0),
     tchannel0(0),
     tchannel1(0),
     tchannel2(0),
@@ -32,56 +32,90 @@ CameraInputModule::~CameraInputModule()
 
 void CameraInputModule::Initialize()
 {
-    cameraAPI_ = new CameraAPI(this, framework_);
-    if (cameraAPI_)
-    {   
-        LogInfo("Registered CameraAPI to framework.");
-        framework_->RegisterDynamicObject("camera", cameraAPI_);
-    }
-
-    camera_ = cvCreateCameraCapture(0);
-    if (camera_)
+    cameraInput_ = new CameraInput(this, framework_);
+    if (cameraInput_)
     {
-        LogInfo("Found a camera device.");
-        if (cameraAPI_)
-            cameraAPI_->SetEnabled(true);
+        framework_->RegisterDynamicObject("camerainput", cameraInput_);
+        connect(cameraInput_, SIGNAL(Capturing(bool)), SLOT(OnCapturingStateChanged(bool)));
     }
-    else
-        LogInfo("Could not find a camera device.");
 }
 
 void CameraInputModule::Uninitialize()
 {
-    if (camera_)
-    {
-        LogInfo("Released camera device and internal surfaces.");
-        cvReleaseCapture(&camera_);
+    ReleaseDevice();
+}
 
-        if (tchannel0)
-            cvReleaseImage(&tchannel0);
-        if (tchannel1)
-            cvReleaseImage(&tchannel1);
-        if (tchannel2)
-            cvReleaseImage(&tchannel2);
-        if (tchannel3)
-            cvReleaseImage(&tchannel3);
-        if (destFrame)
-            cvReleaseImage(&destFrame);
+void CameraInputModule::GrabDevice()
+{
+    if (framework_->IsHeadless())
+        return;
+
+    openCvCamera_ = cvCreateCameraCapture(0);
+    if (openCvCamera_)
+    {
+        if (cameraInput_)
+            cameraInput_->SetEnabled(true);
     }
+    else
+    {
+        LogInfo("Could not find a camera device.");
+        if (cameraInput_)
+            cameraInput_->SetEnabled(false);
+    }
+}
+
+void CameraInputModule::ReleaseDevice()
+{
+    if (openCvCamera_)
+        cvReleaseCapture(&openCvCamera_);
+
+    if (tchannel0)
+        cvReleaseImage(&tchannel0);
+    if (tchannel1)
+        cvReleaseImage(&tchannel1);
+    if (tchannel2)
+        cvReleaseImage(&tchannel2);
+    if (tchannel3)
+        cvReleaseImage(&tchannel3);
+    if (destFrame)
+        cvReleaseImage(&destFrame);
+
+    openCvCamera_ = 0;
+    tchannel0 = 0;
+    tchannel1 = 0;
+    tchannel2 = 0;
+    tchannel3 = 0;
+    destFrame = 0;
+}
+
+void CameraInputModule::OnCapturingStateChanged(bool capturing)
+{
+    ReleaseDevice();
+    if (capturing)
+        GrabDevice();
 }
 
 void CameraInputModule::Update(f64 frametime)
 {
-    if (!camera_)
+    if (framework_->IsHeadless())
         return;
+    if (!openCvCamera_)
+        return;
+    if (!cameraInput_)
+        return;
+    if (!cameraInput_->IsCapturing())
+         return;
 
-    // Don't update too often, stick with 25 fps (updateInterval_)
+
+    // Don't update too often, stick with 15 fps (updateInterval_)
+    // Going 20 or over wont leave any time for Qts/our main loop to run
+    // if one or multiple places are processing the emitted frames.
     updateBuildup_ += frametime;
     if (updateBuildup_ >= updateInterval_)
     {
         updateBuildup_ = 0;
         
-        IplImage *currentFrame = cvQueryFrame(camera_);
+        IplImage *currentFrame = cvQueryFrame(openCvCamera_);
         if (!currentFrame)
             return;
 
@@ -110,8 +144,8 @@ void CameraInputModule::Update(f64 frametime)
         QImage image(data, size.width, size.height, QImage::Format_RGB32);
         if (!image.isNull())
         {
-            cameraAPI_->SetFrame(image);
-            emit frameUpdate(cameraAPI_->CurrentFrame());
+            cameraInput_->SetFrame(image);
+            emit frameUpdate(cameraInput_->CurrentFrame());
         }
     }
 }

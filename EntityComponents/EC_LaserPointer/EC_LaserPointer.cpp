@@ -15,7 +15,6 @@
 #include "EC_Placeable.h"
 #include "EC_InputMapper.h"
 #include "Entity.h"
-#include "OgreMaterialUtils.h"
 #include "LoggingFunctions.h"
 #include "SceneManager.h"
 
@@ -29,6 +28,7 @@ EC_LaserPointer::EC_LaserPointer(IModule *module) :
     IComponent(module->GetFramework()),
     startPos_(this, "startPosition"),
     endPos_(this, "endPosition"),
+    color_(this, "color", Color(1.0f,0.0f,0.0f,1.0f)),
     enabled_(this, "enabled", true),
     laserObject_(0),
     id_(),
@@ -38,6 +38,12 @@ EC_LaserPointer::EC_LaserPointer(IModule *module) :
     updateInterval_(20)
 {
     renderer_ = module->GetFramework()->GetServiceManager()->GetService<OgreRenderer::Renderer>(Service::ST_Renderer);
+
+    AttributeMetadata *meta = new AttributeMetadata();
+    meta->designable = false;
+    startPos_.SetMetadata(meta);
+    endPos_.SetMetadata(meta);
+
     connect(this, SIGNAL(ParentEntitySet()), this, SLOT(CreateLaser()));
 }
 
@@ -53,6 +59,8 @@ void EC_LaserPointer::CreateLaser()
         return;
     if (renderer_.expired())
         return;
+    if (GetFramework()->IsHeadless())
+        return;
 
     Ogre::SceneManager *scene = renderer_.lock()->GetSceneManager();
     assert(scene);
@@ -65,16 +73,18 @@ void EC_LaserPointer::CreateLaser()
         return;
 
     node_ = parentEntity->GetComponent<EC_Placeable>().get();
+
+    if (!node_)
+        return;
+
     id_ = Ogre::StringConverter::toString((int)parentEntity->GetId());
 
     laserObject_ = scene->createManualObject("laser" + id_);
     Ogre::SceneNode* laserObjectNode = scene->getRootSceneNode()->createChildSceneNode("laser" + id_ + "_node");
-    Ogre::MaterialPtr laserMaterial = Ogre::MaterialManager::getSingleton().create("laser" + id_ + "Material", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME); 
-    laserMaterial->setReceiveShadows(false);
-    laserMaterial->getTechnique(0)->setLightingEnabled(true); 
-    laserMaterial->getTechnique(0)->getPass(0)->setDiffuse(1,0,0,1); 
-    laserMaterial->getTechnique(0)->getPass(0)->setAmbient(1,0,0); 
-    laserMaterial->getTechnique(0)->getPass(0)->setSelfIllumination(1,0,0); 
+    laserMaterial_ = Ogre::MaterialManager::getSingleton().create("laser" + id_ + "Material", Ogre::ResourceGroupManager::DEFAULT_RESOURCE_GROUP_NAME); 
+    laserMaterial_->setReceiveShadows(false);
+    laserMaterial_->getTechnique(0)->setLightingEnabled(true);
+    UpdateColor();
     laserObjectNode->attachObject(laserObject_);
 
     connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), this, SLOT(HandleAttributeChange(IAttribute*, AttributeChange::Type)));
@@ -90,6 +100,10 @@ void EC_LaserPointer::CreateLaser()
 void EC_LaserPointer::DestroyLaser()
 {
     if (!ViewEnabled())
+        return;
+    if (renderer_.expired())
+        return;
+    if (GetFramework()->IsHeadless())
         return;
 
     OgreRenderer::RendererPtr renderer = renderer_.lock();
@@ -123,7 +137,7 @@ void EC_LaserPointer::DestroyLaser()
 
 void EC_LaserPointer::Update(MouseEvent *e)
 {
-    if (IsEnabled())
+    if (IsEnabled() && !GetFramework()->IsHeadless())
     {
         if (canUpdate_)
         {
@@ -133,8 +147,7 @@ void EC_LaserPointer::Update(MouseEvent *e)
             {
                 SetStartPos(node_->GetPosition());
                 SetEndPos(result->getpos());
-                canUpdate_ = false;
-                QTimer::singleShot(updateInterval_, this, SLOT(EnableUpdate()));
+                DisableUpdate();
             }
             else
                 laserObject_->clear();
@@ -144,6 +157,19 @@ void EC_LaserPointer::Update(MouseEvent *e)
 
 void EC_LaserPointer::HandleAttributeChange(IAttribute *attribute, AttributeChange::Type change)
 {
+    if (!ViewEnabled())
+        return;
+    if (renderer_.expired())
+        return;
+    if (GetFramework()->IsHeadless())
+        return;
+
+    if (QString::fromStdString(attribute->GetNameString()) == QString::fromStdString(color_.GetNameString()))
+    {
+        UpdateColor();
+        return;
+    }
+
     if (IsEnabled())
     {
         laserObject_->clear();
@@ -179,6 +205,12 @@ void EC_LaserPointer::Disable()
     enabled_.Set(false, AttributeChange::Default);
 }
 
+void EC_LaserPointer::DisableUpdate()
+{
+    canUpdate_ = false;
+    QTimer::singleShot(updateInterval_, this, SLOT(EnableUpdate()));
+}
+
 void EC_LaserPointer::SetStartPos(const Vector3df pos)
 {
     startPos_.Set(pos, AttributeChange::Default);
@@ -202,4 +234,48 @@ Vector3df EC_LaserPointer::GetEndPos() const
 bool EC_LaserPointer::IsEnabled()
 {
     return enabled_.Get();
+}
+
+void EC_LaserPointer::SetQColor(const QColor & color)
+{
+    Color col = Color((float)color.redF(),
+                      (float)color.greenF(),
+                      (float)color.blueF(),
+                      (float)color.alphaF());
+
+    color_.Set(col, AttributeChange::Default);
+}
+
+void EC_LaserPointer::SetColor(int red, int green, int blue, int alpha = 255)
+{
+    QColor color = QColor(red, green, blue, alpha);
+    SetQColor(color);
+}
+
+Color EC_LaserPointer::GetColor() const
+{
+    return color_.Get();
+}
+
+QColor EC_LaserPointer::GetQColor() const
+{
+    Color color = GetColor();
+    QColor newcolor;
+    newcolor.setRgbF(color.r, color.g, color.b, color.a);
+    return newcolor;
+}
+
+void EC_LaserPointer::UpdateColor()
+{
+    if (!ViewEnabled())
+        return;
+    if (renderer_.expired())
+        return;
+    if (GetFramework()->IsHeadless())
+        return;
+
+    Color color = GetColor();
+    laserMaterial_->getTechnique(0)->getPass(0)->setDiffuse(color.r,color.g,color.b,color.a);
+    laserMaterial_->getTechnique(0)->getPass(0)->setAmbient(color.r,color.g,color.b);
+    laserMaterial_->getTechnique(0)->getPass(0)->setSelfIllumination(color.r,color.g,color.b);
 }

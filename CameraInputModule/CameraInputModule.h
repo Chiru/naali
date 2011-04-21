@@ -3,6 +3,7 @@
 #ifndef incl_CameraInputModule_h
 #define incl_CameraInputModule_h
 
+#include "CameraInputModuleApi.h"
 #include "Foundation.h"
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
@@ -15,23 +16,25 @@
 class CameraInput;
 class CvCapture;
 
-/*! CameraInputModule reads a video camera (webcam) source from your PC and emits the image data as QImage. See more about the API from CameraInput.h
+/*! CameraInputModule reads a video camera (webcam) source from your PC and emits the image data as QImage. See more about the API from CameraInput.h.
 
     C++ via CameraInputModule:
     \code
-    QObject *camModule = fw->GetModuleQObj("CameraInputModule");
+    CameraInputModule *camModule = fw->GetModule<CameraInputModule>();
     if (camModule)
-        connect(camModule, SIGNAL(frameUpdate(const QImage&)), SLOT(Handler(const QImage&)));
+        connect(camModule->GetCameraInput(), SIGNAL(frameUpdate(const QImage&)), SLOT(Handler(const QImage&)));
     \endcode
 
     JavaScript via CameraInput object:
     \code
-    camerainput.frameUpdate.connect(Handler);
+    // Note that frameUpdate will emit you a QImage. If you want to use it directly in eg. a QLabel
+    // you can make it a QPixmap with QPixmap.fromImage(frame)
+    camerainput.FrameUpdate.connect(Handler);
     \endcode
 
     This module depends and uses the opencv library http://opencv.willowgarage.com/wiki/
 */
-class CameraInputModule : public QObject, public IModule
+class CAMERAINPUT_MODULE_API CameraInputModule : public QObject, public IModule
 {
 
 Q_OBJECT
@@ -52,9 +55,10 @@ public:
     /// IModule override.
     void Update(f64 frametime);
 
-signals:
-    /// Replicates the CameraInput signal for easy c++ access to the camera data.
-    void frameUpdate(const QImage &frame);
+public slots:
+    /// Get CameraInput that has all the relevant slots and signals for camera data interaction.
+    /// \return CameraInput* The CameraInput object ptr.
+    CameraInput *GetCameraInput() const;
 
 private slots:
     void GrabDevice();

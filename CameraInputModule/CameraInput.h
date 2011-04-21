@@ -3,13 +3,15 @@
 #ifndef incl_CameraInputModule_CameraInput_h
 #define incl_CameraInputModule_CameraInput_h
 
+#include "CameraInputModuleApi.h"
+
 #include <QObject>
 #include <QImage>
 
 class CameraInputModule;
 namespace Foundation { class Framework; }
 
-class CameraInput : public QObject
+class CAMERAINPUT_MODULE_API CameraInput : public QObject
 {
 
 Q_OBJECT
@@ -45,7 +47,7 @@ public slots:
 signals:
     /// This signal is emitted when the current captured frame is updated.
     /// \param QImage Updated frame, this is always the current frame of CameraInput.
-    void frameUpdate(const QImage &frame);
+    void FrameUpdate(const QImage &frame);
 
     /// This signal is emitted when capturing state changes.
     /// \param bool True if capturing false other wise.

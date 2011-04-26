@@ -267,7 +267,6 @@ namespace Scene
         EntityMap::iterator it = entities_.begin();
         while (it != entities_.end())
         {
-            // If entity somehow manages to live, at least it doesn't belong to the scene anymore
             if (send_events)
             {
                 EmitEntityRemoved(it->second.get(), change);
@@ -276,6 +275,8 @@ namespace Scene
                 Events::SceneEventData event_data(it->second->GetId());
                 framework_->GetEventManager()->SendEvent(cat_id, Events::EVENT_ENTITY_DELETED, &event_data);
             }
+
+            // If entity somehow manages to live, at least it doesn't belong to the scene anymore
             it->second->SetScene(0);
             ++it;
         }

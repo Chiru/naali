@@ -7,8 +7,6 @@ if (!framework.IsHeadless())
     var assetAction = null;
     
     var mainwin = ui.MainWindow();
-    
-    print("MAINWINDOW TYPE: " + typeof mainwin);
 
     var fileMenu = mainwin.AddMenu("&File");
     

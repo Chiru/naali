@@ -8,20 +8,19 @@ if (!framework.IsHeadless())
     
     var mainwin = ui.MainWindow();
 
+    // File
     var fileMenu = mainwin.AddMenu("&File");
     
-    var importMenu = fileMenu.addMenu(new QIcon("./data/ui/images/folder_closed.png"), "Import Scene");
-    importMenu.addAction(new QIcon("./data/ui/images/resource.png"), "From File").triggered.connect(OpenLocalScene);
-    importMenu.addAction(new QIcon("./data/ui/images/icon/browser.ico"), "From Web").triggered.connect(OpenWebScene);
-    var exportAction = fileMenu.addAction(new QIcon("./data/ui/images/resource.png"), "Export Scene");
+    // Load and save scene
+    var importWebAction = fileMenu.addAction(new QIcon("./data/ui/images/folder_closed.png"), "Import Web Scene");
+    importWebAction.triggered.connect(OpenWebScene);
+    var exportAction = fileMenu.addAction(new QIcon("./data/ui/images/resource.png"), "Save as...");
     exportAction.triggered.connect(SaveScene);
     fileMenu.addSeparator();
     
     if (framework.GetModuleQObj("UpdateModule"))
         fileMenu.addAction(new QIcon("./data/ui/images/icon/update.ico"), "Check Updates").triggered.connect(CheckForUpdates);
-    
-    //fileMenu.addAction("New scene").triggered.connect(NewScene);
-    
+       
     // Reconnect menu items for client only
     if (!server.IsAboutToStart())
     {
@@ -33,13 +32,8 @@ if (!framework.IsHeadless())
     }
     fileMenu.addAction(new QIcon("./data/ui/images/icon/system-shutdown.ico"), "Quit").triggered.connect(Quit);
 
+    // View
     var viewMenu = mainwin.AddMenu("&View");
-    if (framework.GetModuleQObj("CAVEStereo"))
-    {
-        var caveMenu = viewMenu.addMenu("&CAVE and Stereo");
-        caveMenu.addAction("CAVE").triggered.connect(OpenCaveWindow);
-        caveMenu.addAction("Stereoscopy").triggered.connect(OpenStereoscopyWindow);
-    }
 
     // Chiru demonstration and mobility menu:
     var demoMenu = mainwin.AddMenu("&Demo");
@@ -79,11 +73,7 @@ if (!framework.IsHeadless())
     }
 
     if (framework.GetModuleQObj("Console"))
-    {
         viewMenu.addAction("Console").triggered.connect(OpenConsoleWindow);
-    }
-
-    //var eceditorAction = viewMenu.addAction("EC Editor");
 
     if (framework.GetModuleQObj("DebugStats"))
         viewMenu.addAction("Profiler").triggered.connect(OpenProfilerWindow);
@@ -97,6 +87,16 @@ if (!framework.IsHeadless())
     if (framework.GetModuleQObj("PythonScript"))
         viewMenu.addAction("Python Console").triggered.connect(OpenPythonConsole);
         
+    // Settings
+    if (framework.GetModuleQObj("CAVEStereo"))
+    {
+        var caveSettings = mainwin.AddMenuAction("&Settings", "Cave");
+        caveSettings.triggered.connect(OpenCaveWindow);
+        var stereoSettings = mainwin.AddMenuAction("&Settings", "Stereoscopy");
+        stereoSettings.triggered.connect(OpenStereoscopyWindow);
+    }
+    
+    // Help
     var helpMenu = mainwin.AddMenu("&Help");
     helpMenu.addAction(new QIcon("./data/ui/images/icon/browser.ico"), "Wiki").triggered.connect(OpenWikiUrl);
     helpMenu.addAction(new QIcon("./data/ui/images/icon/browser.ico"), "Doxygen").triggered.connect(OpenDoxygenUrl);
@@ -116,7 +116,7 @@ if (!framework.IsHeadless())
 
     function Connected() {
         disconnectAction.setEnabled(true);
-        importMenu.setEnabled(true);
+        importWebAction.setEnabled(true);
         exportAction.setEnabled(true);
         ui.EmitAddAction(sceneAction);
         ui.EmitAddAction(assetAction);
@@ -124,7 +124,7 @@ if (!framework.IsHeadless())
 
     function Disconnected() {
         disconnectAction.setEnabled(false);
-        importMenu.setEnabled(false);
+        importWebAction.setEnabled(false);
         exportAction.setEnabled(false);
     }
 
@@ -138,15 +138,24 @@ if (!framework.IsHeadless())
     }
 
     function OpenMailingListUrl() {
-        QDesktopServices.openUrl(new QUrl("http://groups.google.com/group/realxtend/"));
+        if (server.IsRunning())
+            QDesktopServices.openUrl(new QUrl("http://groups.google.com/group/realxtend/"));
+        else
+            ui.EmitOpenUrl(new QUrl("http://groups.google.com/group/realxtend/"));
     }
     
     function OpenWikiUrl() {
-        QDesktopServices.openUrl(new QUrl("http://wiki.realxtend.org/"));
+        if (server.IsRunning())
+            QDesktopServices.openUrl(new QUrl("http://wiki.realxtend.org/"));
+        else
+            ui.EmitOpenUrl(new QUrl("http://wiki.realxtend.org/"));
     }
 
     function OpenDoxygenUrl() {
-        QDesktopServices.openUrl(new QUrl("http://www.realxtend.org/doxygen/"));
+        if (server.IsRunning())
+            QDesktopServices.openUrl(new QUrl("http://www.realxtend.org/doxygen/"));
+        else
+            ui.EmitOpenUrl(new QUrl("http://www.realxtend.org/doxygen/"));
     }
 
     function OpenSceneWindow() {
@@ -204,7 +213,7 @@ if (!framework.IsHeadless())
     }
     
     function OpenWebScene() {
-        var webRef = QInputDialog.getText(ui.MainWindow(), "Import Scene", "Insert a txml or tbin scene url", QLineEdit.Normal, "http://", Qt.Dialog);
+        var webRef = QInputDialog.getText(ui.MainWindow(), "Import Web Scene", "Insert a txml or tbin scene url", QLineEdit.Normal, "http://", Qt.Dialog);
         if (webRef == null || webRef == "")
             return;
         var ext = webRef.substring(webRef.length-4);

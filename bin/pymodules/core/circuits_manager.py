@@ -84,6 +84,7 @@ class ComponentRunner:
         #XXX should this be using the __tick__ mechanism of circuits, and how?
         m = self.m
         m.tick()
+        m.flush()
 
     def send_event(self, event, channel):
         """simulate sync sending of events using the async lib.

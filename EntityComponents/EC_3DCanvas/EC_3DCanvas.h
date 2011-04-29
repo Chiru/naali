@@ -29,6 +29,7 @@ namespace Ogre
 }
 
 class QTimer;
+class EC_Mesh;
 
 /**
 
@@ -88,6 +89,8 @@ public slots:
     void SetSubmesh(uint submesh);
     void SetSubmeshes(const QList<uint> &submeshes);
 
+    void SetMesh(EC_Mesh *meshPtr_);
+
     QWidget *GetWidget() { return widget_; }
     const int GetRefreshRate() { return update_interval_msec_; }
     QList<uint> GetSubMeshes() { return submeshes_; }
@@ -108,6 +111,7 @@ private slots:
 
 private:
     QPointer<QWidget> widget_;
+    QPointer<EC_Mesh> meshPtr_;
     QList<uint> submeshes_;
     QTimer *refresh_timer_;
 

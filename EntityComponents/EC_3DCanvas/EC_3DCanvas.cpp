@@ -22,6 +22,7 @@
 EC_3DCanvas::EC_3DCanvas(IModule *module) :
     IComponent(module->GetFramework()),
     widget_(0),
+    meshPtr_(0),
     update_internals_(false),
     refresh_timer_(0),
     update_interval_msec_(0),
@@ -94,11 +95,19 @@ void EC_3DCanvas::Start()
 
     if(!mesh_hooked_)
     {
-        Scene::Entity* entity = GetParentEntity();
-        EC_Mesh* ec_mesh = entity->GetComponent<EC_Mesh>().get();
-        if (ec_mesh)
+        if(!meshPtr_)
         {
-            connect(ec_mesh, SIGNAL(MaterialChanged(uint, const QString)), SLOT(MeshMaterialsUpdated(uint, const QString)));
+            Scene::Entity* entity = GetParentEntity();
+            EC_Mesh* ec_mesh = entity->GetComponent<EC_Mesh>().get();
+            if (ec_mesh)
+            {
+                connect(ec_mesh, SIGNAL(MaterialChanged(uint, const QString)), SLOT(MeshMaterialsUpdated(uint, const QString)));
+                mesh_hooked_ = true;
+            }
+        }
+        else
+        {
+            connect(meshPtr_, SIGNAL(MaterialChanged(uint, const QString)), SLOT(MeshMaterialsUpdated(uint, const QString)));
             mesh_hooked_ = true;
         }
     }
@@ -239,7 +248,13 @@ void EC_3DCanvas::UpdateSubmeshes()
 
     int draw_type = -1;
     uint submesh_count = 0;
-    EC_Mesh* ec_mesh = entity->GetComponent<EC_Mesh>().get();
+    EC_Mesh* ec_mesh;
+
+    if(!meshPtr_)
+        ec_mesh = entity->GetComponent<EC_Mesh>().get();
+    else
+        ec_mesh = meshPtr_;
+
     EC_OgreCustomObject* ec_custom_object = entity->GetComponent<EC_OgreCustomObject>().get();
 
     if (ec_mesh)
@@ -315,8 +330,14 @@ void EC_3DCanvas::RestoreOriginalMeshMaterials()
         return;
 
     int draw_type = -1;
-    uint submesh_count = 0;
-    EC_Mesh* ec_mesh = entity->GetComponent<EC_Mesh>().get();
+    uint submesh_count = 0;    
+    EC_Mesh* ec_mesh;
+
+    if(!meshPtr_)
+        ec_mesh = entity->GetComponent<EC_Mesh>().get();
+    else
+        ec_mesh = meshPtr_;
+
     EC_OgreCustomObject* ec_custom_object = entity->GetComponent<EC_OgreCustomObject>().get();
 
     if (ec_mesh)
@@ -370,4 +391,9 @@ void EC_3DCanvas::ComponentRemoved(IComponent *component, AttributeChange::Type 
         SetWidget(0);
         submeshes_.clear();
     }
+}
+
+void EC_3DCanvas::SetMesh(EC_Mesh *meshPtr)
+{
+    meshPtr_ = meshPtr;
 }

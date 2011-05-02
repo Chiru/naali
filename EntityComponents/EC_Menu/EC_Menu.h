@@ -37,9 +37,8 @@
 <table class="header">
 <tr>
 <td>
-<h2>Template</h2>
-Empty template for EC components.
-This componen can be used as a template when creating new EC components.
+<h2>EC_Menu</h2>
+EC_Menu Component.
 
 Registered by RexLogic::RexLogicModule.
 

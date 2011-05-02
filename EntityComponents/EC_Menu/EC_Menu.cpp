@@ -68,7 +68,7 @@ EC_Menu::EC_Menu(IModule *module) :
     input_->SetTakeMouseEventsOverQt(true);
 
     // Listen on mouse input signals.
-    connect(input_.get(), SIGNAL(OnMouseEvent(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
+    connect(input_.get(), SIGNAL(MouseEventReceived(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
 
     //LogInfo("EC_Menu initialized");
 }

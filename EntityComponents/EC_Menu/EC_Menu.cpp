@@ -10,6 +10,7 @@
 
 #include "StableHeaders.h"
 #include "EC_Menu.h"
+#include "EC_3DCanvas.h"
 #include "IModule.h"
 #include "Entity.h"
 #include "LoggingFunctions.h"
@@ -39,17 +40,23 @@ DEFINE_POCO_LOGGING_FUNCTIONS("EC_Menu")
 EC_Menu::EC_Menu(IModule *module) :
     IComponent(module->GetFramework()),
     renderSubmeshIndex(this, "Render Submesh", 0),
-    interactive(this, "Interactive", false)
+    interactive(this, "Interactive", false),
+    ent_clicked_(false),
+    save_start_position_(true),
+    numberOfMenuelements_(10),
+    radius_(2.0)
 {
-
     renderTimer_ = new QTimer();
+    scrollerTimer_ = new QTimer();
     // Connect signals from IComponent
     connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenu()), Qt::UniqueConnection);
     connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
+    QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(kinecticScroller()));
 
     renderTimer_->setInterval(40);
     renderTimer_->start();
+
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
 
@@ -63,14 +70,13 @@ EC_Menu::EC_Menu(IModule *module) :
     // Listen on mouse input signals.
     connect(input_.get(), SIGNAL(OnMouseEvent(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
 
-    ent_clicked_ = false;
-    save_start_position_ = true;
     //LogInfo("EC_Menu initialized");
 }
 
 EC_Menu::~EC_Menu()
 {
     /// \todo Write your own EC_Component destructor here
+
     SAFE_DELETE_LATER(listview_);
 }
 
@@ -96,7 +102,7 @@ void EC_Menu::PrepareMenu()
 
     // Create EC_Mesh components.
     /// \TODO When creating menu, this should check number of menuelements and give that as a imput to CreateMeshComponents().
-    MeshList_ = CreateMeshComponents(10);
+    MeshList_ = CreateMeshComponents(numberOfMenuelements_);
     if (MeshList_.empty())
     {
         // Wait for EC_Mesh to be added.
@@ -105,16 +111,28 @@ void EC_Menu::PrepareMenu()
     }
     else
     {
-        int i;
         Vector3df position = Vector3df(0.0, 0.0, 0.0);
-        for(i=0;i<MeshList_.count();i++)
-        {
-            position.x=0 + 2 * cos( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
-            position.z=4 + 2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+        //initializes meshes in circle
 
-            //MeshList_.at(i)->SetName("MeshName");
+        float phi;
+        for(int i = 0; i < MeshList_.count(); i++)
+        {
+
+            //position.x=radius_ * Ogre::Math::Cos( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+            //position.z=radius_ * Ogre::Math::Sin( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+
+            phi = 2 * float(i) * Ogre::Math::PI / float(MeshList_.count()) + ( 0.5*Ogre::Math::PI);
+            phiList.append(phi);
+
+            position.x = radius_ * cos(phiList.at(i));
+            position.z = radius_ * sin(phiList.at(i));
+
+            //LogInfo("position.x = " + ToString(position.x) + " position.z = " + ToString(position.z));
+
+            //MeshList_.at(i)->SetName("meshname"+i);
             MeshList_.at(i)->setmeshRef("local://rect_plane.mesh");
             MeshList_.at(i)->SetAdjustPosition(position);
+
         }
     }
 
@@ -127,8 +145,8 @@ void EC_Menu::PrepareMenu()
     }
 
     // Get or create local EC_3DCanvas component
-    EC_3DCanvas *sceneCanvas = GetOrCreateSceneCanvasComponent();
-    if (!sceneCanvas)
+    CanvasList_ = CreateSceneCanvasComponents(numberOfMenuelements_);
+    if (CanvasList_.count()==0)
     {
         LogError("PrepareComponent: Could not get or create EC_3DCanvas component!");
         return;
@@ -139,20 +157,73 @@ void EC_Menu::PrepareMenu()
         view_->setSource(QUrl::fromLocalFile("./data/qmlfiles/testi.qml"));
         view_->setFixedSize(400, 400);*/
 
-        QStringList omaLista;
-        omaLista<<"list1"<<"list2"<<"list3"<<"list4"<<"list5"<<"list6"<<"list7"<<"list8"<<"list9"<<"list10"<<"list11"<<"list12";
-        omaLista.append("mylist");
+        QStringList TestList;
+        QStringList TestList1;
+        QStringList TestList2;
+        QStringList TestList3;
+        QStringList TestList4;
+        QStringList TestList5;
+        QStringList TestList6;
+        QStringList TestList7;
+        QStringList TestList8;
+        QStringList TestList9;
+        TestList<<"list1"<<"list2"<<"list3"<<"list4"<<"list5"<<"list6"<<"list7"<<"list8"<<"list9"<<"list10"<<"list11"<<"list12";
+        TestList1.append("1");
+        TestList2.append("2");
+        TestList3.append("3");
+        TestList4.append("4");
+        TestList5.append("5");
+        TestList6.append("6");
+        TestList7.append("7");
+        TestList8.append("8");
+        TestList9.append("9");
         listview_ = new QListView();
+
+        QListView *listview_1 = new QListView();
+        QListView *listview_2 = new QListView();
+        QListView *listview_3 = new QListView();
+        QListView *listview_4 = new QListView();
+        QListView *listview_5 = new QListView();
+        QListView *listview_6 = new QListView();
+        QListView *listview_7 = new QListView();
+        QListView *listview_8 = new QListView();
+        QListView *listview_9 = new QListView();
 
         //QWidget *testiw = new QWidget();
         //QLabel *testl = new QLabel("plaeh", testiw);
 
         //LogInfo("setModel");
-        listview_->setModel(new QStringListModel(omaLista));
+        listview_->setModel(new QStringListModel(TestList));
+
+        listview_1->setModel(new QStringListModel(TestList1));
+        listview_2->setModel(new QStringListModel(TestList2));
+        listview_3->setModel(new QStringListModel(TestList3));
+        listview_4->setModel(new QStringListModel(TestList4));
+        listview_5->setModel(new QStringListModel(TestList5));
+        listview_6->setModel(new QStringListModel(TestList6));
+        listview_7->setModel(new QStringListModel(TestList7));
+        listview_8->setModel(new QStringListModel(TestList8));
+        listview_9->setModel(new QStringListModel(TestList9));
+
         SetEntityPosition();
         //LogInfo("SetWidget");
-        GetOrCreateSceneCanvasComponent()->SetWidget(listview_);
 
+        for(int i=0; i<CanvasList_.count();i++)
+        {
+            CanvasList_.at(i)->SetMesh(MeshList_.at(i));
+            CanvasList_.at(i)->SetSubmesh(0);
+            //CanvasList_.at(i)->SetWidget(listview_);
+        }
+        CanvasList_.at(0)->SetWidget(listview_);
+        CanvasList_.at(1)->SetWidget(listview_1);
+        CanvasList_.at(2)->SetWidget(listview_2);
+        CanvasList_.at(3)->SetWidget(listview_3);
+        CanvasList_.at(4)->SetWidget(listview_4);
+        CanvasList_.at(5)->SetWidget(listview_5);
+        CanvasList_.at(6)->SetWidget(listview_6);
+        CanvasList_.at(7)->SetWidget(listview_7);
+        CanvasList_.at(8)->SetWidget(listview_8);
+        CanvasList_.at(9)->SetWidget(listview_9);
     }
 }
 
@@ -172,55 +243,126 @@ void EC_Menu::HandleMouseInputEvent(MouseEvent *mouse)
             startPosition_.setY(mouse->Y());
             save_start_position_ = false;
             ent_clicked_ = true;
+            speed_=0; //to stop scrolling when clicked
         }
     }
 
     if(ent_clicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
-        int i;
-        //LogInfo("relative movement: " + ToString(mouse->RelativeX()) +"," + ToString(mouse->RelativeY()));
-        //LogInfo("HandleMouseInputEvent");
-        if((mousePosition-startPosition_).manhattanLength()>15)
-        {
-            Vector3df position = Vector3df(0.0,0.0,0.0);
-            for(i=0;i<MeshList_.count();i++)
-            {
-                position.x=0 + 2 * cos( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x())/150));
-                position.z=4 + 2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() - ((mouse->X() + startPosition_.x())/150));
 
-                MeshList_.at(i)->SetAdjustPosition(position);
-            }
+        Vector3df position = Vector3df(0.0,0.0,0.0);
+        for(int i=0;i<MeshList_.count();i++)
+        {
+            //Sets new angle for components using polar coordinates.
+            float phi = phiList.at(i) - float((float)mouse->RelativeX()/250);
+
+            phiList.replace(i, phi);
+            position.x = radius_ * cos(phiList.at(i));
+            position.z = radius_ * sin(phiList.at(i));
+
+            /// \!TODO just a testhack.. need to be changed asap.
+            if(position.z>1.8)
+                selected_=i;
+
+            MeshList_.at(i)->SetAdjustPosition(position);
         }
+        //LogInfo("Selected planar: " + ToString(selected_));
+        speed_=mouse->RelativeX();
+
+
     }
-    if(mouse->eventType == MouseEvent::MouseReleased)
+    if(mouse->eventType == MouseEvent::MouseReleased && ent_clicked_)
     {
+
         ent_clicked_ = false;
         save_start_position_ = true;
-        //acceleratorVector_.setX(mouse->RelativeX());
+
         //acceleratorVector_.setY(mouse->RelativeY());
-        //kinecticScroller(acceleratorVector_);
+
+        if(speed_>3 || speed_<-3)
+        {
+            scrollerTimer_Interval=50;
+            //LogInfo(ToString(speed_));
+
+            scrollerTimer_->setInterval(scrollerTimer_Interval);
+            scrollerTimer_->start();
+        }
+        else
+        {
+            centerAfterRotation();
+            scrollerTimer_->stop();
+            speed_=0;
+        }
     }
-    /*void EC_Menu::mouseMoveEvent(QMouseEvent *event)
-    {
-        if (!(event->buttons() & Qt::LeftButton))
-            return;
-        if ((event->pos() - dragStartPosition).manhattanLength() < 30)
-            return;
 
-        //QDrag *drag = new QDrag(this);
-        //QMimeData *mimeData = new QMimeData;
-
-        //mimeData->setData(mimeType, data);
-        //drag->setMimeData(mimeData);
-
-        //Qt::DropAction dropAction = drag->exec(Qt::CopyAction | Qt::MoveAction);
-
-    }*/
 }
-void EC_Menu::kinecticScroller(QPoint a)
+
+void EC_Menu::centerAfterRotation()
+{
+    //Rotate scroller so, that selected component is in the front.
+    //Original positions. We want that planars are in those positions after scrolling is over.
+    /*
+        position.x=2 * cos( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+        position.z=2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+    */
+
+    /// \!TODO Make this work more smoothly
+    Vector3df tempPosition = Vector3df(0.0,0.0,0.0);
+
+    tempPosition.x = radius_ * cos( 0.5*Ogre::Math::PI );
+    tempPosition.z = radius_ * sin( 0.5*Ogre::Math::PI );
+    MeshList_.at(selected_)->SetAdjustPosition(tempPosition);
+
+    //LogInfo("Selected planar: " + ToString(selected_));
+    int j = selected_;
+    for (int i=1; i<MeshList_.count(); i++)
+    {
+        j++;
+
+        if(j==MeshList_.count())
+            j=0;
+
+        tempPosition.x = radius_ * cos( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+        tempPosition.z = radius_ * sin( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
+
+        MeshList_.at(j)->SetAdjustPosition(tempPosition);
+    }
+}
+
+void EC_Menu::kinecticScroller()
 {
 
-    LogInfo("kinectic");
+    if(speed_!=0)
+    {
+        Vector3df position = Vector3df(0.0,0.0,0.0);
+
+        for(int i=0;i<MeshList_.count();i++)
+        {
+            float phi = phiList.at(i) - speed_ * scrollerTimer_Interval/10000;
+            phiList.replace(i, phi);
+            position.x = radius_ * cos(phiList.at(i));
+            position.z = radius_ * sin(phiList.at(i));
+
+            MeshList_.at(i)->SetAdjustPosition(position);
+
+            /// \!TODO just a testhack.. need to be changed asap.
+            if(position.z>1.8)
+                selected_=i;
+        }
+        if(speed_<0)
+            speed_+=1.0;
+        else
+            speed_-=1.0;
+
+        //LogInfo("speed: " + ToString(speed_));
+    }
+
+    else
+    {
+        centerAfterRotation();
+        scrollerTimer_->stop();
+    }
+
 }
 
 void EC_Menu::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)
@@ -231,38 +373,17 @@ void EC_Menu::AttributeChanged(IAttribute *attribute, AttributeChange::Type chan
 void EC_Menu::Render()
 {
     //LogInfo("Trying to render");
-    //GetOrCreateSceneCanvasComponent()->Update();
-
 
     // Don't do anything if rendering is not enabled
     if (!ViewEnabled() || GetFramework()->IsHeadless())
         return;
 
-    // Get needed components, something is fatally wrong if these are not present but componentPrepared_ is true.
-    //EC_Mesh *mesh = GetOrCreateMeshComponent();
-    EC_3DCanvas *sceneCanvas = GetOrCreateSceneCanvasComponent();
-
-    // Validate submesh index from EC_Mesh
-    /*uint submeshIndex = (uint)getrenderSubmeshIndex();
-    if (submeshIndex >= mesh->GetNumSubMeshes())
+    for(int i = 0; i < CanvasList_.count(); i++)
     {
-        /// \note ResetSubmeshIndex() is called with a small delay here, or the ec editor UI wont react to it. Resetting the index back to 0 will call Render() again.
-        LogWarning("Render submesh index " + QString::number(submeshIndex).toStdString() + " is illegal, restoring default value.");
-        QTimer::singleShot(1, this, SLOT(ResetSubmeshIndex()));
-        return;
-    }*/
+        CanvasList_.at(i)->SetSubmesh(0);
+        CanvasList_.at(i)->Update();
+    }
 
-    // Set submesh to EC_3DCanvas if different from current
-    //if (!sceneCanvas->GetSubMeshes().contains(submeshIndex))
-
-    //sceneCanvas->SetSubmesh(1);
-    sceneCanvas->SetSubmesh(0);
-
-    // Set widget to EC_3DCanvas if different from current
-    if (sceneCanvas->GetWidget() != listview_)
-        sceneCanvas->SetWidget(listview_);
-
-    sceneCanvas->Update();
 }
 
 
@@ -320,10 +441,6 @@ void EC_Menu::SetEntityPosition()
         entityTransform.position=ownEntityPos;
         entityTransform.rotation=cameraTransform.rotation;
 
-        //hack for turning 3DCanvas face to camera.
-        //TODO Chance this to work properly.
-        //entityTransform.SetRot(entityTransform.rotation.x-90,entityTransform.rotation.y ,entityTransform.rotation.z+180);
-
         GetOrCreatePlaceableComponent()->settransform(entityTransform);
     }
     else
@@ -333,11 +450,10 @@ void EC_Menu::SetEntityPosition()
 
 QList<EC_Mesh *> EC_Menu::CreateMeshComponents(int NumberOfMenuObjects)
 {
-    int i;
 
     if (GetParentEntity())
     {
-        for(i=0; i<NumberOfMenuObjects; i++)
+        for(int i=0; i<NumberOfMenuObjects; i++)
         {
             IComponent *iComponent =  GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
@@ -349,14 +465,20 @@ QList<EC_Mesh *> EC_Menu::CreateMeshComponents(int NumberOfMenuObjects)
     return MeshList_;
 }
 
-EC_3DCanvas *EC_Menu::GetOrCreateSceneCanvasComponent()
+QList<EC_3DCanvas *>EC_Menu::CreateSceneCanvasComponents(int NumberOfMenuObjects)
 {
-    if (!GetParentEntity())
-        return 0;
+    //if (!GetParentEntity())
+        //return 0;
     //IComponent *iComponent = parent->GetOrCreateComponentRaw(EC_3DCanvas::TypeNameStatic(), AttributeChange::LocalOnly, false);
-    IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
-    EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
-    return canvas;
+    for(int i=0; i<NumberOfMenuObjects; i++)
+    {
+        IComponent *iComponent = GetParentEntity()->CreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
+        EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
+        CanvasList_.append(canvas);
+    }
+
+    /// \!TODO some error handling would be nice..
+    return CanvasList_;
 }
 
 EC_Placeable *EC_Menu::GetOrCreatePlaceableComponent()

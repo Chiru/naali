@@ -85,20 +85,28 @@ private:
     Foundation::RenderServiceInterface *renderer_;
 
     QList<EC_Mesh *> MeshList_;
+    QList<EC_3DCanvas *> CanvasList_;
+    QList<float> phiList;
     bool ent_clicked_;
     bool save_start_position_;
     QPoint startPosition_;
 
-    QPoint acceleratorVector_;
+    float speed_;
+    float radius_;
     InputContextPtr input_;
+    int selected_;
+    int numberOfMenuelements_;
 
     //QDeclarativeView *view_;
     void SetEntityPosition();
 
-    void kinecticScroller(QPoint);
+
+    //void kinecticScroller();
 
     //! Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
+    QTimer *scrollerTimer_;
+    int scrollerTimer_Interval;
 
 public:
     /// Destructor.
@@ -112,9 +120,15 @@ public:
     Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
+    //! Integer for menuelements.
+    //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
+    //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
+
 
 public slots:
     void Render();
+
+    void kinecticScroller();
 
     //! Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
@@ -137,13 +151,15 @@ private slots:
     QList<EC_Mesh*> CreateMeshComponents(int);
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
-    EC_3DCanvas *GetOrCreateSceneCanvasComponent();
+    QList<EC_3DCanvas *>CreateSceneCanvasComponents(int);
 
     EC_Placeable *GetOrCreatePlaceableComponent();
 
     //! Handles entity action WebViewControllerChanged
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
+
+    void centerAfterRotation();
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

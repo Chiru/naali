@@ -16,6 +16,7 @@
 #include "ModuleManager.h"
 #include "SceneAPI.h"
 #include "UiAPI.h"
+#include "AssetAPI.h"
 
 
 
@@ -48,6 +49,10 @@ void QMLUIModule::PostInitialize()
     window_ = new QMLWidget();
     QObject::connect(window_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
     QMLStatus(window_->status());
+
+
+
+
 }
 
 void QMLUIModule::Uninitialize()
@@ -93,6 +98,9 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
         QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
 
         QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
+
+        giveQMLUsingBattery(true);
+        giveQMLBatteryLevel("75");
     }
     else if (qmlstatus == QDeclarativeView::Null)
     {

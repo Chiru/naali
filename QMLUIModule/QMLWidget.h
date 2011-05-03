@@ -8,7 +8,7 @@
 #ifndef incl_LoginModule_QMLWidget_h
 #define incl_LoginModule_QMLWidget_h
 
-#include <QtDeclarative/QtDeclarative>
+#include <QtDeclarative/QDeclarativeView>
 
 
 class QMLWidget : public QDeclarativeView

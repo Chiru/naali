@@ -4,7 +4,6 @@
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
 #include "SceneManager.h"
-#include "MobilityModule.h"
 #include "UiProxyWidget.h"
 
 #include <QtDeclarative>

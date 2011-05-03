@@ -730,7 +730,7 @@ void SceneTreeWidget::NewEntity()
     AttributeChange::Type changeType;
 
     // Show a dialog so that user can choose if he wants to create local or synchronized entity.
-    QStringList types(QStringList() << tr("Synchronized") << tr("Local"));
+    QStringList types(QStringList() << tr("Synchronized") << tr("Local") << tr("Persistent"));
     bool ok;
     QString type = QInputDialog::getItem(NULL, tr("Choose Entity Type"), tr("Type:"), types, 0, false, &ok);
     if (!ok || type.isEmpty())
@@ -745,6 +745,11 @@ void SceneTreeWidget::NewEntity()
     {
         id = scene.lock()->GetNextFreeIdLocal();
         changeType = AttributeChange::LocalOnly;
+    }
+    else if(type == tr("Persistent"))
+    {
+        id = scene.lock()->GetNextFreeIdPersistent();
+        changeType = AttributeChange::Replicate;
     }
     else
     {

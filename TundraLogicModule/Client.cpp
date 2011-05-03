@@ -314,7 +314,24 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
 
             Scene::ScenePtr scene = framework_->Scene()->GetScene("TundraClient");
             if (scene)
+            {
+                const unsigned keep_ent_min = 0xe0000000, keep_ent_max = 0xefffffff;
+                std::list<Scene::EntityPtr> persist_ents;
+                Scene::SceneManager::EntityMap emap = scene->GetEntityMap();
+                Scene::SceneManager::EntityMap::const_iterator it = emap.begin();
+                while(it != emap.end())
+                {
+                    Scene::EntityPtr entity = it->second;
+                    if (entity->IsPersistent())
+                    {
+                        TundraLogicModule::LogInfo("Stashing persistent entity " + ToString(entity->GetId()));
+                        persist_ents.push_back(entity);
+                    }
+                }
                 scene->RemoveAllEntities(true, AttributeChange::LocalOnly);
+                for (Scene::EntityList::iterator it = persist_ents.begin(); it != persist_ents.end(); it++)
+                    emap[(*it)->GetId()] = *it;
+            }
         }
         reconnect_ = true;
     }

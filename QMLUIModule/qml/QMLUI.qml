@@ -143,11 +143,27 @@ Rectangle {
             textEdit.edtext = textEdit.edtext + text
     }
 
+    function loadtimer() {
+        if (loaderTimer.source == "")
+            loaderTimer.source = "./QMLTime.qml"
+        else
+            loaderTimer.source = ""
+    }
+
 
     MouseArea {
         anchors.fill: parent
 
         onClicked: { setFocus(false);}
+    }
+
+    Loader {
+        id: loaderTimer
+        source: ""
+        anchors.right: parent.right
+        anchors.top: parent.top
+        anchors.topMargin: 30
+        anchors.rightMargin: 10
     }
 
     QMLMenu {

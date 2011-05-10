@@ -2,12 +2,12 @@ import Qt 4.7
 Item {
     property alias owner: openMenu.parent
     signal onSetVisible
-    Text {
+    Image {
         id: openMenu
-        text: "Open Menu"
+        source: "./images/arrow.png"
         anchors.left: owner.left
-        y: 30
-        font.pointSize: 24; font.bold: true
+        y: 10
+
         opacity: 1
 
         MouseArea {
@@ -34,7 +34,7 @@ Item {
         states: State {
             name: "open"
             PropertyChanges {
-                target: openMenu; y: 180; text: "Close Menu"
+                target: openMenu; y: 180
             }
         }
 
@@ -43,21 +43,41 @@ Item {
             to: "open"
             reversible: true
             ParallelAnimation {
-                NumberAnimation { properties: "y"; duration: 500; /*easing.type: Easing.OutInBounce*/ }
+                NumberAnimation { properties: "y"; duration: 500; }
+                //NumberAnimation { properties: "rotation"; duration: 500; /*easing.type: Easing.OutInBounce*/ }
             }
         }
+    }
+
+    Rectangle {
+        color: "lightblue"
+        opacity: 0.5
+        id: rectBg
+        width: openMenu.width
+        property int height_: openMenu.y
+        height: height_
+        y: 0
+        //x: 0
+        border.color: "black"
+        border.width: 1
+        radius: 5
+        anchors.horizontalCenter: openMenu.horizontalCenter
+
+        //Behavior on height { SmoothedAnimation { duration: 500 } }
+
     }
 
 
 
     Text {
         id: oneMenu
-        text: "oneMenu"
+        text: "View"
         //anchors.left: owner.left
         y: -100
+        x: 10
         opacity: 0
         scale: 1
-        font.pointSize: 24; font.bold: true
+        font.pointSize: 24;
 
         states: State {
             name: "down"
@@ -97,7 +117,7 @@ Item {
             text: "Keyboard"
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 12; font.bold: true
+            font.pointSize: 12;
 
             MouseArea {
                 anchors.fill: parent
@@ -111,7 +131,7 @@ Item {
                 anchors.left: parent.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -126,7 +146,7 @@ Item {
                 anchors.left: kb1.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -141,7 +161,7 @@ Item {
                 anchors.left: kb2.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -156,7 +176,7 @@ Item {
                 anchors.left: pathview.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -171,7 +191,7 @@ Item {
                 anchors.left: battery.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -186,7 +206,7 @@ Item {
                 anchors.left: network.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -201,7 +221,7 @@ Item {
                 anchors.left: logo.right
                 anchors.leftMargin: 5
                 opacity: 1
-                font.pointSize: 12; font.bold: true
+                font.pointSize: 12;
 
                 MouseArea {
                     anchors.fill: parent
@@ -231,11 +251,12 @@ Item {
 
     Text {
         id: twoMenu
-        text: "twoMenu"
+        text: "Load"
         //anchors.left: owner.left
         y: -100
+        x: 10
         opacity: 0
-        font.pointSize: 24; font.bold: true
+        font.pointSize: 24;
 
         states: State {
             name: "down"
@@ -272,16 +293,16 @@ Item {
 
         Text {
             id: submenu2
-            text: "Load ListView"
+            text: "Timer"
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 18; font.bold: true
+            font.pointSize: 18;
 
-            /*MouseArea {
+            MouseArea {
                 id: submenuMA2
                 anchors.fill: parent
-                onClicked: loadxml()
-            }*/
+                onClicked: loadtimer()
+            }
 
             states: State {
                 name: "open"
@@ -304,11 +325,12 @@ Item {
 
     Text {
         id: threeMenu
-        text: "threeMenu"
+        text: "Exit"
         //anchors.left: owner.left
         y: -100
+        x: 10
         opacity: 0
-        font.pointSize: 24; font.bold: true
+        font.pointSize: 24;
 
         states: State {
             name: "down"
@@ -348,12 +370,12 @@ Item {
             text: "Exit"
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 18; font.bold: true
+            font.pointSize: 18;
 
             states: State {
                 name: "open"
                 PropertyChanges {
-                    target: submenu3; x: 200; opacity: 1
+                    target: submenu3; x: 130; opacity: 1
                 }
             }
 

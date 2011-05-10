@@ -119,6 +119,8 @@ AddEntityComponent(EntityComponents/EC_VideoSource EC_VideoSource)
 AddEntityComponent(EntityComponents/EC_Selected EC_Selected)
 AddEntityComponent(EntityComponents/EC_WebView EC_WebView)
 AddEntityComponent(EntityComponents/EC_Menu EC_Menu)
+AddEntityComponent(EntityComponents/EC_MenuContainer EC_MenuContainer)
+AddEntityComponent(EntityComponents/EC_MenuItem EC_MenuItem)
 AddEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
 
 # The following EC's are declared by AvatarModule. Optional.

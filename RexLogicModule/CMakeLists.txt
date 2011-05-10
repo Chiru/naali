@@ -76,6 +76,8 @@ LinkEntityComponent(EntityComponents/EC_PlanarMirror EC_PlanarMirror)
 LinkEntityComponent(EntityComponents/EC_ProximityTrigger EC_ProximityTrigger)
 LinkEntityComponent(EntityComponents/EC_WebView EC_WebView)
 LinkEntityComponent(EntityComponents/EC_Menu EC_Menu)
+LinkEntityComponent(EntityComponents/EC_MenuContainer EC_MenuContainer)
+LinkEntityComponent(EntityComponents/EC_MenuItem EC_MenuItem)
 LinkEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
 
 link_modules (Core Foundation Interfaces Scene OgreRenderingModule AssetModule AvatarModule RexCommon

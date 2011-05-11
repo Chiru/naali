@@ -52,7 +52,8 @@ EC_RigidBody::EC_RigidBody(IModule* module) :
     heightField_(0),
     disconnected_(false),
     owner_(checked_static_cast<PhysicsModule*>(module)),
-    cachedShapeType_(-1)
+    cachedShapeType_(-1),
+    got_authority_(false)
 {
     static AttributeMetadata shapemetadata;
     static bool metadataInitialized = false;
@@ -237,6 +238,10 @@ void EC_RigidBody::UpdateSignals()
     
     Scene::SceneManager* scene = parent->GetScene();
     world_ = owner_->GetPhysicsWorldForScene(scene);
+    if (world_->IsClient())
+        got_authority_ = false;
+    else
+        got_authority_ = true;
 }
 
 void EC_RigidBody::CheckForPlaceableAndTerrain()
@@ -648,12 +653,22 @@ void EC_RigidBody::GetAabbox(Vector3df &outAabbMin, Vector3df &outAabbMax)
     outAabbMax.set(aabbMax.x(), aabbMax.y(), aabbMax.z());
 }
 
-bool EC_RigidBody::HasAuthority() const
+void EC_RigidBody::RespectMyAuthority(bool yesno)
 {
-    if ((!world_) || ((world_->IsClient()) && (!GetParentEntity()->IsLocal())))
+    got_authority_ = yesno;
+}
+
+
+bool EC_RigidBody::HasAuthority()
+{
+    if (!world_)
         return false;
-    
-    return true;
+    else if (GetParentEntity()->IsLocal()) // preserve old default, could also require explicitness and drop this
+        return true;
+    else if (got_authority_)
+        return true;
+    else
+        return false;
 }
 
 void EC_RigidBody::TerrainUpdated(IAttribute* attribute)
@@ -724,8 +739,8 @@ void EC_RigidBody::CreateHeightFieldFromTerrain()
     if (!terrain)
         return;
     
-    int width = terrain->PatchWidth() * Environment::EC_Terrain::cPatchSize;
-    int height = terrain->PatchHeight() * Environment::EC_Terrain::cPatchSize;
+    uint width = terrain->PatchWidth() * Environment::EC_Terrain::cPatchSize;
+    uint height = terrain->PatchHeight() * Environment::EC_Terrain::cPatchSize;
     
     if ((!width) || (!height))
         return;

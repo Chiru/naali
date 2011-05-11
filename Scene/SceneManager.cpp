@@ -195,6 +195,30 @@ namespace Scene
         assert(!HasEntity(gid_local_));
         return gid_local_;
     }
+
+    entity_id_t SceneManager::GetNextFreeIdPersistent()
+    {
+        // Find the largest persistent entity ID in the scene.
+        entity_id_t largestEntityId = 0;
+        for(EntityMap::const_reverse_iterator iter = entities_.rbegin(); iter != entities_.rend(); ++iter)
+            if ((iter->first & PersistentEntity) != 0)
+            {
+                largestEntityId = iter->first;
+                break;
+            }
+
+        // Ensure that the entity id we give out is always larger than the largest entity id currently existing in the scene.
+        gid_persistent_ = std::max(gid_persistent_, (largestEntityId+1) | PersistentEntity);
+
+        while(entities_.find(gid_persistent_) != entities_.end())
+        {
+            gid_persistent_ = (gid_persistent_ + 1) | PersistentEntity;
+            if (gid_persistent_ == PersistentEntity) ++gid_persistent_;
+        }
+
+        assert(!HasEntity(gid_persistent_));
+        return gid_persistent_;
+    }
     
     void SceneManager::ChangeEntityId(entity_id_t old_id, entity_id_t new_id)
     {
@@ -243,7 +267,6 @@ namespace Scene
         EntityMap::iterator it = entities_.begin();
         while (it != entities_.end())
         {
-            // If entity somehow manages to live, at least it doesn't belong to the scene anymore
             if (send_events)
             {
                 EmitEntityRemoved(it->second.get(), change);
@@ -252,6 +275,8 @@ namespace Scene
                 Events::SceneEventData event_data(it->second->GetId());
                 framework_->GetEventManager()->SendEvent(cat_id, Events::EVENT_ENTITY_DELETED, &event_data);
             }
+
+            // If entity somehow manages to live, at least it doesn't belong to the scene anymore
             it->second->SetScene(0);
             ++it;
         }

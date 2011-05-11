@@ -82,7 +82,7 @@ namespace Scene
 
             To create an empty entity omit components parameter.
 
-            \param id Id of the new entity. Use GetNextFreeId() or GetNextFreeIdLocal()
+            \param id Id of the new entity. Use GetNextFreeId() or GetNextFreeIdLocal/Persistent()
             \param components Optional list of component names the entity will use. If omitted or the list is empty, creates an empty entity.
             \param change Notification/network replication mode
             \param defaultNetworkSync Whether components will have network sync. Default true
@@ -164,11 +164,14 @@ namespace Scene
         bool HasEntityId(uint id) const { return HasEntity((entity_id_t)id); }
         uint NextFreeId() { return (uint)GetNextFreeId(); }
         uint NextFreeIdLocal() { return (uint)GetNextFreeIdLocal(); }
+        uint NextFreeIdPersistent() { return (uint)GetNextFreeIdPersistent(); }
         
         Scene::Entity* CreateEntityRaw(uint id = 0, const QStringList &components = QStringList(), AttributeChange::Type change = AttributeChange::Default, bool defaultNetworkSync = true) 
             { return CreateEntity((entity_id_t)id, components, change, defaultNetworkSync).get(); }
         Scene::Entity* CreateEntityLocalRaw(const QStringList &components = QStringList(), AttributeChange::Type change = AttributeChange::LocalOnly, bool defaultNetworkSync = false)
             { return CreateEntity(NextFreeIdLocal(), components, change, defaultNetworkSync).get(); }
+        Scene::Entity* CreateEntityPersistentRaw(const QStringList &components = QStringList(), AttributeChange::Type change = AttributeChange::Default, bool defaultNetworkSync = true)
+            { return CreateEntity(NextFreeIdPersistent(), components, change, defaultNetworkSync).get(); }
 
         Scene::Entity* GetEntityRaw(uint id) { return GetEntity(id).get(); }
         QVariantList GetEntityIdsWithComponent(const QString &type_name) const;
@@ -237,6 +240,11 @@ namespace Scene
         /* As local entities will not be network synced, there should be no conflicts in assignment
          */
         entity_id_t GetNextFreeIdLocal();
+
+        //! Get the next free persistent entity id. Can be used with CreateEntity().
+        /* These will stay alive over server reconnects.
+         */
+        entity_id_t GetNextFreeIdPersistent();
 
         //! Return list of entities with a specific component present.
         //! \param type_name Type name of the component
@@ -468,6 +476,7 @@ namespace Scene
 
         uint gid_; //!< Current global id for networked entities
         uint gid_local_; //!< Current id for local entities.
+        uint gid_persistent_; //!< Current id for persistent entities.
         EntityMap entities_; //!< All entities in the scene.
         Foundation::Framework *framework_; //!< Parent framework.
         QString name_; //!< Name of the scene.

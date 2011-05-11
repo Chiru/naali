@@ -112,12 +112,19 @@ function ServerHandleUserConnected(connectionID, user) {
 function ServerHandleUserDisconnected(connectionID, user) {
     var avatarEntityName = "Avatar" + connectionID;
     var avatartEntity = scene.GetEntityByNameRaw(avatarEntityName);
+    var sticky = me.GetOrCreateComponentRaw("EC_DynamicComponent");
+    var av_transform = avatarEntity.placeable.transform;
     if (avatartEntity != null) {
         var entityID = avatartEntity.id;
         scene.RemoveEntityRaw(entityID);
 
         if (user != null) {
-        print("[Avatar Application] User " + user.GetProperty("username") + " disconnected, destroyed avatar entity.");
+            var username = user.GetProperty("username");
+            print("[Avatar Application] User " + username + " disconnected, destroyed avatar entity.");
+            if (!sticky.GetAttribute(username))
+                sticky.AddQVariantAttribute(username);
+            
+            sticky.SetAttribute(username, av_transform);
         }
     }
 }

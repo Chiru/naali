@@ -21,8 +21,10 @@ class QDomElement;
 
 namespace Scene
 {
-    //! Local entity ID flag (high bit)
-    static const entity_id_t LocalEntity = 0x80000000;
+    //! Local (not synced over network) entity ID flag (32nd bit)
+    static const entity_id_t LocalEntity = 1UL << 31;
+    //! Persistent (stays in scene over reconnect) entity ID flag (31st bit)
+    static const entity_id_t PersistentEntity = 1UL << 30;
 
     //! Represents an entity in the world.
     /*! An entity is just a collection of components, the components define what
@@ -412,6 +414,9 @@ namespace Scene
 
         //! Returns if this entity is local
         bool IsLocal() const { return (id_ & LocalEntity) != 0; }
+
+        //! Returns if this entity is local
+        bool IsPersistent() const { return (id_ & LocalEntity) != 0; }
 
         QString ToString() const;
     private:

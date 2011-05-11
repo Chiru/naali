@@ -189,7 +189,7 @@ public:
     //! Angular velocity
     Q_PROPERTY(Vector3df angularVelocity READ getangularVelocity WRITE setangularVelocity)
     DEFINE_QPROPERTY_ATTRIBUTE(Vector3df, angularVelocity)
-    
+
     virtual ~EC_RigidBody();
     
     //! Set component as serializable.
@@ -294,8 +294,11 @@ public slots:
 
     btRigidBody* GetRigidBody() const { return body_; }
     
-    //! Return whether have authority. On the client, returns false for non-local objects.
-    bool HasAuthority() const;
+    //! Return whether have authority.
+    bool HasAuthority();
+
+    //! (Dis)claim authority.
+    void RespectMyAuthority(bool);
     
 private slots:
     //! Called when the parent entity has been set.
@@ -398,6 +401,8 @@ private:
     
     //! Heightfield values, for the case the shape is a heightfield.
     std::vector<float> heightValues_;
+
+    bool got_authority_;
 };
 
 

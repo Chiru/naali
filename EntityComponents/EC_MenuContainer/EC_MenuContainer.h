@@ -89,7 +89,8 @@ private:
 
     QList<EC_MenuItem*> MenuItemList_;    
     QList<EC_MenuItem*> SubMenuItemList_;
-    //QList<float> phiList;
+    //QList<QList*> MenuData;
+
     bool ent_clicked_;
     bool subMenu_clicked_;
     bool subMenu_;
@@ -97,6 +98,7 @@ private:
 
     float speed_;
     float radius_;
+    float subMenuRadius_;
     InputContextPtr input_;
     int selected_;
     int numberOfMenuelements_;
@@ -128,6 +130,8 @@ public slots:
 
     //! Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
+
+    void SetMenuData(int, float);
 
 
 private slots:

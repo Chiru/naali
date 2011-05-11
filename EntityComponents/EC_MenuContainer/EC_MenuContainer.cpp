@@ -42,14 +42,16 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     subMenu_clicked_(false),
     subMenu_(false),
     subMenuIsScrolling(false),
-    numberOfMenuelements_(10),
+    numberOfMenuelements_(0),
     selected_(0),
-    radius_(2.0)
+    subMenuRadius_(0.0),
+    radius_(0.0)
 {
     scrollerTimer_ = new QTimer();
     renderTimer_ = new QTimer();
+
     // Connect signals from IComponent
-    connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuContainer()), Qt::UniqueConnection);
+    //connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuContainer()), Qt::UniqueConnection);
     connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(kinecticScroller()));
     QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
@@ -67,8 +69,6 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
 
     // Listen on mouse input signals.
     connect(input_.get(), SIGNAL(MouseEventReceived(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
-
-    //LogInfo("EC_Menu initialized");
 }
 
 EC_MenuContainer::~EC_MenuContainer()
@@ -80,18 +80,28 @@ EC_MenuContainer::~EC_MenuContainer()
         for(int i=0; i<MenuItemList_.count(); i++)
         {
             entity_id_t id = MenuItemList_.at(i)->GetParentEntity()->GetId();
-            sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
+            if(id)
+                sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
         }
         MenuItemList_.clear();
         for(int i=0; i<SubMenuItemList_.count(); i++)
         {
             entity_id_t id = SubMenuItemList_.at(i)->GetParentEntity()->GetId();
-            sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
+            if(id)
+                sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
         }
         SubMenuItemList_.clear();
     }
     SAFE_DELETE(scrollerTimer_);
     SAFE_DELETE(renderTimer_);
+}
+
+void EC_MenuContainer::SetMenuData(int menuElements, float radius)
+{
+    numberOfMenuelements_ = menuElements;
+    radius_=radius;
+    PrepareMenuContainer();
+    //MenuData=menuData;
 }
 
 void EC_MenuContainer::Render()
@@ -123,21 +133,28 @@ void EC_MenuContainer::PrepareMenuContainer()
     setMenuContainerPosition();
 
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
-    float phiVertical;
+    float phi;
 
     //Set menuItem positions in circle.
     for(int i = 0; i < numberOfMenuelements_; i++)
     {
         EC_MenuItem *menuItem = CreateMenuItem();
-        phiVertical = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
-        position.x = radius_ * cos(phiVertical);
-        position.z = radius_ * sin(phiVertical);
+        if(menuItem)
+        {
+            phi = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
+            position.x = radius_ * cos(phi);
+            position.z = radius_ * sin(phi);
 
-        menuItem->setphiVertical(phiVertical);
-        menuItem->SetMenuItemPosition(position);
-        MenuItemList_.append(menuItem);
+            //LogInfo(ToString(position));
+            //LogInfo(ToString(phi));
+            menuItem->setphi(phi);
+            menuItem->SetMenuItemPosition(position);
+            MenuItemList_.append(menuItem);
+        }
+        else
+            LogError("Error while creating menu items");
     }
-
+    //Render();
 }
 
 void EC_MenuContainer::setMenuContainerPosition()
@@ -236,16 +253,14 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         for(int i = 0; i<SubMenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
-            float phiHorizontal = SubMenuItemList_.at(i)->getphiHorizontal() + float((float)mouse->RelativeY()/250);
+            float phi = SubMenuItemList_.at(i)->getphi() + float((float)mouse->RelativeY()/250);
 
             //Next position for menu components.
-            position.y = radius_ * Ogre::Math::Cos(phiHorizontal);
-            position.z = radius_ * Ogre::Math::Sin(phiHorizontal);
-            SubMenuItemList_.at(i)->setphiHorizontal(phiHorizontal);
-
-            /// \TODO just a testhack.. need to be changed.
-            if(position.z>1.8)
-                selected_=i;
+            //In z-angle +radius_ is for moving submenu closer to camera. Otherwise it is inside main circle.
+            position.y = subMenuRadius_ * Ogre::Math::Cos(phi);
+            position.z = subMenuRadius_ * Ogre::Math::Sin(phi) + radius_;
+            SubMenuItemList_.at(i)->setphi(phi);
+            /// \todo add submenuselected attribute and set it here.
 
             SubMenuItemList_.at(i)->SetMenuItemPosition(position);
         }
@@ -260,16 +275,16 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         for(int i = 0; i<MenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
-            float phiVertical = MenuItemList_.at(i)->getphiVertical() - float((float)mouse->RelativeX()/250);
+            float phi = MenuItemList_.at(i)->getphi() - float((float)mouse->RelativeX()/250);
 
             //Next position for menu components.
-            position.x = radius_ * Ogre::Math::Cos(phiVertical);
-            position.z = radius_ * Ogre::Math::Sin(phiVertical);
-            MenuItemList_.at(i)->setphiVertical(phiVertical);
+            position.x = radius_ * Ogre::Math::Cos(phi);
+            position.z = radius_ * Ogre::Math::Sin(phi);
+            MenuItemList_.at(i)->setphi(phi);
 
-            /// \TODO just a testhack.. need to be changed.
-            if(position.z>1.8)
+            if(Ogre::Math::Sin(phi) > 0.950)
                 selected_=i;
+
 
             MenuItemList_.at(i)->SetMenuItemPosition(position);
         }
@@ -286,7 +301,8 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             if(result)
             {
                 renderTimer_->stop();
-                /// \TODO Here we need logic to open second sublayer of the menu
+                /// \TODO Lock submenu to one specific menuitem
+                /// \todo When scrolling change submenu to selected menuitem
                 if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity() && !subMenu_)
                 {
                     subMenu_ = true;
@@ -303,14 +319,14 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
                     for(int i=0; i<SubMenuItemList_.count(); i++)
                     {
-                        /// \todo delete submenu entities
+                        //delete submenu entities
                         entity_id_t id = SubMenuItemList_.value(i)->GetParentEntity()->GetId();
                         sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
                     }
                     SubMenuItemList_.clear();
                     LogInfo("Close submenu");
                 }
-                renderTimer_->start();
+                //renderTimer_->start();
             }
         }
 
@@ -346,12 +362,12 @@ void EC_MenuContainer::kinecticScroller()
         {
             for(int i=0; i<SubMenuItemList_.count(); i++)
             {
-                float phiHorizontal = SubMenuItemList_.at(i)->getphiHorizontal() - speed_ * scrollerTimer_Interval/10000;
+                float phi = SubMenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
 
-                position.y = radius_ * cos(phiHorizontal);
-                position.z = radius_ * sin(phiHorizontal);
+                position.y = subMenuRadius_ * cos(phi);
+                position.z = subMenuRadius_ * sin(phi) + radius_;
 
-                SubMenuItemList_.at(i)->setphiHorizontal(phiHorizontal);
+                SubMenuItemList_.at(i)->setphi(phi);
                 SubMenuItemList_.at(i)->SetMenuItemPosition(position);
 
                 //if(position.z>1.8)
@@ -362,18 +378,18 @@ void EC_MenuContainer::kinecticScroller()
         {
             for(int i=0; i<MenuItemList_.count(); i++)
             {
-                float phiVertical = MenuItemList_.at(i)->getphiVertical() - speed_ * scrollerTimer_Interval/10000;
+                float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
 
-                position.x = radius_ * cos(phiVertical);
-                position.z = radius_ * sin(phiVertical);
+                position.x = radius_ * cos(phi);
+                position.z = radius_ * sin(phi);
 
-                MenuItemList_.at(i)->setphiVertical(phiVertical);
+                MenuItemList_.at(i)->setphi(phi);
                 MenuItemList_.at(i)->SetMenuItemPosition(position);
 
-                /// \!TODO just a testhack.. need to be changed.
-                if(position.z>1.8)
+                if(Ogre::Math::Sin(phi) > 0.950)
                     selected_=i;
             }
+            //LogInfo("Selected planar: " + ToString(selected_));
         }
         if(speed_<0)
             speed_ += 1.0;
@@ -406,6 +422,7 @@ void EC_MenuContainer::createSubMenu(int menuIndex)
         return;
 
     int subItems = MenuItemList_.at(menuIndex)->GetNumberOfSubItems();
+    subMenuRadius_=radius_/2.0f;
 
     for(int i=0; i<subItems; i++)
     {
@@ -415,21 +432,22 @@ void EC_MenuContainer::createSubMenu(int menuIndex)
 
 
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
-    float phiHorizontal;
+    float phi;
 
     if(SubMenuItemList_.count()>0)
     {
         //Set menuItem positions in circle.
         for(int i = 0; i < SubMenuItemList_.count(); i++)
         {
-            phiHorizontal = 2 * float(i) * Ogre::Math::PI / float(SubMenuItemList_.count()) + ( Ogre::Math::PI);
-            position.y = radius_ * cos(phiHorizontal);
-            position.z = radius_ * sin(phiHorizontal)+0.25;
+            phi = 2 * float(i) * Ogre::Math::PI / float(SubMenuItemList_.count()) + ( Ogre::Math::PI);
+            position.y = subMenuRadius_ * cos(phi);
+            position.z = subMenuRadius_ * sin(phi) + radius_;
 
-            SubMenuItemList_.at(i)->setphiHorizontal(phiHorizontal);
+            SubMenuItemList_.at(i)->setphi(phi);
             SubMenuItemList_.at(i)->SetMenuItemPosition(position);
         }
     }
+    //Render();
 }
 
 EC_MenuItem* EC_MenuContainer::CreateMenuItem()

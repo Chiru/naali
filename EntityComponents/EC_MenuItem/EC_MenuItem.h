@@ -93,11 +93,15 @@ public:
     Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
-    Q_PROPERTY(float phiVertical READ getphiVertical WRITE setphiVertical);
+    Q_PROPERTY(float phi READ getphi WRITE setphi);
+    DEFINE_QPROPERTY_ATTRIBUTE(float, phi);
+
+    /*Q_PROPERTY(float phiVertical READ getphiVertical WRITE setphiVertical);
     DEFINE_QPROPERTY_ATTRIBUTE(float, phiVertical);
 
     Q_PROPERTY(float phiHorizontal READ getphiHorizontal WRITE setphiHorizontal);
     DEFINE_QPROPERTY_ATTRIBUTE(float, phiHorizontal);
+    */
 
 public slots:
     //! Setter for EC_Placeable parameters

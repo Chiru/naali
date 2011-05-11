@@ -292,6 +292,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         // Note: create scene & send info of login success only on first connection, not on reconnect
         if (!reconnect_)
         {
+            TundraLogicModule::LogInfo("Brand new connection (vs reconnect)");
             Scene::ScenePtr scene = framework_->Scene()->CreateScene("TundraClient", true);
             // Create physics world in client (non-authoritative) mode
             Physics::PhysicsModule *physics = framework_->GetModule<Physics::PhysicsModule>();
@@ -318,8 +319,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
                 const unsigned keep_ent_min = 0xe0000000, keep_ent_max = 0xefffffff;
                 std::list<Scene::EntityPtr> persist_ents;
                 Scene::SceneManager::EntityMap emap = scene->GetEntityMap();
-                Scene::SceneManager::EntityMap::const_iterator it = emap.begin();
-                while(it != emap.end())
+                for(Scene::SceneManager::EntityMap::const_iterator it = emap.begin(); it != emap.end(); ++it)
                 {
                     Scene::EntityPtr entity = it->second;
                     if (entity->IsPersistent())

@@ -20,7 +20,7 @@ function ServerHandleUserAboutToConnect(connectionID, user) {
 }
 
 function CreateAvatarEntity(username, avatarEntityName) {
-    var avatarEntity = scene.CreateEntityRaw(scene.NextFreeId(), ["EC_Script", "EC_Placeable", "EC_AnimationController"]);
+    var avatarEntity = scene.CreateEntityRaw(scene.NextFreeIdPersistent(), ["EC_Script", "EC_Placeable", "EC_AnimationController"]);
     avatarEntity.SetTemporary(true); // We never want to save the avatar entities to disk.
     avatarEntity.SetName(avatarEntityName);
     var script = avatarEntity.script;
@@ -38,7 +38,7 @@ function CreateAvatarEntity(username, avatarEntityName) {
 
     var avatartEntity = scene.GetEntityByNameRaw(avatarEntityName);
 
-    if (prev_transform) {
+    if (false && prev_transform) {
         transform = prev_transform;
     } else {
         // Set random starting position for avatar
@@ -84,7 +84,7 @@ function ServerHandleUserDisconnected(connectionID, user) {
         var entityID = avatarEntity.Id;
         if (user != null) {
             var username = user.GetProperty("username");
-            print("[Avatar Application] User " + username + " disconnected, destroyed avatar entity.");
+            print("[Avatar Application] User " + username + " disconnected, keeping avatar entity.");
             dc_set(me, username, av_transform);
         }
     }

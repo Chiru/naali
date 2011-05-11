@@ -177,6 +177,10 @@
 #include "EC_MenuItem.h"
 #endif
 
+#ifdef EC_QML_ENABLED
+#include "EC_QML.h"
+#endif
+
 #ifdef EC_LaserPointer_ENABLED
 #include "EC_LaserPointer.h"
 #endif
@@ -303,6 +307,10 @@ void RexLogicModule::Load()
 
 #ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_MenuItem);
+#endif
+
+#ifdef EC_QML_ENABLED
+    DECLARE_MODULE_EC(EC_QML);
 #endif
 
 #ifdef EC_LaserPointer_ENABLED

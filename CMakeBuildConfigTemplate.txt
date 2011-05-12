@@ -123,6 +123,11 @@ AddEntityComponent(EntityComponents/EC_MenuContainer EC_MenuContainer)
 AddEntityComponent(EntityComponents/EC_MenuItem EC_MenuItem)
 AddEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
 
+#This component requires QtDeclarative to be included
+if(DECLARATIVE_ENABLED)
+    AddEntityComponent(EntityComponents/EC_QML EC_QML)
+endif()
+
 # The following EC's are declared by AvatarModule. Optional.
 AddEntityComponent(EntityComponents/EC_HoveringWidget EC_HoveringWidget)
 

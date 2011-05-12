@@ -157,11 +157,11 @@ function ServerHandleUserConnected(connectionID, user) {
 
 function ServerHandleUserDisconnected(connectionID, user) {
     var avatarEntityName = "Avatar" + connectionID;
-    var avatartEntity = scene.GetEntityByNameRaw(avatarEntityName);
+    var avatarEntity = scene.GetEntityByNameRaw(avatarEntityName);
     var sticky = me.GetOrCreateComponentRaw("EC_DynamicComponent");
     var av_transform = avatarEntity.placeable.transform;
-    if (avatartEntity != null) {
-        var entityID = avatartEntity.id;
+    if (avatarEntity != null) {
+        var entityID = avatarEntity.id;
         scene.RemoveEntityRaw(entityID);
 
         if (user != null) {

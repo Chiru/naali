@@ -45,8 +45,7 @@ EC_MenuItem::EC_MenuItem(IModule *module) :
     IComponent(module->GetFramework()),
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
-    phiVertical(this, "PhiVertical", 0.0),
-    phiHorizontal(this, "PhiHorizontal", 0.0),
+    phi(this, "Phi", 0.0),
     ent_clicked_(false)
 {
     // Connect signals from IComponent
@@ -133,6 +132,7 @@ void EC_MenuItem::PrepareMenuItem()
         //Canvas_->SetMesh(MeshList_.at(i));
         Canvas_->SetSubmesh(0);
         Canvas_->SetWidget(listview_);
+        Canvas_->Update();
 
     }
 }

@@ -8,14 +8,14 @@
  *
  */
 
-#ifndef incl_EC_MenuItem_EC_MenuItem_h
-#define incl_EC_MenuItem_EC_MenuItem_h
+#ifndef incl_EC_QML_EC_QML_h
+#define incl_EC_QML_EC_QML_h
 
 #include "IComponent.h"
 #include "IAttribute.h"
 #include "Declare_EC.h"
 
-#include <Ogre.h>
+
 #include "SceneFwd.h"
 #include "InputFwd.h"
 
@@ -28,17 +28,17 @@
 #include <QList>
 #include <QPointer>
 
+#include "EC_3DCanvas.h"
+#include "EC_Mesh.h"
 #include "EC_Placeable.h"
-
-
-//#include <QtDeclarative/QtDeclarative>
+#include <QtDeclarative/QtDeclarative>
 
 /**
 <table class="header">
 <tr>
 <td>
-<h2>EC_MenuItem</h2>
-EC_MenuItem Component.
+<h2>EC_QML</h2>
+EC_QML Component.
 
 Registered by RexLogic::RexLogicModule.
 
@@ -67,23 +67,44 @@ class QListView;
 class QMouseEvent;
 class RaycastResult;
 
-class EC_MenuItem : public IComponent
+class EC_QML : public IComponent
 {
     Q_OBJECT
-    DECLARE_EC(EC_MenuItem);
+    DECLARE_EC(EC_QML);
 
 private:
     /// Constuctor.
     /// @param module Owner module.
-    explicit EC_MenuItem(IModule *module);
+    explicit EC_QML(IModule *module);
+    EC_Placeable *cameraPlaceable;
+    Vector3df ownEntityPos;
+    Vector3df distance;
     QPointer<QListView> listview_;
 
+    Foundation::RenderServiceInterface *renderer_;
+
+    //QList<EC_3DCanvas *> CanvasList_;
+    EC_3DCanvas* canvas_;
+    EC_Mesh *mesh_;
     bool ent_clicked_;
-    int selected_;
+    bool c1, c2, c3, qml_ready, camera_ready_;
+    Transform target_transform_;
+
+
+    InputContextPtr input_;
+
+    QDeclarativeView *qmlview_;
+    void SetEntityPosition();
+
+    //! Internal timer for updating inworld EC_3DCanvas.
+    QTimer *renderTimer_;
+
+    //! Internal timer for smooth camera movement.
+    QTimer *cameraMovementTimer_;
 
 public:
     /// Destructor.
-    ~EC_MenuItem();
+    ~EC_QML();
 
     //! Rendering target submesh index.
     Q_PROPERTY(int renderSubmeshIndex READ getrenderSubmeshIndex WRITE setrenderSubmeshIndex);
@@ -93,31 +114,28 @@ public:
     Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
-    Q_PROPERTY(float phi READ getphi WRITE setphi);
-    DEFINE_QPROPERTY_ATTRIBUTE(float, phi);
+    Q_PROPERTY(QString qmlsource READ getqmlsource WRITE setqmlsource);
+    DEFINE_QPROPERTY_ATTRIBUTE(QString, qmlsource);
 
-    /*Q_PROPERTY(float phiVertical READ getphiVertical WRITE setphiVertical);
-    DEFINE_QPROPERTY_ATTRIBUTE(float, phiVertical);
+    //! Integer for menuelements.
+    //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
+    //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
 
-    Q_PROPERTY(float phiHorizontal READ getphiHorizontal WRITE setphiHorizontal);
-    DEFINE_QPROPERTY_ATTRIBUTE(float, phiHorizontal);
-    */
 
 public slots:
-    //! Setter for EC_Placeable parameters
-    void SetMenuContainerEntity(ComponentPtr);
+    void Render();
 
-    //! Setter for entity position
-    void SetMenuItemPosition(Vector3df);
+    //! Handle MouseEvents
+    void HandleMouseInputEvent(MouseEvent *mouse);
 
-    int GetNumberOfSubItems();
+    void ServerHandleAttributeChange(IAttribute *attribute, AttributeChange::Type changeType);
 
-    void Update();
+
 
 
 private slots:
     //! Prepares everything related to the parent widget and other needed components.
-    void PrepareMenuItem();
+    void PrepareQML();
 
     //! Monitors this entitys added components.
     void ComponentAdded(IComponent *component, AttributeChange::Type change);
@@ -128,18 +146,21 @@ private slots:
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
-    //! Create as many EC_Mesh components to the parent entity as given in input.
-    EC_Mesh* GetOrCreateMeshComponent();
+    //! Create EC_Mesh component to the parent entity. Returns 0 if parent entity is not present
+    EC_Mesh* CreateMeshComponents();
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
-    EC_3DCanvas* GetOrCreateCanvasComponent();
+    EC_3DCanvas* CreateSceneCanvasComponents();
 
-    EC_Placeable* GetOrCreatePlaceableComponent();
+    EC_Placeable *GetOrCreatePlaceableComponent();
 
     //! Handles entity action WebViewControllerChanged
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
 
+    void QMLStatus(QDeclarativeView::Status);
+
+    void SmoothCameraMove();
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

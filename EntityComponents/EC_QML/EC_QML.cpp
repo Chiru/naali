@@ -42,21 +42,18 @@ EC_QML::EC_QML(IModule *module) :
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
     ent_clicked_(false),
-    save_start_position_(true),
-    numberOfMenuelements_(1),
-    radius_(2.0),
     qmlsource(this, "qmlsource", ""),
     qml_ready(false)
 {
     renderTimer_ = new QTimer();
     cameraMovementTimer_ = new QTimer();
+
     // Connect signals from IComponent
-    connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenu()), Qt::UniqueConnection);
+    connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareQML()), Qt::UniqueConnection);
     connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(ServerHandleAttributeChange(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
     QObject::connect(cameraMovementTimer_, SIGNAL(timeout()), this, SLOT(SmoothCameraMove()));
-
 
     cameraMovementTimer_->setInterval(40);
     camera_ready_ = true;
@@ -75,19 +72,17 @@ EC_QML::EC_QML(IModule *module) :
 
     // Listen on mouse input signals.
     connect(input_.get(), SIGNAL(MouseEventReceived(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
-
-
 }
 
 EC_QML::~EC_QML()
 {
     /// \todo Write your own EC_Component destructor here
-
     SAFE_DELETE_LATER(qmlview_);
+    SAFE_DELETE_LATER(renderTimer_);
+    SAFE_DELETE_LATER(cameraMovementTimer_);
 }
 
-
-void EC_QML::PrepareMenu()
+void EC_QML::PrepareQML()
 {
     // Don't do anything if rendering is not enabled
     if (!ViewEnabled() || GetFramework()->IsHeadless())
@@ -99,6 +94,9 @@ void EC_QML::PrepareMenu()
     if (parent)
     {
         connect(parent, SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
+        IComponent *iComponent =  GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+        mesh_ = dynamic_cast<EC_Mesh*>(iComponent);
+        canvas_ = dynamic_cast<EC_3DCanvas*>(iComponent);
     }
     else
     {
@@ -106,10 +104,9 @@ void EC_QML::PrepareMenu()
         return;
     }
 
-    // Create EC_Mesh components.
-    /// \TODO When creating menu, this should check number of menuelements and give that as a imput to CreateMeshComponents().
-    MeshList_ = CreateMeshComponents(numberOfMenuelements_);
-    if (MeshList_.empty())
+    // Create EC_Mesh component.
+    mesh_ = CreateMeshComponents();
+    if (!mesh_)
     {
         // Wait for EC_Mesh to be added.
         connect(parent, SIGNAL(ComponentAdded(IComponent*, AttributeChange::Type)), SLOT(ComponentAdded(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
@@ -117,29 +114,7 @@ void EC_QML::PrepareMenu()
     }
     else
     {
-        Vector3df position = Vector3df(0.0, 0.0, 0.0);
-        //initializes meshes in circle
-
-        float phi;
-        for(int i = 0; i < MeshList_.count(); i++)
-        {
-
-            //position.x=radius_ * Ogre::Math::Cos( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
-            //position.z=radius_ * Ogre::Math::Sin( i * radius_ * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
-
-            phi = 2 * float(i) * Ogre::Math::PI / float(MeshList_.count()) + ( 0.5*Ogre::Math::PI);
-            phiList.append(phi);
-
-            position.x = radius_ * cos(phiList.at(i));
-            position.z = radius_ * sin(phiList.at(i));
-
-            //LogInfo("position.x = " + ToString(position.x) + " position.z = " + ToString(position.z));
-
-            //MeshList_.at(i)->SetName("meshname"+i);
-            MeshList_.at(i)->setmeshRef("local://rect_plane.mesh");
-            MeshList_.at(i)->SetAdjustPosition(position);
-
-        }
+        mesh_->setmeshRef("local://rect_plane.mesh");
     }
 
     EC_Placeable *placeable = GetOrCreatePlaceableComponent();
@@ -151,8 +126,8 @@ void EC_QML::PrepareMenu()
     }
 
     // Get or create local EC_3DCanvas component
-    CanvasList_ = CreateSceneCanvasComponents(numberOfMenuelements_);
-    if (CanvasList_.count()==0)
+    canvas_ = CreateSceneCanvasComponents();
+    if (!canvas_)
     {
         LogError("PrepareComponent: Could not get or create EC_3DCanvas component!");
         return;
@@ -164,15 +139,9 @@ void EC_QML::PrepareMenu()
         QObject::connect(qmlview_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
         SetEntityPosition();
 
-        for(int i=0; i<CanvasList_.count();i++)
-        {
-            CanvasList_.at(i)->SetMesh(MeshList_.at(i));
-            CanvasList_.at(i)->SetSubmesh(0);
-            //CanvasList_.at(i)->SetWidget(listview_);
-        }
-        CanvasList_.at(0)->SetWidget(qmlview_);
-
-
+        canvas_->SetMesh(mesh_);
+        canvas_->SetSubmesh(0);
+        canvas_->SetWidget(qmlview_);
     }
 }
 
@@ -183,9 +152,16 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
     if (qmlstatus == QDeclarativeView::Ready)
     {
         LogInfo("QDeclarativeView has loaded and created the QML component.");
-        qml_ready = true;
 
-
+        if (qmlview_->size().width() > 0 && qmlview_->size().height() > 0)
+        {
+            qml_ready = true;
+        }
+        else
+        {
+            LogInfo("Unable to draw the QML component, because it has no size defined!");
+            qml_ready = false;
+        }
     }
 
     else if (qmlstatus == QDeclarativeView::Null)
@@ -196,6 +172,7 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
     else if (qmlstatus == QDeclarativeView::Loading)
     {
         LogInfo("QDeclarativeView is loading network data.");
+        qml_ready = false;
     }
     else if (qmlstatus == QDeclarativeView::Error)
     {
@@ -206,30 +183,15 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
     {
         qml_ready = false;
     }
-
-
 }
 
 
 void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
 {
-
-
-
-    QPoint mousePosition;
-    mousePosition.setX(mouse->X());
-    mousePosition.setY(mouse->Y());
-
-
     RaycastResult* result;
-
-
-
-
 
     if(mouse->IsLeftButtonDown())
     {
-
         if (renderer_)
         {
             result = renderer_->Raycast(mouse->X(), mouse->Y());
@@ -259,13 +221,10 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
 
                     dist.z=4;
                     dist.y=0;
-
                     dist = parentPlaceable->GetRelativeVector(dist);
-
 
                     Transform cameraTransform = cameraPlaceable->gettransform();
                     Transform viewTransform;
-
 
                     Transform entityTransform;
                     entityTransform = parentPlaceable->gettransform();
@@ -286,13 +245,9 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
                         c3 = false;
                         cameraMovementTimer_->start();
                     }
-
-
-
                 }
                 else
                     LogError("Couldn't get OgreCamera Placeable");
-
             }
         }
     }
@@ -358,9 +313,6 @@ void EC_QML::SmoothCameraMove()
             cameraPlaceable->settransform(cameraTransform);
             camera_ready_ = true;
         }
-
-
-
     }
     else
         cameraMovementTimer_->stop();
@@ -388,11 +340,8 @@ void EC_QML::Render()
 
     if (qml_ready)
     {
-        for(int i = 0; i < CanvasList_.count(); i++)
-        {
-            CanvasList_.at(i)->SetSubmesh(0);
-            CanvasList_.at(i)->Update();
-        }
+            canvas_->SetSubmesh(0);
+            canvas_->Update();
     }
 }
 
@@ -403,7 +352,6 @@ void EC_QML::ServerHandleAttributeChange(IAttribute *attribute, AttributeChange:
         qml_ready = false;
         qmlview_->setSource(QUrl(getqmlsource()));
     }
-
 }
 
 
@@ -468,46 +416,36 @@ void EC_QML::SetEntityPosition()
 
 }
 
-QList<EC_Mesh *> EC_QML::CreateMeshComponents(int NumberOfMenuObjects)
+EC_Mesh* EC_QML::CreateMeshComponents()
 {
 
     if (GetParentEntity())
     {
-        for(int i=0; i<NumberOfMenuObjects; i++)
-        {
             IComponent *iComponent =  GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
-            MeshList_.append(mesh);
-        }
+            return mesh;
+
     }
     else
-        LogError("Couldn't get parent entity, returning empty QList");
-    return MeshList_;
+        LogError("Couldn't get parent entity, returning 0");
+    return 0;
+
 }
 
-QList<EC_3DCanvas *>EC_QML::CreateSceneCanvasComponents(int NumberOfMenuObjects)
+EC_3DCanvas* EC_QML::CreateSceneCanvasComponents()
 {
-    //if (!GetParentEntity())
-        //return 0;
-    //IComponent *iComponent = parent->GetOrCreateComponentRaw(EC_3DCanvas::TypeNameStatic(), AttributeChange::LocalOnly, false);
-    for(int i=0; i<NumberOfMenuObjects; i++)
-    {
-        IComponent *iComponent = GetParentEntity()->CreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
-        EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
-        CanvasList_.append(canvas);
-    }
+    IComponent *iComponent = GetParentEntity()->CreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
+    EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
 
     /// \!TODO some error handling would be nice..
-    return CanvasList_;
+    return canvas;
 }
 
 EC_Placeable *EC_QML::GetOrCreatePlaceableComponent()
 {
     if (!GetParentEntity())
         return 0;
-    //IComponent *iComponent = parent->GetOrCreateComponentRaw(EC_3DCanvas::TypeNameStatic(), AttributeChange::LocalOnly, false);
     IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
-    //IComponent *iComponent = GetParentEntity()->CreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
     EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
     return placeable;
 }

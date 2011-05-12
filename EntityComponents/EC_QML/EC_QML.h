@@ -83,32 +83,24 @@ private:
 
     Foundation::RenderServiceInterface *renderer_;
 
-    QList<EC_Mesh *> MeshList_;
-    QList<EC_3DCanvas *> CanvasList_;
-    QList<float> phiList;
+    //QList<EC_3DCanvas *> CanvasList_;
+    EC_3DCanvas* canvas_;
+    EC_Mesh *mesh_;
     bool ent_clicked_;
-    bool save_start_position_;
     bool c1, c2, c3, qml_ready, camera_ready_;
-    QPoint startPosition_;
     Transform target_transform_;
-    QTimer *cameraMovementTimer_;
 
-    float speed_;
-    float radius_;
+
     InputContextPtr input_;
-    int selected_;
-    int numberOfMenuelements_;
 
     QDeclarativeView *qmlview_;
     void SetEntityPosition();
 
-
-    //void kinecticScroller();
-
     //! Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
-    QTimer *scrollerTimer_;
-    int scrollerTimer_Interval;
+
+    //! Internal timer for smooth camera movement.
+    QTimer *cameraMovementTimer_;
 
 public:
     /// Destructor.
@@ -133,8 +125,6 @@ public:
 public slots:
     void Render();
 
-    void kinecticScroller();
-
     //! Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
 
@@ -145,7 +135,7 @@ public slots:
 
 private slots:
     //! Prepares everything related to the parent widget and other needed components.
-    void PrepareMenu();
+    void PrepareQML();
 
     //! Monitors this entitys added components.
     void ComponentAdded(IComponent *component, AttributeChange::Type change);
@@ -156,19 +146,17 @@ private slots:
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
-    //! Create as many EC_Mesh components to the parent entity as given in input. Returns empty QList if parent entity is not present
-    QList<EC_Mesh*> CreateMeshComponents(int);
+    //! Create EC_Mesh component to the parent entity. Returns 0 if parent entity is not present
+    EC_Mesh* CreateMeshComponents();
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
-    QList<EC_3DCanvas *>CreateSceneCanvasComponents(int);
+    EC_3DCanvas* CreateSceneCanvasComponents();
 
     EC_Placeable *GetOrCreatePlaceableComponent();
 
     //! Handles entity action WebViewControllerChanged
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
-
-    void centerAfterRotation();
 
     void QMLStatus(QDeclarativeView::Status);
 

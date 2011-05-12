@@ -228,9 +228,9 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
                     Vector3df viewRotation = entityTransform.rotation;
 
                     //viewTransform.position = ownEntityPos;
-                    viewTransform.position.x = entityTransform.position.x + mesh_->GetAdjustPosition().x + dist.x;
-                    viewTransform.position.y = entityTransform.position.y + mesh_->GetAdjustPosition().y + dist.y;
-                    viewTransform.position.z = entityTransform.position.z + mesh_->GetAdjustPosition().z + dist.z;
+                    viewTransform.position.x = entityTransform.position.x + dist.x;
+                    viewTransform.position.y = entityTransform.position.y + dist.y;
+                    viewTransform.position.z = entityTransform.position.z + dist.z;
                     viewTransform.rotation = viewRotation;
                     target_transform_ = viewTransform;
 

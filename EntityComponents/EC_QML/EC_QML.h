@@ -83,7 +83,6 @@ private:
 
     Foundation::RenderServiceInterface *renderer_;
 
-    //QList<EC_3DCanvas *> CanvasList_;
     EC_3DCanvas* canvas_;
     EC_Mesh *mesh_;
     bool ent_clicked_;
@@ -130,9 +129,6 @@ public slots:
 
     void ServerHandleAttributeChange(IAttribute *attribute, AttributeChange::Type changeType);
 
-
-
-
 private slots:
     //! Prepares everything related to the parent widget and other needed components.
     void PrepareQML();
@@ -147,10 +143,10 @@ private slots:
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
     //! Create EC_Mesh component to the parent entity. Returns 0 if parent entity is not present
-    EC_Mesh* CreateMeshComponents();
+    EC_Mesh* GetOrCreateMeshComponent();
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
-    EC_3DCanvas* CreateSceneCanvasComponents();
+    EC_3DCanvas* GetOrCreateSceneCanvasComponent();
 
     EC_Placeable *GetOrCreatePlaceableComponent();
 

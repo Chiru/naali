@@ -94,9 +94,6 @@ void EC_QML::PrepareQML()
     if (parent)
     {
         connect(parent, SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
-        IComponent *iComponent =  GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
-        mesh_ = dynamic_cast<EC_Mesh*>(iComponent);
-        canvas_ = dynamic_cast<EC_3DCanvas*>(iComponent);
     }
     else
     {
@@ -105,7 +102,7 @@ void EC_QML::PrepareQML()
     }
 
     // Create EC_Mesh component.
-    mesh_ = CreateMeshComponents();
+    mesh_ = GetOrCreateMeshComponent();
     if (!mesh_)
     {
         // Wait for EC_Mesh to be added.
@@ -126,7 +123,7 @@ void EC_QML::PrepareQML()
     }
 
     // Get or create local EC_3DCanvas component
-    canvas_ = CreateSceneCanvasComponents();
+    canvas_ = GetOrCreateSceneCanvasComponent();
     if (!canvas_)
     {
         LogError("PrepareComponent: Could not get or create EC_3DCanvas component!");
@@ -231,9 +228,9 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
                     Vector3df viewRotation = entityTransform.rotation;
 
                     //viewTransform.position = ownEntityPos;
-                    viewTransform.position.x = ownEntityPos.x+dist.x;
-                    viewTransform.position.y = ownEntityPos.y+dist.y;
-                    viewTransform.position.z = ownEntityPos.z+dist.z;
+                    viewTransform.position.x = entityTransform.position.x + dist.x;
+                    viewTransform.position.y = entityTransform.position.y + dist.y;
+                    viewTransform.position.z = entityTransform.position.z + dist.z;
                     viewTransform.rotation = viewRotation;
                     target_transform_ = viewTransform;
 
@@ -416,12 +413,12 @@ void EC_QML::SetEntityPosition()
 
 }
 
-EC_Mesh* EC_QML::CreateMeshComponents()
+EC_Mesh* EC_QML::GetOrCreateMeshComponent()
 {
 
     if (GetParentEntity())
     {
-            IComponent *iComponent =  GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+            IComponent *iComponent =  GetParentEntity()->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
             EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
             return mesh;
 
@@ -432,9 +429,9 @@ EC_Mesh* EC_QML::CreateMeshComponents()
 
 }
 
-EC_3DCanvas* EC_QML::CreateSceneCanvasComponents()
+EC_3DCanvas* EC_QML::GetOrCreateSceneCanvasComponent()
 {
-    IComponent *iComponent = GetParentEntity()->CreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
+    IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
     EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
 
     /// \!TODO some error handling would be nice..

@@ -104,7 +104,11 @@ else
     cd generator
     qmake
     make -j $nprocs
-    ./generator --include-paths=/usr/include/qt4
+    if [ ! -z $QTDIR ]; then
+        ./generator --include-paths=$QTDIR/include
+    else
+        ./generator --include-paths=/usr/include/qt4
+    fi
     cd ..
 
     cd qtbindings

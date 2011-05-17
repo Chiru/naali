@@ -85,6 +85,13 @@ namespace OgreRenderer
             \return Raycast result structure
         */
         virtual RaycastResult* Raycast(int x, int y);
+        
+        //! Do raycast in to the world from a scene co-ordinate to another.
+        /*! \param pos The initial point for the ray
+            \param dir The direction of the ray, automatically normalized
+            \return Raycast result structure
+        */
+        virtual RaycastResult* Raycast3df(Vector3df pos, Vector3df dir);
 
         //! Returns window width, or 0 if no render window
         virtual int GetWindowWidth() const;
@@ -366,6 +373,9 @@ namespace OgreRenderer
         tick_t timerFrequency;
         /// Specifies the target fps to run the system at. By default 60. Setting this to zero means no limit.
         float targetFpsLimit;
+        
+        /// Do the actual raycast
+        virtual bool PerformRaycast(Ogre::Ray &ray, RaycastResult &result);
 
         bool render_enabled_;
     };

@@ -17,6 +17,9 @@
 #include <QWidget>
 #include <QPainter>
 
+#include "LoggingFunctions.h"
+DEFINE_POCO_LOGGING_FUNCTIONS("EC_3DCanvas")
+
 #include <QDebug>
 
 EC_3DCanvas::EC_3DCanvas(IModule *module) :
@@ -29,6 +32,9 @@ EC_3DCanvas::EC_3DCanvas(IModule *module) :
     material_name_(""),
     texture_name_("")
 {
+    if (framework_->IsHeadless())
+        return;
+
     boost::shared_ptr<OgreRenderer::Renderer> renderer = module->GetFramework()->GetServiceManager()->
         GetService<OgreRenderer::Renderer>(Service::ST_Renderer).lock();
     mesh_hooked_ = false;
@@ -55,6 +61,9 @@ EC_3DCanvas::EC_3DCanvas(IModule *module) :
 
 EC_3DCanvas::~EC_3DCanvas()
 {
+    if (framework_->IsHeadless())
+        return;
+
     submeshes_.clear();
     widget_ = 0;
 
@@ -83,6 +92,9 @@ EC_3DCanvas::~EC_3DCanvas()
 
 void EC_3DCanvas::Start()
 {
+    if (framework_->IsHeadless())
+        return;
+
     update_internals_ = true;
     if (update_interval_msec_ != 0 && refresh_timer_)
     {
@@ -115,6 +127,9 @@ void EC_3DCanvas::Start()
 
 void EC_3DCanvas::MeshMaterialsUpdated(uint index, const QString &material_name)
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (material_name_.empty())
         return;
     if(material_name.compare(QString(material_name_.c_str())) != 0 )
@@ -132,6 +147,9 @@ void EC_3DCanvas::MeshMaterialsUpdated(uint index, const QString &material_name)
 
 void EC_3DCanvas::Stop()
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (refresh_timer_)
         if (refresh_timer_->isActive())
             refresh_timer_->stop();
@@ -139,6 +157,9 @@ void EC_3DCanvas::Stop()
 
 void EC_3DCanvas::Setup(QWidget *widget, const QList<uint> &submeshes, int refresh_per_second)
 {
+    if (framework_->IsHeadless())
+        return;
+
     SetWidget(widget);
     SetSubmeshes(submeshes);
     SetRefreshRate(refresh_per_second);
@@ -146,6 +167,9 @@ void EC_3DCanvas::Setup(QWidget *widget, const QList<uint> &submeshes, int refre
 
 void EC_3DCanvas::SetWidget(QWidget *widget)
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (widget_ != widget)
     {
         widget_ = widget;
@@ -156,6 +180,9 @@ void EC_3DCanvas::SetWidget(QWidget *widget)
 
 void EC_3DCanvas::SetRefreshRate(int refresh_per_second)
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (refresh_per_second < 0)
         refresh_per_second = 0;
 
@@ -180,6 +207,9 @@ void EC_3DCanvas::SetRefreshRate(int refresh_per_second)
 
 void EC_3DCanvas::SetSubmesh(uint submesh)
 {
+    if (framework_->IsHeadless())
+        return;
+
     submeshes_.clear();
     submeshes_.append(submesh);
     update_internals_ = true;
@@ -187,6 +217,9 @@ void EC_3DCanvas::SetSubmesh(uint submesh)
 
 void EC_3DCanvas::SetSubmeshes(const QList<uint> &submeshes)
 {
+    if (framework_->IsHeadless())
+        return;
+
     submeshes_.clear();
     submeshes_ = submeshes;
     update_internals_ = true;
@@ -194,6 +227,9 @@ void EC_3DCanvas::SetSubmeshes(const QList<uint> &submeshes)
 
 void EC_3DCanvas::WidgetDestroyed(QObject *obj)
 {
+    if (framework_->IsHeadless())
+        return;
+
     widget_ = 0;
     Stop();
     RestoreOriginalMeshMaterials();
@@ -202,45 +238,69 @@ void EC_3DCanvas::WidgetDestroyed(QObject *obj)
 
 void EC_3DCanvas::Update()
 {
-    if (!widget_ || texture_name_.empty())
+    if (framework_->IsHeadless())
         return;
 
-    Ogre::TexturePtr texture = Ogre::TextureManager::getSingleton().getByName(texture_name_);
-    if (texture.isNull())
+    if (!widget_.data() || texture_name_.empty())
+        return;
+    if (widget_->width() <= 0 || widget_->height() <= 0)
         return;
 
-    if (buffer_.size() != widget_->size())
-        buffer_ = QImage(widget_->size(), QImage::Format_ARGB32_Premultiplied);
-    QPainter painter(&buffer_);
-    widget_->render(&painter);
-
-    // Set texture to material
-    if (update_internals_ && !material_name_.empty())
+    try
     {
-        Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(material_name_);
-        if (material.isNull())
+        Ogre::TexturePtr texture = Ogre::TextureManager::getSingleton().getByName(texture_name_);
+        if (texture.isNull())
             return;
-        OgreRenderer::SetTextureUnitOnMaterial(material, texture_name_);
-        UpdateSubmeshes();
-        update_internals_ = false;
-    }
 
-    if ((int)texture->getWidth() != buffer_.width() || (int)texture->getHeight() != buffer_.height())
+        if (buffer_.size() != widget_->size())
+            buffer_ = QImage(widget_->size(), QImage::Format_ARGB32_Premultiplied);
+        if (buffer_.width() <= 0 || buffer_.height() <= 0)
+            return;
+
+        QPainter painter(&buffer_);
+        widget_->render(&painter);
+
+        // Set texture to material
+        if (update_internals_ && !material_name_.empty())
+        {
+            Ogre::MaterialPtr material = Ogre::MaterialManager::getSingleton().getByName(material_name_);
+            if (material.isNull())
+                return;
+            OgreRenderer::SetTextureUnitOnMaterial(material, texture_name_);
+            UpdateSubmeshes();
+            update_internals_ = false;
+        }
+
+        if ((int)texture->getWidth() != buffer_.width() || (int)texture->getHeight() != buffer_.height())
+        {
+            texture->freeInternalResources();
+            texture->setWidth(buffer_.width());
+            texture->setHeight(buffer_.height());
+            texture->createInternalResources();
+        }
+
+        if (!texture->getBuffer().isNull())
+        {
+            Ogre::Box update_box(0,0, buffer_.width(), buffer_.height());
+            Ogre::PixelBox pixel_box(update_box, Ogre::PF_A8R8G8B8, (void*)buffer_.bits());
+            texture->getBuffer()->blitFromMemory(pixel_box, update_box);
+        }
+    }
+    catch (Ogre::Exception &e) // inherits std::exception
     {
-        texture->freeInternalResources();
-        texture->setWidth(buffer_.width());
-        texture->setHeight(buffer_.height());
-        texture->createInternalResources();
+        LogError("Exception occurred while blitting texture data from memory: " + std::string(e.what()));
     }
-
-    Ogre::Box update_box(0,0, buffer_.width(), buffer_.height());
-    Ogre::PixelBox pixel_box(update_box, Ogre::PF_A8R8G8B8, (void*)buffer_.bits());
-    if (!texture->getBuffer().isNull())
-        texture->getBuffer()->blitFromMemory(pixel_box, update_box);
+    catch (...)
+    {
+        LogError("Unknown exception occurred while blitting texture data from memory.");
+    }
 }
 
 void EC_3DCanvas::UpdateSubmeshes()
 {
+    if (framework_->IsHeadless())
+        return;
+
     Scene::Entity* entity = GetParentEntity();
     
     if (material_name_.empty() || !entity)
@@ -318,6 +378,9 @@ void EC_3DCanvas::UpdateSubmeshes()
 
 void EC_3DCanvas::RestoreOriginalMeshMaterials()
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (restore_materials_.empty())
     {
         update_internals_ = true;
@@ -378,12 +441,18 @@ void EC_3DCanvas::RestoreOriginalMeshMaterials()
 
 void EC_3DCanvas::ParentEntitySet()
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (GetParentEntity())
         connect(GetParentEntity(), SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
 }
 
 void EC_3DCanvas::ComponentRemoved(IComponent *component, AttributeChange::Type change)
 {
+    if (framework_->IsHeadless())
+        return;
+
     if (component == this)
     {
         Stop();

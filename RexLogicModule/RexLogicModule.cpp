@@ -226,7 +226,7 @@ void RexLogicModule::Load()
     DECLARE_MODULE_EC(EC_FreeData);
 //#endif
 
-    // External EC's
+// External EC's
 #ifdef EC_Highlight_ENABLED
     DECLARE_MODULE_EC(EC_Highlight);
 #endif
@@ -263,7 +263,7 @@ void RexLogicModule::Load()
 //#ifdef EC_Name_ENABLED
     DECLARE_MODULE_EC(EC_Name);
 //#endif
-#ifdef EC_Movable_ENABLED
+#ifdef EC_ParticleSystem_ENABLED
     DECLARE_MODULE_EC(EC_ParticleSystem);
 #endif
 #ifdef EC_SoundListener_ENABLED
@@ -281,30 +281,24 @@ void RexLogicModule::Load()
 #ifdef EC_Gizmo_ENABLED
     DECLARE_MODULE_EC(EC_Gizmo);
 #endif
-
 #ifdef EC_PlanarMirror_ENABLED
     DECLARE_MODULE_EC(EC_PlanarMirror);
 #endif
 #ifdef EC_Selected_ENABLED
     DECLARE_MODULE_EC(EC_Selected);
 #endif
-
 #ifdef EC_WebView_ENABLED
     DECLARE_MODULE_EC(EC_WebView);
 #endif
-
 #ifdef EC_ProximityTrigger_ENABLED
     DECLARE_MODULE_EC(EC_ProximityTrigger);
 #endif
-
 #ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_Menu);
 #endif
-
 #ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_MenuContainer);
 #endif
-
 #ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_MenuItem);
 #endif
@@ -312,7 +306,6 @@ void RexLogicModule::Load()
 #ifdef EC_QML_ENABLED
     DECLARE_MODULE_EC(EC_QML);
 #endif
-
 #ifdef EC_LaserPointer_ENABLED
     DECLARE_MODULE_EC(EC_LaserPointer);
 #endif

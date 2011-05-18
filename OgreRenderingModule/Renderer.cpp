@@ -909,11 +909,31 @@ namespace OgreRenderer
         return t;
     }
 
+    RaycastResult* Renderer::Raycast3df(Vector3df pos, Vector3df dir)
+    {
+        static RaycastResult result;
+
+        result.entity_ = 0;
+        if (!initialized_)
+            return &result;
+        if (!renderWindow)
+            return &result; /// \todo Ray from co-ordinate to another can be done in headless?
+
+        Ogre::Vector3 normalisedDir = ToOgreVector3(dir -pos);
+        normalisedDir.normalise();
+
+        Ogre::Ray ray(ToOgreVector3(pos), normalisedDir);
+
+        PerformRaycast(ray, result);
+
+        return &result;
+    }
+
     RaycastResult* Renderer::Raycast(int x, int y)
     {
         static RaycastResult result;
-        
-        result.entity_ = 0; 
+
+        result.entity_ = 0;
         if (!initialized_)
             return &result;
         if (!renderWindow)
@@ -923,7 +943,16 @@ namespace OgreRenderer
         float screeny = y / (float)renderWindow->OgreRenderWindow()->getHeight();
 
         Ogre::Ray ray = camera_->getCameraToViewportRay(screenx, screeny);
+
+        PerformRaycast(ray, result);
+
+        return &result;
+    }
+
+    bool Renderer::PerformRaycast(Ogre::Ray &ray, RaycastResult &result)
+    {
         ray_query_->setRay(ray);
+
         Ogre::RaySceneQueryResult &results = ray_query_->execute();
 
         // The minimum priority to use if we're picking an Entity that doesn't have the component that contains priority.
@@ -940,11 +969,11 @@ namespace OgreRenderer
             //! \todo Do we want results for invisible entities?
             if (!entry.movable->isVisible())
                 continue;
-            
+
             Ogre::Any any = entry.movable->getUserAny();
             if (any.isEmpty())
                 continue;
-            
+
             Scene::Entity *entity = 0;
             try
             {
@@ -992,7 +1021,7 @@ namespace OgreRenderer
             //! \todo Do we want results for invisible entities?
             if (!entry.movable->isVisible())
                 continue;
-            
+
             Ogre::Any any = entry.movable->getUserAny();
             if (any.isEmpty())
                 continue;
@@ -1046,7 +1075,7 @@ namespace OgreRenderer
                                 closest_distance = hit.second;
                                 closest_priority = current_priority;
 
-                                Ogre::Vector2 uv = FindUVs(ray, hit.second, vertices, texcoords, indices, j); 
+                                Ogre::Vector2 uv = FindUVs(ray, hit.second, vertices, texcoords, indices, j);
                                 Ogre::Vector3 point = ray.getPoint(closest_distance);
 
                                 result.entity_ = entity;
@@ -1081,8 +1110,7 @@ namespace OgreRenderer
                 }
             }
         }
-
-        return &result;
+        return true;
     }
     
     //qt wrapper / upcoming replacement for the one above

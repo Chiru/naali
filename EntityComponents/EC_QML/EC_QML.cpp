@@ -15,14 +15,13 @@
 #include "Entity.h"
 #include "LoggingFunctions.h"
 
-#include <Ogre.h>
 #include <EC_OgreCamera.h>
 #include "RenderServiceInterface.h"
 
 #include <QStringListModel>
 #include <QListView>
-//#include <QMouseEvent>
-//#include "MouseEvent.h"
+#include <QMouseEvent>
+#include <QEvent>
 #include "InputAPI.h"
 
 #include "SceneInteract.h"
@@ -187,7 +186,7 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
 {
     RaycastResult* result;
 
-    if(mouse->IsLeftButtonDown())
+    if(mouse->eventType == MouseEvent::MousePressed && mouse->button == MouseEvent::LeftButton)
     {
         if (renderer_)
         {
@@ -195,60 +194,138 @@ void EC_QML::HandleMouseInputEvent(MouseEvent *mouse)
 
             if(result->entity_==GetParentEntity())
             {
-                ent_clicked_ = true;
-            }
-            else
-            {
-                ent_clicked_ = false;
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
+
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseButtonPress, qmlview_->mapFromScene(mousepoint), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
             }
         }
     }
-    if(mouse->eventType == MouseEvent::MouseReleased && ent_clicked_)
+
+    if(mouse->eventType == MouseEvent::MouseReleased && mouse->button == MouseEvent::LeftButton)
     {
-        ent_clicked_ = false;
         if (renderer_)
         {
             result = renderer_->Raycast(mouse->X(), mouse->Y());
+
             if(result->entity_==GetParentEntity())
             {
-                if(cameraPlaceable)
-                {
-                    Vector3df dist;
-                    EC_Placeable *parentPlaceable = checked_static_cast<EC_Placeable*> (GetParentEntity()->GetComponent("EC_Placeable").get());
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
 
-                    dist.z=4;
-                    dist.y=0;
-                    dist = parentPlaceable->GetRelativeVector(dist);
-
-                    Transform cameraTransform = cameraPlaceable->gettransform();
-                    Transform viewTransform;
-
-                    Transform entityTransform;
-                    entityTransform = parentPlaceable->gettransform();
-                    Vector3df viewRotation = entityTransform.rotation;
-
-                    //viewTransform.position = ownEntityPos;
-                    viewTransform.position.x = entityTransform.position.x + dist.x;
-                    viewTransform.position.y = entityTransform.position.y + dist.y;
-                    viewTransform.position.z = entityTransform.position.z + dist.z;
-                    viewTransform.rotation = viewRotation;
-                    target_transform_ = viewTransform;
-
-                    if (cameraTransform != target_transform_)
-                    {
-                        camera_ready_ = false;
-                        c1 = false;
-                        c2 = false;
-                        c3 = false;
-                        cameraMovementTimer_->start();
-                    }
-                }
-                else
-                    LogError("Couldn't get OgreCamera Placeable");
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseButtonRelease, qmlview_->mapFromScene(mousepoint), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
             }
         }
     }
+
+    if(mouse->eventType == MouseEvent::MouseDoubleClicked && mouse->button == MouseEvent::LeftButton)
+    {
+        if (renderer_)
+        {
+            result = renderer_->Raycast(mouse->X(), mouse->Y());
+
+            if(result->entity_==GetParentEntity())
+            {
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
+
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseButtonDblClick, qmlview_->mapFromScene(mousepoint), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
+            }
+        }
+    }
+
+    if(mouse->eventType == MouseEvent::MouseMove && mouse->IsLeftButtonDown())
+    {
+        if (renderer_)
+        {
+            result = renderer_->Raycast(mouse->X(), mouse->Y());
+
+            if(result->entity_==GetParentEntity())
+            {
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
+
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseMove, qmlview_->mapFromScene(mousepoint), Qt::LeftButton, Qt::LeftButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
+            }
+        }
+    }
+
+
+    //Right button event handlers not needed?
+
+    /*if(mouse->eventType == MouseEvent::MousePressed && mouse->button == MouseEvent::RightButton )
+    {
+        if (renderer_)
+        {
+            result = renderer_->Raycast(mouse->X(), mouse->Y());
+
+            if(result->entity_==GetParentEntity())
+            {
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
+
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseButtonPress, qmlview_->mapFromScene(mousepoint), Qt::RightButton, Qt::RightButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
+            }
+        }
+    }
+
+    if(mouse->eventType == MouseEvent::MouseReleased && mouse->button == MouseEvent::RightButton )
+    {
+        if (renderer_)
+        {
+            result = renderer_->Raycast(mouse->X(), mouse->Y());
+
+            if(result->entity_==GetParentEntity())
+            {
+                int xpos = (int)qmlview_->size().width() * result->u_;
+                int ypos = (int)qmlview_->size().height() * result->v_;
+
+                QPoint mousepoint(xpos, ypos);
+                QMouseEvent event = QMouseEvent(QEvent::MouseButtonRelease, qmlview_->mapFromScene(mousepoint), Qt::RightButton, Qt::RightButton, Qt::NoModifier);
+                QApplication::sendEvent(qmlview_->viewport(), &event);
+            }
+        }
+    }*/
 }
+
+                /*Vector3df dist;
+                EC_Placeable *parentPlaceable = checked_static_cast<EC_Placeable*> (GetParentEntity()->GetComponent("EC_Placeable").get());
+
+                dist.z=4;
+                dist.y=0;
+                dist = parentPlaceable->GetRelativeVector(dist);
+
+                Transform cameraTransform = cameraPlaceable->gettransform();
+                Transform viewTransform;
+
+                Transform entityTransform;
+                entityTransform = parentPlaceable->gettransform();
+                Vector3df viewRotation = entityTransform.rotation;
+
+                viewTransform.position.x = entityTransform.position.x + dist.x;
+                viewTransform.position.y = entityTransform.position.y + dist.y;
+                viewTransform.position.z = entityTransform.position.z + dist.z;
+                viewTransform.rotation = viewRotation;
+                target_transform_ = viewTransform;
+
+                if (cameraTransform != target_transform_)
+                {
+                    camera_ready_ = false;
+                    c1 = false;
+                    c2 = false;
+                    c3 = false;
+                    cameraMovementTimer_->start();
+                }*/
 
 void EC_QML::SmoothCameraMove()
 {
@@ -306,8 +383,11 @@ void EC_QML::SmoothCameraMove()
 
         if (c1 && c2 && c3)
         {
-            cameraTransform.rotation = parentTransform.rotation;
+            cameraTransform.rotation.x = parentTransform.rotation.x;
+            cameraTransform.rotation.z = parentTransform.rotation.z;
+            cameraTransform.rotation.y = 0;
             cameraPlaceable->settransform(cameraTransform);
+            cameraPlaceable->LookAt(parentTransform.position);
             camera_ready_ = true;
         }
     }
@@ -380,7 +460,6 @@ void EC_QML::SetEntityPosition()
     if(avatarCameraPtr)
     {
         Scene::Entity *avatarCamera = avatarCameraPtr.get();
-        //EC_Placeable *cameraPlaceable = checked_static_cast<EC_Placeable*>(avatarCamera->GetComponent("EC_Placeable").get());
         cameraPlaceable = checked_static_cast<EC_Placeable*>(avatarCamera->GetComponent("EC_Placeable").get());
         //LogInfo("avatarCamera is active");
     }

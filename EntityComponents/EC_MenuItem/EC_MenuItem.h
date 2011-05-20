@@ -110,6 +110,8 @@ public slots:
     //! Setter for entity position
     void SetMenuItemPosition(Vector3df);
 
+    void SetMenuItemData(QWidget*);
+
     int GetNumberOfSubItems();
 
     void Update();

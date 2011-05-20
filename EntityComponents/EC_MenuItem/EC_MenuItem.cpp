@@ -119,22 +119,32 @@ void EC_MenuItem::PrepareMenuItem()
         /// \TODO Add dynamic data import mechanishm
         //Some hardcoded testmaterial.
 
-        QStringList TestList;
-        TestList<<"list1"<<"list2"<<"list3"<<"list4"<<"list5"<<"list6"<<"list7"<<"list8"<<"list9"<<"list10"<<"list11"<<"list12";
+        //QStringList TestList;
+        //TestList<<"list1"<<"list2"<<"list3"<<"list4"<<"list5"<<"list6"<<"list7"<<"list8"<<"list9"<<"list10"<<"list11"<<"list12";
 
-        listview_ = new QListView();
+        //listview_ = new QListView();
 
         //LogInfo("setModel");
-        listview_->setModel(new QStringListModel(TestList));
+        //listview_->setModel(new QStringListModel(TestList));
 
         //LogInfo("SetWidget");
 
         //Canvas_->SetMesh(MeshList_.at(i));
-        Canvas_->SetSubmesh(0);
-        Canvas_->SetWidget(listview_);
-        Canvas_->Update();
+        //Canvas_->SetSubmesh(0);
+        //Canvas_->SetWidget(listview_);
+        //Canvas_->Update();
 
     }
+}
+
+void EC_MenuItem::SetMenuItemData(QWidget *data)
+{
+    //listview_ = new QListView();
+    //listview_->setModel(new QStringListModel(datalist));
+    EC_3DCanvas *Canvas_ = GetOrCreateCanvasComponent();
+    Canvas_->SetSubmesh(0);
+    //LogInfo("Item Data Ptr: " + ToString(data));
+    Canvas_->SetWidget(data);
 }
 
 void EC_MenuItem::Update()

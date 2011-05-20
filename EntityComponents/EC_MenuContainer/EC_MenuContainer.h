@@ -84,12 +84,12 @@ private:
     QPointer<QListView> listview_;
 
     Foundation::RenderServiceInterface *renderer_;
-    //! Internal timer for updating inworld EC_3DCanvas.
+    /// Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
 
     QList<EC_MenuItem*> MenuItemList_;    
-    QList<EC_MenuItem*> SubMenuItemList_;
-    //QList<QList*> MenuData;
+    QList<EC_MenuItem*> subMenuItemList_;
+    QList<QWidget*> MenuData_;
 
     bool ent_clicked_;
     bool subMenu_clicked_;
@@ -101,12 +101,14 @@ private:
     float subMenuRadius_;
     InputContextPtr input_;
     int selected_;
+    int previousSelected_;
+    int subMenuItemSelected_;
     int numberOfMenuelements_;
 
     //QDeclarativeView *view_;
     //void SetEntityPosition();
 
-    //! Internal timer for kinetic scroller.
+    /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;
     int scrollerTimer_Interval;
 
@@ -114,11 +116,11 @@ public:
     /// Destructor.
     ~EC_MenuContainer();
 
-    //! Boolean for interactive mode, if true it will show context menus on mouse click events.
+    ///! Boolean for interactive mode, if true it will show context menus on mouse click events.
     //Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     //DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
-    //! Integer for menuelements.
+    ///! Integer for menuelements.
     //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
     //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
 
@@ -126,40 +128,51 @@ public:
 public slots:
     void Render();
 
-    void kinecticScroller();
+    /// Handles kinetic scrolling for both, menu and submenu items.
+    void kineticScroller();
 
-    //! Handle MouseEvents
+    /// Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
 
-    void SetMenuData(int, float);
+    /// Sets data for MenuContainer.
+    /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
+    void SetMenuData(QList<QWidget*>);
 
 
 private slots:
-    //! Prepares everything related to the parent widget and other needed components.
+    /// Prepares everything related to the parent widget and other needed components.
     void PrepareMenuContainer();
 
-    //! Monitors this entitys added components.
+    /// Monitors this entitys added components.
     void ComponentAdded(IComponent *component, AttributeChange::Type change);
 
-    //! Monitors this entitys removed components.
+    /// Monitors this entitys removed components.
     void ComponentRemoved(IComponent *component, AttributeChange::Type change);
 
-    //! Monitors this components Attribute changes.
+    /// Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
     EC_Placeable *GetOrCreatePlaceableComponent();
 
-    //! Handles entity action WebViewControllerChanged
+    /// Handles entity action WebViewControllerChanged
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
 
     void centerAfterRotation();
     void setMenuContainerPosition();
-    void createSubMenu(int);
+
+    /// \param menuIndex indicates which MenuItem was selected when this function were called.
+    void createSubMenu(int menuIndex);
+
     EC_MenuItem* CreateMenuItem();
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);
+
+    /// This signal is emitted when one of the menuitems was selected.
+    /// \param menuitem indicates which item was selected from main layer
+    /// \param submenuItem indicates which item was selected from sublayer.
+    void OnMenuSelection(int menuitem, int submenuItem);
 
 };
 

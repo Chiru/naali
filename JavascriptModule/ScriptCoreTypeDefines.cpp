@@ -222,6 +222,35 @@ QScriptValue toScriptValueEntityList(QScriptEngine *engine, const QList<Scene::E
     return obj;
 }
 
+void fromScriptValueWidgetList(const QScriptValue &obj, QList<QWidget*> &widgets)
+{
+    widgets.clear();
+    QScriptValueIterator it(obj);
+    while (it.hasNext())
+    {
+        it.next();
+        QObject *qwidget = it.value().toQObject();
+        if (qwidget)
+        {
+            QWidget *widget = qobject_cast<QWidget*>(qwidget);
+            if (widget)
+                widgets.append(widget);
+        }
+    }
+}
+
+QScriptValue toScriptValueWidgetList(QScriptEngine *engine, const QList<QWidget*> &widgets)
+{
+    QScriptValue obj = engine->newArray(widgets.size());
+    for(int i=0; i<widgets.size(); ++i)
+    {
+        QWidget *widget = widgets.at(i);
+        if (widget)
+            obj.setProperty(i, engine->newQObject(widget));
+    }
+    return obj;
+}
+
 void fromScriptValueStdString(const QScriptValue &obj, std::string &s)
 {
     s = obj.toString().toStdString();
@@ -312,6 +341,12 @@ void ExposeCoreTypes(QScriptEngine *engine)
     qScriptRegisterMetaType_helper(
         engine, id, reinterpret_cast<QScriptEngine::MarshalFunction>(toScriptValueEntityList),
         reinterpret_cast<QScriptEngine::DemarshalFunction>(fromScriptValueEntityList),
+        QScriptValue());
+        
+    id = qRegisterMetaType< QList<QWidget*> >("QList<QWidget*>");
+    qScriptRegisterMetaType_helper(
+        engine, id, reinterpret_cast<QScriptEngine::MarshalFunction>(toScriptValueWidgetList),
+        reinterpret_cast<QScriptEngine::DemarshalFunction>(fromScriptValueWidgetList),
         QScriptValue());
  
     id = qRegisterMetaType<std::string>("std::string");

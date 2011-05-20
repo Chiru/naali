@@ -1,10 +1,19 @@
 /*
   SlideCircle
+   - circling around slide thingies for your sliding pleasure
+
+   TODO
+   * Add a help text
+   * Fix voodoo magic camera panning code
+   * Path finding so that we won't go through things
 
 */
 
 engine.ImportExtension("qt.core");
 engine.ImportExtension("qt.gui");
+
+
+// Some functions needed for QVector3D calculations.
 
 function distance(v1, v2) {
     var a = Math.pow((v1.x() - v2.x()), 2);
@@ -93,9 +102,10 @@ function getNormal(entity, distance) {
     return pos;
 }
 
+/* Goes in front of given entity*/
 function viewScreen(screen) {
 
-    var pos = getNormal(screen, 10);
+    var pos = getNormal(screen, close);
 
     var p = camera.placeable.position;
 
@@ -108,14 +118,18 @@ function viewScreen(screen) {
     camera.placeable.LookAt(screen.placeable.position);
 }
 
+
+/* calculates to point to move and look */
 function getPoints(from, to) {
+    orig_target = from.placeable.position;
     targets = [];
-    targets.push(getNormal(from, 15));
-    targets.push(getNormal(to, 15));
-    targets.push(getNormal(to, 10));
+    targets.push(getNormal(from, far));
+    targets.push(getNormal(to, far));
+    targets.push(getNormal(to, close));
     lookAtTargets = [];
-    lookAtTargets.push(getNormal(from, 10));
-    lookAtTargets.push(getNormal(to, 10));
+    lookAtTargets.push(getNormal(from, close));
+    lookAtTargets.push(getNormal(to, far));
+    lookAtTargets.push(getNormal(to, close));
 }
 
 function HandleGotoNext() {
@@ -143,17 +157,14 @@ function animationUpdate(dt) {
     }
     var target = targets[0];
     var pos = camera.placeable.position;
-    //print(pos);
-    //print(target);
-    var d = distance(pos, target);
+    var dist = distance(pos, target);
  
-    //print(d);
-
-    if (d <= 0.1) {
-	targets.splice(0, 1);
-	if (lookAtTargets.length == 2) {
-	    lookAtTargets.splice(0, 1);
-	}
+    var orig_dist = distance(target, orig_target);
+    
+    // If we're there change targets for moving and looking.
+    if (dist <= 0.1) {
+	orig_target = targets.splice(0, 1)[0];
+	lookAtTargets.splice(0, 1);
 	return;
     }
 
@@ -167,7 +178,54 @@ function animationUpdate(dt) {
     pos.setZ(newPos.z());
 
     camera.placeable.position = pos;
+
+    // camera panning
+    
+    if (lookAtTargets.length == 0) {
+	return;
+    }
+
+    //Transform's orientation is a Vector3df so we can't call our
+    //vector math function since QVector3D has setX instead of setx
+    //etc.
+
+    // Get current rotation
+    var oldtransform = camera.placeable.transform;
+    var currentRotation = oldtransform.rot;
+    
+    // get target rotation
+
     camera.placeable.LookAt(lookAtTargets[0]);
+    var newtransform = camera.placeable.transform;
+    var targetRotation = newtransform.rot;
+
+    // put back to current position
+    camera.placeable.transform = oldtransform;
+
+    var a = Math.pow((currentRotation.x - targetRotation.x), 2);
+    var b = Math.pow((currentRotation.y - targetRotation.y), 2);
+    var c = Math.pow((currentRotation.z - targetRotation.z), 2);
+    var r = Math.sqrt(a + b + c);
+
+    // If we're close enough we won't turn
+    if ((r <= 2) || (r >= 358)) {
+	return;
+    }
+
+    var drotx = targetRotation.x - currentRotation.x;
+    var droty = targetRotation.y - currentRotation.y;
+    var drotz = targetRotation.z - currentRotation.z;
+    
+    // Count magnitude
+    var magnitude = Math.sqrt(Math.pow(drotx, 2) + Math.pow(droty, 2) + Math.pow(drotz, 2));
+
+    var ratio = Math.min(orig_dist / dist, 5);
+
+    newtransform.rot.x = (currentRotation.x + drotx / magnitude * ratio) % 360;
+    newtransform.rot.y = (currentRotation.y + droty / magnitude * ratio) % 360;
+    newtransform.rot.z = (currentRotation.z + drotz / magnitude * ratio) % 360;
+    
+    camera.placeable.transform = newtransform;
 }
 
 function reset() {
@@ -175,12 +233,9 @@ function reset() {
     targets = [];
 }
 
-function putCube(place) {
-    cube.placeable.position = place;
-}
-
-
+// We look for anything that has a EC_WebView and circulate between them
 var entities = scene.GetEntitiesWithComponentRaw("EC_WebView");
+
 var currentIndex = 0;
 var endIndex = entities.length;
 
@@ -192,10 +247,14 @@ inputmapper.RegisterMapping('n', "GotoNext", 1);
 inputmapper.RegisterMapping('p', "GotoPrev", 1);
 inputmapper.RegisterMapping('r', "ResetShow", 1);
 
+var close = 5;
+var far = 15;
+
 me.Action("GotoNext").Triggered.connect(HandleGotoNext);
 me.Action("GotoPrev").Triggered.connect(HandleGotoPrev);
 me.Action("ResetShow").Triggered.connect(reset);
 
+var orig_target;
 var targets = [];
 var lookAtTargets = [];
 print(targets);

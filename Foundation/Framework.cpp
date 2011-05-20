@@ -80,9 +80,9 @@ namespace Foundation
     {
         ParseProgramOptions();
 
-        /// \note Major becomes 1 when we stop breaking the API, which is still planned after 1.0.6 which is kind of an alpha of 1.0 still.
-        api_versioninfo_ = new ApiVersionInfo(this, 0, 6, 0, 0);
-        application_versioninfo_ = new ApplicationVersionInfo(this, 1, 0, 6, 0, "realXtend", "Tundra");
+        /// \note ApiVersionInfo major becomes 1.0 when we stop breaking the API.
+        api_versioninfo_ = new ApiVersionInfo(this, 0, 7, 0, 0);
+        application_versioninfo_ = new ApplicationVersionInfo(this, 1, 0, 7, 0, "realXtend", "Tundra");
 
         if (commandLineVariables.count("help")) 
         {
@@ -136,11 +136,6 @@ namespace Foundation
             }
 
             config_manager_->Load();
-
-            // Set config values we explicitly always want to override
-            /// \todo remove this version code, use fw->ApplicationVersion() instead.
-            config_manager_->SetSetting(Framework::ConfigurationGroup(), std::string("version_major"), std::string("0"));
-            config_manager_->SetSetting(Framework::ConfigurationGroup(), std::string("version_minor"), std::string("3.4.1"));
             
             CreateLoggingSystem(); // depends on config and platform
 
@@ -161,11 +156,7 @@ namespace Foundation
             const char cDefaultAssetCachePath[] = "/assetcache";
             asset->OpenAssetCache((GetPlatform()->GetApplicationDataDirectory() + cDefaultAssetCachePath).c_str());
 
-            ui = new UiAPI(this);
-
-            // Connect signal if main window was created. Not in headless mode.
-            if (ui->MainWindow())
-                connect(ui->MainWindow(), SIGNAL(WindowCloseEvent()), this, SLOT(Exit()));
+            ui = new UiAPI(this);               
 
             audio = new AudioAPI(asset); // Audio API depends on the Asset API, so must be loaded after Asset API is.
             asset->RegisterAssetTypeFactory(AssetTypeFactoryPtr(new GenericAssetFactory<AudioAsset>("Audio"))); ///< \todo This line needs to be removed.

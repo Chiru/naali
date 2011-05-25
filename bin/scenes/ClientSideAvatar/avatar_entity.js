@@ -121,6 +121,14 @@ function ClientHandleCollision(ent, pos, normal, distance, impulse, newCollision
 function ClientUpdatePhysics(frametime) {
     var placeable = me.placeable;
     var rigidbody = me.rigidbody;
+    var transform = placeable.transform;
+
+    // don't fall to china
+    if (transform.pos.z < -50) {
+	transform.pos.z = 20;
+	placeable.transform = transform;
+	ServerHandleToggleFly();
+    }
 
     if (!flying) {
         // Apply motion force
@@ -156,8 +164,6 @@ function ClientUpdatePhysics(frametime) {
         // Manually move the avatar placeable when flying
         // this has the downside of no collisions.
         // Feel free to reimplement properly with mass enabled.
-        var av_placeable = me.placeable;
-        var av_transform = av_placeable.transform;
 
         // Make a vector where we have moved
         var moveVec = new Vector3df();
@@ -166,36 +172,36 @@ function ClientUpdatePhysics(frametime) {
         moveVec.z = motion_z * fly_speed_factor;
 
         // Apply that with av looking direction to the current position
-        var offsetVec = av_placeable.GetRelativeVector(moveVec);
-        av_transform.pos.x = av_transform.pos.x + offsetVec.x;
-        av_transform.pos.y = av_transform.pos.y + offsetVec.y;
-        av_transform.pos.z = av_transform.pos.z + offsetVec.z;
+        var offsetVec = placeable.GetRelativeVector(moveVec);
+        transform.pos.x = transform.pos.x + offsetVec.x;
+        transform.pos.y = transform.pos.y + offsetVec.y;
+        transform.pos.z = transform.pos.z + offsetVec.z;
 
         // This may look confusing. Its kind of a hack to tilt the avatar
         // when flying to the sides when you turn with A and D.
         // At the same time we need to lift up the Z of the av accorting to the angle of tilt
         if (motion_x != 0) {
-            if (motion_y > 0 && av_transform.rot.x <= 5) {
-                av_transform.rot.x = av_transform.rot.x + motion_y/2;
+            if (motion_y > 0 && transform.rot.x <= 5) {
+                transform.rot.x = transform.rot.x + motion_y/2;
         }
-            if (motion_y < 0 && av_transform.rot.x >= -5) {
-                av_transform.rot.x = av_transform.rot.x + motion_y/2;
+            if (motion_y < 0 && transform.rot.x >= -5) {
+                transform.rot.x = transform.rot.x + motion_y/2;
         }
-            if (motion_y != 0 && av_transform.rot.x > 0) {
-                av_transform.pos.z = av_transform.pos.z + (av_transform.rot.x * 0.0045); // magic number
+            if (motion_y != 0 && transform.rot.x > 0) {
+                transform.pos.z = transform.pos.z + (transform.rot.x * 0.0045); // magic number
         }
-        if (motion_y != 0 && av_transform.rot.x < 0) {
-                av_transform.pos.z = av_transform.pos.z + (-av_transform.rot.x * 0.0045); // magic number
+        if (motion_y != 0 && transform.rot.x < 0) {
+                transform.pos.z = transform.pos.z + (-transform.rot.x * 0.0045); // magic number
         }
         }
-        if (motion_y == 0 && av_transform.rot.x > 0) {
-            av_transform.rot.x = av_transform.rot.x - 0.5;
+        if (motion_y == 0 && transform.rot.x > 0) {
+            transform.rot.x = transform.rot.x - 0.5;
     }
-    if (motion_y == 0 && av_transform.rot.x < 0) {
-            av_transform.rot.x = av_transform.rot.x + 0.5;
+    if (motion_y == 0 && transform.rot.x < 0) {
+            transform.rot.x = transform.rot.x + 0.5;
     }
 
-        av_placeable.transform = av_transform;
+        placeable.transform = transform;
     }
 }
 

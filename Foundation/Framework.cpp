@@ -467,6 +467,8 @@ namespace Foundation
         exit_signal_ = true;
         if (application)
             application->quit();
+        else
+            RootLogError("ForceExit: can't quit since application is NULL");
     }
     
     void Framework::CancelExit()

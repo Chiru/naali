@@ -349,4 +349,6 @@ void Application::AboutToExit()
     // If no-one canceled the exit as a response to the signal, exit
     if (framework->IsExiting())
         quit();
+    else
+        RootLogInfo("Exit cancelled");
 }

@@ -190,6 +190,10 @@ public:
     Q_PROPERTY(Vector3df angularVelocity READ getangularVelocity WRITE setangularVelocity)
     DEFINE_QPROPERTY_ATTRIBUTE(Vector3df, angularVelocity)
 
+    //! Gravity toggle. If true(default), gravity has effect on this body.
+    Q_PROPERTY(bool gravityEnabled READ getgravityEnabled WRITE setgravityEnabled)
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, gravityEnabled)
+
     virtual ~EC_RigidBody();
     
     //! Set component as serializable.
@@ -294,11 +298,19 @@ public slots:
 
     btRigidBody* GetRigidBody() const { return body_; }
     
+<<<<<<< .merge_file_OK0s3f
     //! Return whether have authority.
     bool HasAuthority();
 
     //! (Dis)claim authority.
     void RespectMyAuthority(bool);
+=======
+    //! Return whether have authority. On the client, returns false for non-local objects.
+    bool HasAuthority() const;
+
+    //! Force body to always stay in upright position (needs to be called in Update loop).
+    void InterpolateUpward();
+>>>>>>> .merge_file_Jfrbgg
     
 private slots:
     //! Called when the parent entity has been set.
@@ -402,7 +414,12 @@ private:
     //! Heightfield values, for the case the shape is a heightfield.
     std::vector<float> heightValues_;
 
+<<<<<<< .merge_file_OK0s3f
     bool got_authority_;
+=======
+    //! Gravity force
+    btVector3 gravity_;
+>>>>>>> .merge_file_Jfrbgg
 };
 
 

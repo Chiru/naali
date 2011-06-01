@@ -120,6 +120,9 @@ public:
     //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
     //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
 
+    ///IComponent Override
+    bool IsSerializable() const { return true; }
+
 
 public slots:
     void Render();

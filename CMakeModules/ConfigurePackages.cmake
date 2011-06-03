@@ -456,7 +456,6 @@ macro(use_package_knet)
     link_directories(${KNET_DIR}/lib)
     if (UNIX)    
         add_definitions(-DUNIX)
-        add_definitions(-DKNET_USE_BOOST)
     endif()
 endmacro()
 
@@ -512,107 +511,6 @@ macro(link_package_assimp)
     if (WIN32)
         target_link_libraries(${TARGET_NAME} debug assimpd)
     endif()
-endmacro()
-
-macro(use_package_qtmobility)
-        message (STATUS "** Configuring QtMobility")
-        
-        if(EXISTS "${QT4_MKSPECS}/features/mobility.prf")
-        
-            message (STATUS "-- Using mkspecs file")
-            message (STATUS "       " ${QT4_MKSPECS}/features/mobility.prf)
-        
-            file (READ ${QT_MKSPECS_DIR}/features/mobility.prf MOBILITY_CONFIG_FILE)
-            
-            string( REGEX MATCH "MOBILITY_PREFIX=([^\n]+)" QTMOBILITY_PREFIX "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_PREFIX ${CMAKE_MATCH_1})
-            
-            string( REGEX MATCH "MOBILITY_INCLUDE=([^\n]+)" QTMOBILITY_INCLUDE "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_INCLUDE ${CMAKE_MATCH_1})
-            
-            string( REGEX MATCH "MOBILITY_LIB=([^\n]+)" QTMOBILITY_LIBRARY "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_LIBRARY ${CMAKE_MATCH_1})
-            
-            message (STATUS "-- Include Directories:")
-            
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtBearer)
-            include_directories(${QTMOBILITY_INCLUDE}/QtBearer)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
-            include_directories(${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtLocation)
-            include_directories(${QTMOBILITY_INCLUDE}/QtLocation)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtServiceFramework)
-            include_directories(${QTMOBILITY_INCLUDE}/QtServiceFramework)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSystemInfo)
-            include_directories(${QTMOBILITY_INCLUDE}/QtSystemInfo)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMultimediaKit)
-            include_directories(${QTMOBILITY_INCLUDE}/QtMultimediaKit)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtContacts)
-            include_directories(${QTMOBILITY_INCLUDE}/QtContacts)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtVersit)
-            include_directories(${QTMOBILITY_INCLUDE}/QtVersit)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSensors)
-            include_directories(${QTMOBILITY_INCLUDE}/QtSensors)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMobility)
-            include_directories(${QTMOBILITY_INCLUDE}/QtMobility)
-            
-            message (STATUS "-- Library Directories:")
-            
-            message (STATUS "       " ${QTMOBILITY_LIBRARY})
-            link_directories(${QTMOBILITY_LIBRARY})
-            
-            message (STATUS "")
-            
-        else ()
-            
-            # mkspecs file for QtMobility not found, halt.
-            message (FATAL_ERROR "!! Unable to locate QtMobility mkspecs file")
-            
-        endif ()
-endmacro()
-
-macro(link_package_qtmobility)
-    target_link_libraries(${TARGET_NAME} optimized QtBearer optimized QtPublishSubscribe optimized QtLocation
-                          optimized QtServiceFramework optimized QtSystemInfo optimized QtMultimediaKit
-                          optimized QtContacts optimized QtVersit optimized QtSensors)
-endmacro()
-
-macro(use_package_qtdeclarative)
-
-        message (STATUS "** Configuring QtDeclarative")
-
-	if(EXISTS "${QT_INCLUDE_DIR}/QtDeclarative/QtDeclarative")
-
-		message (STATUS "       " "QtDeclarative found!")
-
-		
-		set(QTDECLARATIVE_INCLUDE ${QT_INCLUDE_DIR}/QtDeclarative)
-		set(QTDECLARATIVE_LIBRARY ${QT4_LIBRARY_DIR})
-
-		message (STATUS "-- Include Directories:")
-
-		message (STATUS "       " ${QTDECLARATIVE_INCLUDE})
-        	include_directories(${QTDECLARATIVE_INCLUDE})
-
-		
-
-		message (STATUS "-- Library Directories:")
-
-		message (STATUS "       " ${QTDECLARATIVE_LIBRARY})
-		link_directories(${QTDECLARATIVE_LIBRARY})
-
-		message (STATUS "")
-	else ()
-		message (FATAL_ERROR "!! QtDeclarative not found!")
-
-	endif ()
-
-        
-
-endmacro()
-
-macro(link_package_qtdeclarative)
-    target_link_libraries(${TARGET_NAME} optimized QtDeclarative)
 endmacro()
 
 macro(configure_package_opencv)
@@ -681,5 +579,90 @@ endmacro()
 
 macro(link_package_opencv)
     TARGET_LINK_LIBRARIES(${TARGET_NAME} ${OpenCV_LIBS})
+endmacro()
+
+macro(use_package_qtmobility)
+        message (STATUS "** Configuring QtMobility")
+        
+        # Use the mobility.prf for determining QtMobility installation location
+        # \todo Verify this works in Windows
+        if(EXISTS "${QT4_MKSPECS}/features/mobility.prf")
+        
+            message (STATUS "-- Using mkspecs file")
+            message (STATUS "       " ${QT4_MKSPECS}/features/mobility.prf)
+        
+            file (READ ${QT_MKSPECS_DIR}/features/mobility.prf MOBILITY_CONFIG_FILE)
+            
+            string( REGEX MATCH "MOBILITY_PREFIX=([^\n]+)" QTMOBILITY_PREFIX "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_PREFIX ${CMAKE_MATCH_1})
+            
+            string( REGEX MATCH "MOBILITY_INCLUDE=([^\n]+)" QTMOBILITY_INCLUDE "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_INCLUDE ${CMAKE_MATCH_1})
+            
+            string( REGEX MATCH "MOBILITY_LIB=([^\n]+)" QTMOBILITY_LIBRARY "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_LIBRARY ${CMAKE_MATCH_1})
+            
+            message (STATUS "-- Include Directories:")
+            
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
+            include_directories(${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtLocation)
+            include_directories(${QTMOBILITY_INCLUDE}/QtLocation)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtServiceFramework)
+            include_directories(${QTMOBILITY_INCLUDE}/QtServiceFramework)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSystemInfo)
+            include_directories(${QTMOBILITY_INCLUDE}/QtSystemInfo)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMultimediaKit)
+            include_directories(${QTMOBILITY_INCLUDE}/QtMultimediaKit)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtContacts)
+            include_directories(${QTMOBILITY_INCLUDE}/QtContacts)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtVersit)
+            include_directories(${QTMOBILITY_INCLUDE}/QtVersit)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSensors)
+            include_directories(${QTMOBILITY_INCLUDE}/QtSensors)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMobility)
+            include_directories(${QTMOBILITY_INCLUDE}/QtMobility)
+            
+            message (STATUS "-- Library Directories:")
+            
+            message (STATUS "       " ${QTMOBILITY_LIBRARY})
+            link_directories(${QTMOBILITY_LIBRARY})
+            
+            message (STATUS "")
+            
+        else ()
+            
+            # mkspecs file for QtMobility not found, halt.
+            message (FATAL_ERROR "!! Unable to locate QtMobility mkspecs file")
+            
+        endif ()
+endmacro()
+
+macro(link_package_qtmobility)
+    target_link_libraries(${TARGET_NAME} optimized QtPublishSubscribe optimized QtLocation
+                          optimized QtServiceFramework optimized QtSystemInfo optimized QtMultimediaKit
+                          optimized QtContacts optimized QtVersit optimized QtSensors)
+endmacro()
+
+macro(use_package_qtdeclarative)
+        message (STATUS "** Configuring QtDeclarative")
+	if(EXISTS "${QT_INCLUDE_DIR}/QtDeclarative/QtDeclarative")
+		message (STATUS "       " "QtDeclarative found!")
+		set(QTDECLARATIVE_INCLUDE ${QT_INCLUDE_DIR}/QtDeclarative)
+		set(QTDECLARATIVE_LIBRARY ${QT4_LIBRARY_DIR})
+		message (STATUS "-- Include Directories:")
+		message (STATUS "       " ${QTDECLARATIVE_INCLUDE})
+        	include_directories(${QTDECLARATIVE_INCLUDE})
+		message (STATUS "-- Library Directories:")
+		message (STATUS "       " ${QTDECLARATIVE_LIBRARY})
+		link_directories(${QTDECLARATIVE_LIBRARY})
+		message (STATUS "")
+	else ()
+		message (FATAL_ERROR "!! QtDeclarative not found!")
+	endif ()
+endmacro()
+
+macro(link_package_qtdeclarative)
+    target_link_libraries(${TARGET_NAME} optimized QtDeclarative)
 endmacro()
 

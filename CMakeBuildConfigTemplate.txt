@@ -25,12 +25,6 @@ if (MSVC)                       # Configure the use of Hydrax.
   #configure_hydrax ()          # http://www.ogre3d.org/tikiwiki/Hydrax
 endif()
 
-# Configure the use of MobilityModule. Disabled by default.
-SET(MOBILITY_ENABLED 0)
-if(MOBILITY_ENABLED)
-    use_package_qtmobility()
-endif()
-
 # Configure the use of QMLUIModule. Disabled by default.
 SET(DECLARATIVE_ENABLED 0)
 if(DECLARATIVE_ENABLED)
@@ -188,9 +182,6 @@ if (OPENASSETIMPORT)
     add_subdirectory(OpenAssetImport)       # Allows import of various mesh file formats
 endif()
 
-if (MOBILITY_ENABLED)
-    add_subdirectory(MobilityModule)
-endif()
 if (DECLARATIVE_ENABLED)
     add_subdirectory(QMLUIModule)
 endif()

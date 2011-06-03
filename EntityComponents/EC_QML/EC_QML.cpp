@@ -41,7 +41,7 @@ EC_QML::EC_QML(IModule *module) :
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
     ent_clicked_(false),
-    qmlsource(this, "qmlsource", ""),
+    qmlsource(this, "QML source", ""),
     qml_ready(false)
 {
     renderTimer_ = new QTimer();

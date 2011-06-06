@@ -59,7 +59,20 @@ if (!framework.IsHeadless())
         signalMenu.addAction("usingBattery(bool)").triggered.connect(signalUsingBattery);
         signalMenu.addAction("batteryLevelChanged(int)").triggered.connect(signalBatteryLevelChanged);
     }
-    function mobilitySignalHandler(value)
+
+	// Chiru Multiconnection Menu
+	if (!server.IsAboutToStart())
+	{	
+		var multiMenu = mainwin.AddMenu("&MultiCon");
+		var THEREbeDRAGONS = multiMenu.addAction("*Dragons ahead*");
+		var multiconnect = multiMenu.addMenu("&connect");
+		multiconnect.addAction("Chiru world - UDP").triggered.connect(ConnectChiruUDP);
+		multiconnect.addAction("Chiru world - TCP").triggered.connect(ConnectChiruTCP);
+		multiconnect.addAction("Local world - UDP").triggered.connect(ConnectLocalUDP);
+		multiconnect.addAction("Local world - TCP").triggered.connect(ConnectLocalTCP);
+		multiconnect.addAction("Local world - 2346").triggered.connect(ConnectLocal2346);
+	}    
+	function mobilitySignalHandler(value)
     {
         //print("Emitted and catched MobilityModule signal with value: " + value);
     }
@@ -274,6 +287,33 @@ if (!framework.IsHeadless())
         console.ExecuteCommand("disconnect");
         console.ExecuteCommand("connect(localhost, 2345, 'erkki', '', udp)");
     }
+
+	// Chiru multiconnection changes:
+
+	function ConnectChiruUDP()
+	{
+        console.ExecuteCommand("connect(chiru.cie.fi, 2345, 'multitapsa', '', udp)");
+	}
+
+	function ConnectChiruTCP()
+	{
+        console.ExecuteCommand("connect(chiru.cie.fi, 2345, 'multitapsa', '', tcp)");
+	}
+
+	function ConnectLocalUDP()
+	{
+        console.ExecuteCommand("connect(localhost, 2345, 'multitapsa', '', udp)");
+	}
+
+	function ConnectLocalTCP()
+	{
+        console.ExecuteCommand("connect(localhost, 2345, 'multitapsa', '', tcp)");
+	}
+
+	function ConnectLocal2346()
+	{
+        console.ExecuteCommand("connect(localhost, 2346, 'multitapsa', '', tcp)");
+	}
     
     function signalNetworkStateChanged() {      
         var options = new Array();

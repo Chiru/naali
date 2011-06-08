@@ -38,7 +38,7 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
-private_ogre=true
+private_ogre=false
 
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude

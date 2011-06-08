@@ -62,8 +62,12 @@ void TundraLogicModule::Initialize()
     
     connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(AttachSyncManagerToScene(QString)));
     connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(RemoveSyncManagerFromScene(QString)));
+    // Multiconnection specific. When syncManager is created/deleted these are run.
     connect(this, SIGNAL(createOgre(QString)), client_.get(), SLOT(emitCreateOgreSignal(QString)));
     connect(this, SIGNAL(deleteOgre(QString)), client_.get(), SLOT(emitDeleteOgreSignal(QString)));
+    connect(this, SIGNAL(setOgre(QString)), client_.get(), SLOT(emitSetOgreSignal(QString)));
+    connect(client_.get(), SIGNAL(aboutToDisconnect(QString)), this, SLOT(changeScene(QString)));
+    connect(client_.get(), SIGNAL(changeScene(QString)), this, SLOT(changeScene(QString)));
 
     framework_->RegisterDynamicObject("client", client_.get());
     framework_->RegisterDynamicObject("server", server_.get());
@@ -134,7 +138,13 @@ void TundraLogicModule::Uninitialize()
 
 void TundraLogicModule::AttachSyncManagerToScene(const QString &name)
 {
-    SyncManager *sm = new SyncManager(this);
+    // Grep number from scenename; list[0] = TundraClient/TundraServer and list[1] = 0, 1, 2, ..., n: n € Z+
+    QStringList list = name.split("_");
+    QString number = list[1];
+    unsigned short attachedConnection = number.toInt();
+
+    // Tell syncManager 'attachedConnection' is the magic number when using client_->GetConnection(X)
+    SyncManager *sm = new SyncManager(this, attachedConnection);
     sm->RegisterToScene(framework_->Scene()->GetScene(name));
     syncManagers_.insert(name, sm);
     syncManager_ = sm;
@@ -151,6 +161,22 @@ void TundraLogicModule::RemoveSyncManagerFromScene(const QString &name)
     delete sm;
     emit deleteOgre(name);
     TundraLogicModule::LogInfo("Removed SyncManager from scene " + name.toStdString());
+}
+
+void TundraLogicModule::changeScene(const QString &name)
+{
+    // If we already have this scene selected, do nothing.
+    if (framework_->Scene()->GetDefaultScene() == framework_->Scene()->GetScene(name))
+        return;
+    else
+    {
+        TundraLogicModule::LogInfo("Changing ogre scenemanager!");
+        emit setOgre(name);
+        TundraLogicModule::LogInfo("Changing default scene to " + name.toStdString());
+        framework_->Scene()->SetDefaultScene(name);
+        TundraLogicModule::LogInfo("Changing syncmanager!");
+        syncManager_ = syncManagers_[name];
+    }
 }
 
 

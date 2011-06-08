@@ -407,7 +407,13 @@ namespace OgreRenderer
     // Sets viewport again when scenemanager_ pointer is changed
     void Renderer::SetupViewPort()
     {
-        Ogre::Camera* camera=scenemanager_->getCamera("DefaultCamera");
+        Ogre::Camera* camera = NULL;
+        try {
+            camera=scenemanager_->getCamera("DefaultCamera");
+        } catch (Ogre::ItemIdentityException &e) {
+            return;
+        }
+
         viewport_->setCamera(camera);
         camera_=camera;
     }
@@ -416,6 +422,8 @@ namespace OgreRenderer
     // Destroys rayqueries from previous scene and initializes them to new scene
     void Renderer::SetSceneManager(const QString &sceneName)
     {
+        if (framework_->IsHeadless())
+            return;
 
         Ogre::String name= Ogre::String(sceneName.toStdString());
 
@@ -1427,6 +1435,12 @@ namespace OgreRenderer
             sceneManager->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
             return;
 #else
+
+        if (framework_->IsHeadless())
+        {
+            sceneManager->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
+            return;
+        }
         bool using_pssm = (shadowquality_ == Shadows_High);
         bool soft_shadow = framework_->GetDefaultConfig().DeclareSetting("OgreRenderer", "soft_shadow", false);
         

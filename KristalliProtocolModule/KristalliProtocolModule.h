@@ -44,6 +44,10 @@ namespace KristalliProtocol
 
         void Disconnect();
 
+        // Multiconnection disconnect. Takes bool and connection number as a parameter. If bool is false user
+        // disconnected at will and connection properties should be removed immediately.
+        void Disconnect(bool fail, unsigned short con);
+
         /// Starts a Kristalli server at the given port/transport.
         /// \return true if successful
         bool StartServer(unsigned short port, kNet::SocketTransportLayer transport);
@@ -72,8 +76,11 @@ namespace KristalliProtocol
         void SubscribeToNetworkEvents();
 
         /// Return message connection, for use by other modules (null if no connection made)
-        kNet::MessageConnection *GetMessageConnection() { if (!serverConnection_map_.isEmpty()) return serverConnection_map_[0].ptr(); else return serverConnection.ptr(); }
-        
+        kNet::MessageConnection *GetMessageConnection(const unsigned short connection) { return serverConnection_map_[connection].ptr(); }
+
+        // Returns iterator to serverConnection_map_
+        QMapIterator<unsigned short, Ptr(kNet::MessageConnection)> GetConnectionArray() { return QMapIterator<unsigned short, Ptr(kNet::MessageConnection)> (serverConnection_map_); }
+
         /// Return server, for use by other modules (null if not running)
         kNet::NetworkServer* GetServer() const { return server; }
         
@@ -141,11 +148,6 @@ namespace KristalliProtocol
         /// Id for "Framework" event category.
         event_category_id_t frameworkEventCategory_;
 
-        //##################################################
-        //#----------Variables for multiconnection---------#
-        //#Used to store all succesfully made connection   #
-        //#properties to arrays for processing and updates.#
-        //##################################################
         /// Messageconnection properties array: IP
         QList<std::string> serverIp_list_;
 
@@ -179,12 +181,6 @@ namespace KristalliProtocol
         // This method is pretty much like original PerformConnection-method but it uses iterator
         // to access current processed connection. Higher powers decide if this is wise.
         void PerformReconnection(QMutableMapIterator<unsigned short, Ptr(kNet::MessageConnection)> &, unsigned short);
-
-    // Multiconnection public functions.
-    public:
-        // Multiconnection disconnect. Takes bool and connection number as a parameter. If bool is false user
-        // disconnected at will and connection properties should be removed immediately.
-        void Disconnect(bool fail, unsigned short con);
 
     };
 }

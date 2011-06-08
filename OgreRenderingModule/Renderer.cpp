@@ -954,7 +954,7 @@ namespace OgreRenderer
         return t;
     }
 
-    RaycastResult* Renderer::Raycast3df(Vector3df pos, Vector3df dir)
+    RaycastResult* Renderer::RaycastFromTo(Vector3df pos, Vector3df dir)
     {
         static RaycastResult result;
 
@@ -962,7 +962,7 @@ namespace OgreRenderer
         if (!initialized_)
             return &result;
         if (!renderWindow)
-            return &result; /// \todo Ray from co-ordinate to another can be done in headless?
+            return &result;
 
         Ogre::Vector3 normalisedDir = ToOgreVector3(dir -pos);
         normalisedDir.normalise();

@@ -85,13 +85,6 @@ namespace OgreRenderer
             \return Raycast result structure
         */
         virtual RaycastResult* Raycast(int x, int y);
-        
-        //! Do raycast in to the world from a scene co-ordinate to another.
-        /*! \param pos The initial point for the ray
-            \param dir The direction of the ray, automatically normalized
-            \return Raycast result structure
-        */
-        virtual RaycastResult* Raycast3df(Vector3df pos, Vector3df dir);
 
         //! Do a raycast from a world coordinate to another.
         /*! Takes two tundra scene coordinates as parameters.

@@ -416,6 +416,8 @@ namespace OgreRenderer
     // Destroys rayqueries from previous scene and initializes them to new scene
     void Renderer::SetSceneManager(const QString &sceneName)
     {
+        if (framework_->IsHeadless())
+            return;
 
         Ogre::String name= Ogre::String(sceneName.toStdString());
 

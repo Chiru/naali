@@ -48,7 +48,7 @@ cd ..
 git clone git://gitorious.org/qt-mobility/qt-mobility.git
 cd qt-mobility
 git checkout v1.2.0
-./configure --prefix $QTTARGETDIR -qmake-exec $QTARGETDIR/bin/qmake | tee qtmobility.configure.log
+./configure --prefix $QTTARGETDIR -qmake-exec $QTTARGETDIR/bin/qmake | tee qtmobility.configure.log
 make -j $nprocs | tee qtmobility.build.log
 sudo make install | tee qtmobility.install.log
 cd ..

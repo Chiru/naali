@@ -1002,7 +1002,7 @@ namespace OgreRenderer
         return &result;
     }
 
-    bool Renderer::PerformRaycast(Ogre::Ray &ray, RaycastResult &result)
+    void Renderer::PerformRaycast(Ogre::Ray &ray, RaycastResult &result)
     {
         ray_query_->setRay(ray);
 
@@ -1163,7 +1163,6 @@ namespace OgreRenderer
                 }
             }
         }
-        return true;
     }
     
     //qt wrapper / upcoming replacement for the one above

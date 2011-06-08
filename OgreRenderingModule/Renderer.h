@@ -395,9 +395,6 @@ namespace OgreRenderer
         /// Specifies the target fps to run the system at. By default 60. Setting this to zero means no limit.
         float targetFpsLimit;
         
-        /// Do the actual raycast
-        virtual bool PerformRaycast(Ogre::Ray &ray, RaycastResult &result);
-
         bool render_enabled_;
     };
 }

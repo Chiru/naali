@@ -155,10 +155,13 @@ void Application::Go()
     // Install QObject event filter for QApplication, every thing runs trough this filter
     installEventFilter(this);
 
+#ifdef NDEBUG
     try
     {
+#endif
         frameTimer_->start(1);
         exec();
+#ifdef NDEBUG
     }
     catch(const std::exception &e)
     {
@@ -170,6 +173,7 @@ void Application::Go()
         RootLogCritical(std::string("Application::Go() caught an unknown exception!"));
         throw;
     }
+#endif
 }
 
 bool Application::eventFilter(QObject *obj, QEvent *event)
@@ -349,4 +353,6 @@ void Application::AboutToExit()
     // If no-one canceled the exit as a response to the signal, exit
     if (framework->IsExiting())
         quit();
+    else
+        RootLogInfo("Exit cancelled");
 }

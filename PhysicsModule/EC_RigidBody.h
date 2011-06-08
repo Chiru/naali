@@ -299,7 +299,10 @@ public slots:
     btRigidBody* GetRigidBody() const { return body_; }
     
     //! Return whether have authority. On the client, returns false for non-local objects.
-    bool HasAuthority() const;
+    bool HasAuthority();
+
+    //! (Dis)claim authority.
+    void RespectMyAuthority(bool);
 
     //! Force body to always stay in upright position (needs to be called in Update loop).
     void InterpolateUpward();
@@ -405,6 +408,9 @@ private:
     
     //! Heightfield values, for the case the shape is a heightfield.
     std::vector<float> heightValues_;
+
+    //! Physics authority flag
+    bool got_authority_;
 
     //! Gravity force
     btVector3 gravity_;

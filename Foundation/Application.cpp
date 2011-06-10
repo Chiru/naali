@@ -31,6 +31,11 @@
 #include "UiGraphicsView.h"
 #endif
 
+#ifdef _POSIX_C_SOURCE
+#include <unistd.h> // for alarm()
+#include <signal.h>
+#endif
+
 #include "MemoryLeakCheck.h"
 
 using namespace Foundation;
@@ -352,7 +357,18 @@ void Application::AboutToExit()
     
     // If no-one canceled the exit as a response to the signal, exit
     if (framework->IsExiting())
+    {
+#ifdef _POSIX_C_SOURCE
+        // workaround for exit hang with ATI proprietary driver on linux
+        alarm(5);
+        void on_alarm(int)
+        {
+            _exit(1);
+        }
+        signal(SIGALRM, on_alarm);
+#endif
         quit();
+    }
     else
         RootLogInfo("Exit cancelled");
 }

@@ -32,7 +32,7 @@
 #endif
 
 #ifdef _POSIX_C_SOURCE
-#include <unistd.h> // for alarm()
+#include <unistd.h>
 #include <signal.h>
 #endif
 
@@ -361,11 +361,7 @@ void Application::AboutToExit()
 #ifdef _POSIX_C_SOURCE
         // workaround for exit hang with ATI proprietary driver on linux
         alarm(5);
-        void on_alarm(int)
-        {
-            _exit(1);
-        }
-        signal(SIGALRM, on_alarm);
+        signal(SIGALRM, _exit); // exit status ends up as the signal #
 #endif
         quit();
     }

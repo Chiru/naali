@@ -1,9 +1,8 @@
 /**
- *  For conditions of distribution and use, see copyright notice in license.txt
- *
- *  @file   QMLWidget.h
- *  @brief  Simple full screen login widget for OpenSim and realXend authentication methods.
- */
+*  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
+*  @file QMLWidget.h
+*  @brief QDeclarativeView for 2D UI.
+*/
 
 #ifndef incl_LoginModule_QMLWidget_h
 #define incl_LoginModule_QMLWidget_h

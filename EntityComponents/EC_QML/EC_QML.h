@@ -1,9 +1,9 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   EC_Template.h
- *  @brief  EC_Template is empty template for EC components.
- *          This componen can be used as a template when creating new EC components.
+ *  @file   EC_QML.h
+ *  @brief  EC_QML is a component for showing QML-elements in a texture.
  *  @note   no notes
  *
  */
@@ -62,7 +62,6 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-class EC_OgreCamera;
 class QListView;
 class QMouseEvent;
 class RaycastResult;
@@ -76,30 +75,19 @@ private:
     /// Constuctor.
     /// @param module Owner module.
     explicit EC_QML(IModule *module);
-    EC_Placeable *cameraPlaceable;
-    Vector3df ownEntityPos;
-    Vector3df distance;
-    QPointer<QListView> listview_;
 
     Foundation::RenderServiceInterface *renderer_;
 
     EC_3DCanvas* canvas_;
     EC_Mesh *mesh_;
-    bool ent_clicked_;
-    bool c1, c2, c3, qml_ready, camera_ready_;
-    Transform target_transform_;
-
+    bool qml_ready;
 
     InputContextPtr input_;
 
     QDeclarativeView *qmlview_;
-    void SetEntityPosition();
 
     //! Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
-
-    //! Internal timer for smooth camera movement.
-    QTimer *cameraMovementTimer_;
 
 public:
     /// Destructor.

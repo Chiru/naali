@@ -1,8 +1,9 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file
- *  @brief
+ *  @file QMLUIModule.cpp
+ *  @brief QMLUIModule is used for showing a 2D overlay QML UI
  */
 
 #include "StableHeaders.h"
@@ -46,6 +47,9 @@ void QMLUIModule::Initialize()
 
 void QMLUIModule::PostInitialize()
 {
+    if (framework_->IsHeadless())
+        return;
+
     window_ = new QMLWidget();
     QObject::connect(window_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
     QMLStatus(window_->status());
@@ -99,8 +103,6 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 
         QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
 
-        giveQMLUsingBattery(true);
-        giveQMLBatteryLevel("75");
     }
     else if (qmlstatus == QDeclarativeView::Null)
     {

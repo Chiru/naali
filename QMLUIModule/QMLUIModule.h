@@ -1,3 +1,9 @@
+/**
+*  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
+*  @file QMLUIModule.h
+*  @brief QMLUIModule is used for showing a 2D overlay QML UI
+*/
+
 #ifndef incl_QMLUIModule_QMLUIModule_h
 #define incl_QMLUIModule_QMLUIModule_h
 

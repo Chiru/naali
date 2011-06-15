@@ -53,10 +53,6 @@ void QMLUIModule::PostInitialize()
     window_ = new QMLWidget();
     QObject::connect(window_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
     QMLStatus(window_->status());
-
-
-
-
 }
 
 void QMLUIModule::Uninitialize()
@@ -98,11 +94,7 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 
         QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(SetQMLUIFocus(bool)));
 
-        QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(LoadXML()));
-        QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
-
         QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
-
     }
     else if (qmlstatus == QDeclarativeView::Null)
     {
@@ -115,25 +107,10 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
     else if (qmlstatus == QDeclarativeView::Error)
     {
         LogInfo("One or more errors has occurred.");
-        //window_->errors();
     }
     else
     {
-
-    }
-
-
-}
-
-void QMLUIModule::SetQMLUIFocus(bool focus)
-{
-    if (focus)
-    {
-        qmluiproxy_->setFocusPolicy(Qt::ClickFocus);
-    }
-    else
-    {
-        qmluiproxy_->setFocusPolicy(Qt::NoFocus);
+        LogInfo("Unknown QDeclarativeView status!");
     }
 }
 
@@ -142,14 +119,6 @@ void QMLUIModule::NetworkModeChanged(int mode)
     QVariant modee = (QVariant)mode;
     emit giveQMLNetworkMode(modee);
 }
-
-void QMLUIModule::LoadXML()
-{
-    sceneMngr = framework_->Scene()->GetDefaultScene().get();
-    sceneMngr->SaveSceneXML(("testingxmlscene.xml"));
-    emit helloQML("../../bin/testingxmlscene.xml");
-}
-
 
 void QMLUIModule::Exit()
 {

@@ -5,7 +5,6 @@ Rectangle {
     color: "transparent"
     opacity: 1
     signal exit
-    signal loadxml
     signal setFocus(bool focus)
     //signal setVisible
     property int usingbat: 0
@@ -82,7 +81,6 @@ Rectangle {
         else
             cielogo.visible = true
     }
-    function xmlfunction(xmlsource) { xmlModel.source = xmlsource }
     function networkstatechanged(networkstate) {
         if (networkstate == 0)
             networkText.text = "Network state: Undetermined"

@@ -104,11 +104,7 @@ public:
     Q_PROPERTY(QString qmlsource READ getqmlsource WRITE setqmlsource);
     DEFINE_QPROPERTY_ATTRIBUTE(QString, qmlsource);
 
-    //! Integer for menuelements.
-    //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
-    //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
-
-    ///IComponent Override
+    /// IComponent Override
     bool IsSerializable() const { return true; }
 
 
@@ -145,9 +141,9 @@ private slots:
     /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
     void ActionControllerChanged(QString id, QString newController);
 
+     /// Handles changes in QML-status
     void QMLStatus(QDeclarativeView::Status);
 
-    void SmoothCameraMove();
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

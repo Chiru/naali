@@ -185,6 +185,10 @@
 #include "EC_LaserPointer.h"
 #endif
 
+#ifdef EC_Sittable_ENABLED
+#include "EC_Sittable.h"
+#endif
+
 #include <OgreManualObject.h>
 #include <OgreSceneManager.h>
 #include <OgreViewport.h>
@@ -308,6 +312,9 @@ void RexLogicModule::Load()
 #endif
 #ifdef EC_LaserPointer_ENABLED
     DECLARE_MODULE_EC(EC_LaserPointer);
+#endif
+#ifdef EC_Sittable_ENABLED
+    DECLARE_MODULE_EC(EC_Sittable);
 #endif
 }
 

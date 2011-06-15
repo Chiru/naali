@@ -80,6 +80,7 @@ LinkEntityComponent(EntityComponents/EC_MenuContainer EC_MenuContainer)
 LinkEntityComponent(EntityComponents/EC_MenuItem EC_MenuItem)
 LinkEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
 LinkEntityComponent(EntityComponents/EC_QML EC_QML)
+LinkEntityComponent(EntityComponents/EC_Sittable EC_Sittable)
 
 link_modules (Core Foundation Interfaces Scene OgreRenderingModule AssetModule AvatarModule RexCommon
     HttpUtilities RpcUtilities ProtocolUtilities ProtocolModuleOpenSim ProtocolModuleTaiga EnvironmentModule

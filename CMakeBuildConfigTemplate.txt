@@ -132,6 +132,7 @@ AddEntityComponent(EntityComponents/EC_Menu EC_Menu)
 AddEntityComponent(EntityComponents/EC_MenuContainer EC_MenuContainer)
 AddEntityComponent(EntityComponents/EC_MenuItem EC_MenuItem)
 AddEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
+AddEntityComponent(EntityComponents/EC_Sittable EC_Sittable)
 
 #This component requires QtDeclarative to be included
 if(DECLARATIVE_ENABLED)

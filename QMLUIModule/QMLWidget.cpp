@@ -1,3 +1,8 @@
+/**
+*  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
+*  @file QMLWidget.cpp
+*  @brief QDeclarativeView for 2D UI.
+*/
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"

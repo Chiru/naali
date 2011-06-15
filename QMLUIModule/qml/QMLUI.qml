@@ -5,7 +5,6 @@ Rectangle {
     color: "transparent"
     opacity: 1
     signal exit
-    signal loadxml
     signal setFocus(bool focus)
     //signal setVisible
     property int usingbat: 0
@@ -58,11 +57,11 @@ Rectangle {
     }
     function setnetworktext() {
         if (networkText.visible == true) {
-            networkText.visible = false
-            networkmodechanged.visible = false }
+            networkText.visible = false;
+            networkMode.visible = networkText.visible }
         else {
-            networkText.visible = true
-            networkMode.visible = true }
+            networkText.visible = true;
+            networkMode.visible = networkText.visible }
     }
     function setpb() {
         if (pb.visiblee == true)
@@ -82,7 +81,6 @@ Rectangle {
         else
             cielogo.visible = true
     }
-    function xmlfunction(xmlsource) { xmlModel.source = xmlsource }
     function networkstatechanged(networkstate) {
         if (networkstate == 0)
             networkText.text = "Network state: Undetermined"
@@ -195,19 +193,20 @@ Rectangle {
     Text {
         id: networkText
         text: "Network state: Unknown"
-        anchors.horizontalCenter: uiRect.horizontalCenter
-        anchors.top:  uiRect.top
-        anchors.topMargin: 30
+        anchors.left: uiRect.left
+        anchors.bottom:  uiRect.bottom
         visible: false
+
+        Text {
+            id: networkMode
+            text: "Network mode: Unknown"
+            anchors.left: networkText.right
+            anchors.top: networkText.top
+            anchors.leftMargin: 5
+            visible: networkText.visible
+        }
     }
-    Text {
-        id: networkMode
-        text: "Network mode: Unknown"
-        anchors.horizontalCenter: networkText.horizontalCenter
-        anchors.top: networkText.bottom
-        anchors.topMargin: 5
-        visible: false
-    }
+
 
         ProgressBar {
             id: pb
@@ -233,28 +232,5 @@ Rectangle {
             anchors.bottomMargin: 50
             visible: false
         }
-
-    /*XmlListModel {
-         id: xmlModel
-         source: ""
-         query: "/scene/entity"
-
-         XmlRole { name: "entityID"; query: "@id/string()" }
-     }
-
-    ListView {
-        width:  200
-        height: 600
-        anchors.top: uiRect.top
-        anchors.topMargin: 30
-        anchors.right: uiRect.right
-        anchors.rightMargin: 100
-        model:  xmlModel
-        delegate: Text { text: "EntityID:" + entityID; MouseArea { anchors.fill: parent } }
-    }*/
-
-
-
-
 }
 

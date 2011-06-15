@@ -1,3 +1,9 @@
+/**
+*  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
+*  @file QMLUIModule.h
+*  @brief QMLUIModule is used for showing a 2D overlay QML UI
+*/
+
 #ifndef incl_QMLUIModule_QMLUIModule_h
 #define incl_QMLUIModule_QMLUIModule_h
 
@@ -60,7 +66,7 @@ private:
     /// Type name of the module.
     static std::string type_name_static_;
 
-    /// Login window.
+    /// 2D UI widget.
     QMLWidget *window_;
 
     /// Input context for this module.
@@ -75,34 +81,40 @@ private:
     /// "Tundra" event category ID.
     event_category_id_t tundra_category_;
 
-
-    //QByteArray scenexml_;
-    Scene::SceneManager *sceneMngr;
-
+    /// Proxywidget for 2D UI
     UiProxyWidget *qmluiproxy_;
+
+    /// QObject for connecting signals to QDeclarativeView
     QObject *QMLUI;
 
 
 public slots:
 
+    /// Exits the application
     void Exit();
+
+    /// Sends network state to QMLUI (for mobility module)
     void NetworkStateChanged(int);
+
+    /// Sends battery level to QMLUI (for mobility module)
     void BatteryLevelChanged(int);
+
+    /// Sends network mode to QMLUI (for mobility module)
     void NetworkModeChanged(int);
+
+    /// Sends using battery QMLUI (for mobility module)
     void UsingBattery(bool);
-    void SetQMLUIFocus(bool);
-    void LoadXML();
+
+    /// Handles changes in QML-status
     void QMLStatus(QDeclarativeView::Status);
 
 signals:
+
+    /// Direct signals to QMLUI
     void giveQMLNetworkState(QVariant);
     void giveQMLBatteryLevel(QVariant);
     void giveQMLUsingBattery(QVariant);
     void giveQMLNetworkMode(QVariant);
-    void helloQML(QVariant);
-
-
-
 };
 
 

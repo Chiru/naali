@@ -5,9 +5,6 @@ Rectangle {
     width:  1000
     height: 600
 
-    signal stopRendering();
-    signal startRendering();
-
     Rectangle {
         id: sidePanel
         width: 200
@@ -20,28 +17,6 @@ Rectangle {
             anchors.fill: parent
             model: qmlList
             delegate: listDelegate
-        }
-
-        Text {
-            anchors.bottom: txtStart.top
-            id: txtStop
-            font.pointSize: 18;
-            text: "Stop Rendering"
-            MouseArea {
-                anchors.fill: parent
-                onClicked: stopRendering()
-            }
-        }
-
-        Text {
-            anchors.bottom: sidePanel.bottom
-            id: txtStart
-            font.pointSize: 18;
-            text: "Start Rendering"
-            MouseArea {
-                anchors.fill: parent
-                onClicked: startRendering()
-            }
         }
     }
 
@@ -94,10 +69,5 @@ Rectangle {
              name: "RSS news"
              source: "./rssnews/rssnews.qml"
          }
-         ListElement {
-             name: "Flickr"
-             source: "./flickr/flickr.qml"
-         }
-
      }
 }

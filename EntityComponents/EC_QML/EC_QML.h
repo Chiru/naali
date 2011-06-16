@@ -101,8 +101,12 @@ public:
     Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
+    //! QString to qml-file
     Q_PROPERTY(QString qmlsource READ getqmlsource WRITE setqmlsource);
     DEFINE_QPROPERTY_ATTRIBUTE(QString, qmlsource);
+
+    Q_PROPERTY(int renderinterval READ getrenderinterval WRITE setrenderinterval);
+    DEFINE_QPROPERTY_ATTRIBUTE(int, renderinterval);
 
     /// IComponent Override
     bool IsSerializable() const { return true; }

@@ -665,4 +665,3 @@ endmacro()
 macro(link_package_qtdeclarative)
     target_link_libraries(${TARGET_NAME} optimized QtDeclarative)
 endmacro()
-

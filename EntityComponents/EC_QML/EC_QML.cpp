@@ -41,6 +41,7 @@ EC_QML::EC_QML(IModule *module) :
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
     qmlsource(this, "QML source", ""),
+    renderinterval(this, "Render interval", 40),
     qml_ready(false)
 {
     renderTimer_ = new QTimer();
@@ -51,8 +52,8 @@ EC_QML::EC_QML(IModule *module) :
     connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(ServerHandleAttributeChange(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
 
-    renderTimer_->setInterval(40);
-    renderTimer_->start();
+    renderTimer_->setInterval(getrenderinterval());
+
 
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
@@ -102,11 +103,6 @@ void EC_QML::PrepareQML()
         connect(parent, SIGNAL(ComponentAdded(IComponent*, AttributeChange::Type)), SLOT(ComponentAdded(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
         return;
     }
-    /*else
-    {
-        LogInfo("Mesh not ready.");
-        //mesh_->setmeshRef("local://screen.mesh");
-    }*/
 
     EC_Placeable *placeable = GetOrCreatePlaceableComponent();
     if (!placeable)
@@ -129,7 +125,6 @@ void EC_QML::PrepareQML()
         qmlview_->setSource(QUrl(getqmlsource()));
         QObject::connect(qmlview_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
 
-        canvas_->SetMesh(mesh_);
         canvas_->SetSubmesh(getrenderSubmeshIndex());
         canvas_->SetWidget(qmlview_);
     }
@@ -145,10 +140,12 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
 
         if (qmlview_->size().width() > 0 && qmlview_->size().height() > 0)
         {
+            renderTimer_->start();
             qml_ready = true;
         }
         else
         {
+            renderTimer_->stop();
             LogInfo("Unable to draw the QML component, because it has no size defined!");
             qml_ready = false;
         }
@@ -156,21 +153,25 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
 
     else if (qmlstatus == QDeclarativeView::Null)
     {
+        renderTimer_->stop();
         LogInfo("QDeclarativeView has no source set.");
         qml_ready = false;
     }
     else if (qmlstatus == QDeclarativeView::Loading)
     {
+        renderTimer_->stop();
         LogInfo("QDeclarativeView is loading network data.");
         qml_ready = false;
     }
     else if (qmlstatus == QDeclarativeView::Error)
     {
+        renderTimer_->stop();
         LogInfo("One or more errors has occurred.");
         qml_ready = false;
     }
     else
     {
+        renderTimer_->stop();
         qml_ready = false;
     }
 }
@@ -266,6 +267,10 @@ void EC_QML::AttributeChanged(IAttribute *attribute, AttributeChange::Type chang
     {
         canvas_->SetSubmesh(getrenderSubmeshIndex());
     }
+    if (attribute == &renderinterval)
+    {
+        renderTimer_->setInterval(getrenderinterval());
+    }
 }
 
 
@@ -292,6 +297,10 @@ void EC_QML::ServerHandleAttributeChange(IAttribute *attribute, AttributeChange:
     if (attribute == &renderSubmeshIndex)
     {
         canvas_->SetSubmesh(getrenderSubmeshIndex());
+    }
+    if (attribute == &renderinterval)
+    {
+        renderTimer_->setInterval(getrenderinterval());
     }
 }
 

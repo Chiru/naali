@@ -40,7 +40,7 @@ endif ()
 
 use_package (OPENJPEG)
 
-if(DECLARATIVE_ENABLED)
+if(TUNDRA_QT_DECLARATIVE_ENABLED)
     use_package_qtdeclarative()
 endif()
 
@@ -86,7 +86,7 @@ LinkEntityComponent(EntityComponents/EC_LaserPointer EC_LaserPointer)
 LinkEntityComponent(EntityComponents/EC_QML EC_QML)
 LinkEntityComponent(EntityComponents/EC_Sittable EC_Sittable)
 
-if(DECLARATIVE_ENABLED)
+if(TUNDRA_QT_DECLARATIVE_ENABLED)
     LinkEntityComponent(EntityComponents/EC_QML EC_QML)
 endif()
 
@@ -100,10 +100,10 @@ endif ()
 
 link_ogre()
 link_package (OPENJPEG)
-
-if(DECLARATIVE_ENABLED)
+if(TUNDRA_QT_DECLARATIVE_ENABLED)
     link_package_qtdeclarative()
 endif()
+
 
 SetupCompileFlagsWithPCH()
 CopyModuleXMLFile()

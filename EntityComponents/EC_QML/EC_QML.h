@@ -14,24 +14,16 @@
 #include "IComponent.h"
 #include "IAttribute.h"
 #include "Declare_EC.h"
-
-
-#include "SceneFwd.h"
 #include "InputFwd.h"
 
+#include <QDeclarativeView>
 #include <QString>
-#include <QSize>
-#include <QPointer>
 #include <QPoint>
 #include <QTimer>
-#include <QMenu>
-#include <QList>
-#include <QPointer>
 
 #include "EC_3DCanvas.h"
 #include "EC_Mesh.h"
 #include "EC_Placeable.h"
-#include <QtDeclarative/QtDeclarative>
 
 /**
 <table class="header">
@@ -62,7 +54,6 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-class QListView;
 class QMouseEvent;
 class RaycastResult;
 
@@ -111,7 +102,6 @@ public:
     /// IComponent Override
     bool IsSerializable() const { return true; }
 
-
 public slots:
     void Render();
 
@@ -139,15 +129,11 @@ private slots:
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
     EC_3DCanvas* GetOrCreateSceneCanvasComponent();
 
-    EC_Placeable *GetOrCreatePlaceableComponent();
+    //! Get parent entitys EC_Placeable. Return 0 if not present.
+    EC_Placeable* GetOrCreatePlaceableComponent();
 
-    //! Handles entity action WebViewControllerChanged
-    /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
-    void ActionControllerChanged(QString id, QString newController);
-
-     /// Handles changes in QML-status
-    void QMLStatus(QDeclarativeView::Status);
-
+    /// Handles changes in QML-status
+    void QMLStatus(QDeclarativeView::Status qmlstatus);
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

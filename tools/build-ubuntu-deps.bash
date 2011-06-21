@@ -42,13 +42,19 @@ private_ogre=false
 
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
+        if lsb_release -c | egrep -q "maverick|natty"; then
+            more="$more libqt4-webkit-dev"
+        fi
+        if [ x$private_ogre != xtrue ]; then
+            more="$more libogre-dev"
+        fi
 	sudo aptitude -y install scons python-dev libogg-dev libvorbis-dev \
 	 libopenjpeg-dev libcurl4-gnutls-dev libexpat1-dev libphonon-dev \
-	 build-essential g++ libogre-dev libboost-all-dev libpoco-dev \
+	 build-essential g++ libboost-all-dev libpoco-dev \
 	 ccache libqt4-dev python-dev zlib1g-dev libois-dev libcppunit-dev \
 	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
 	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings
+	 liboil0.3-dev mercurial unzip xsltproc $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \

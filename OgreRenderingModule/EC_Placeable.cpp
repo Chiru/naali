@@ -316,10 +316,17 @@ void EC_Placeable::SetQPosition(QVector3D newpos)
 QQuaternion EC_Placeable::GetQOrientation() const 
 {
     const Transform& trans = transform.Get();
-    Quaternion orientation(DEGTORAD * trans.rotation.x,
-                      DEGTORAD * trans.rotation.y,
-                      DEGTORAD * trans.rotation.z);
-    return QQuaternion(orientation.w, orientation.x, orientation.y, orientation.z);
+
+    float x = trans.rotation.x * DEGTORAD;
+    float y = trans.rotation.y * DEGTORAD;
+    float z = trans.rotation.z * DEGTORAD;
+
+    float q0 = cosf(x/2)*cosf(y/2)*cosf(z/2) + sinf(x/2)*sinf(y/2)*sinf(z/2);
+    float q1 = sinf(x/2)*cosf(y/2)*cosf(z/2) - cosf(x/2)*sinf(y/2)*sinf(z/2);
+    float q2 = cosf(x/2)*sinf(y/2)*cosf(z/2) + sinf(x/2)*cosf(y/2)*sinf(z/2);
+    float q3 = cosf(x/2)*cosf(y/2)*sinf(z/2) - sinf(x/2)*sinf(y/2)*cosf(z/2);
+
+    return QQuaternion(q0, q1, q2, q3);
 }
 
 void EC_Placeable::SetQOrientation(QQuaternion newort)

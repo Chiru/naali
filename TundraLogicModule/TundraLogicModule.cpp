@@ -39,7 +39,7 @@ static const std::string cDefaultProtocol = "udp";
 TundraLogicModule::TundraLogicModule() : IModule(type_name_static_),
     autostartserver_(false),
     autostartserver_port_(cDefaultPort),
-    syncManager_(0)
+    activeSyncManager("")
 {
     syncManagers_.clear();
 }
@@ -56,7 +56,6 @@ void TundraLogicModule::Initialize()
 {
     tundraEventCategory_ = framework_->GetEventManager()->RegisterEventCategory("Tundra");
     
-    //syncManager_ = boost::shared_ptr<SyncManager>(new SyncManager(this));
     client_ = boost::shared_ptr<Client>(new Client(this));
     server_ = boost::shared_ptr<Server>(new Server(this));
     
@@ -143,19 +142,18 @@ void TundraLogicModule::AttachSyncManagerToScene(const QString &name)
     // Tell syncManager 'attachedConnection' is the magic number when using client_->GetConnection(X)
     SyncManager *sm = new SyncManager(this, attachedConnection);
     sm->RegisterToScene(framework_->Scene()->GetScene(name));
+    LogInfo("Registered SyncManager to scene " + name.toStdString());
     syncManagers_.insert(name, sm);
-    syncManager_ = sm;
+    activeSyncManager = name;
     // When syncmanager is created we also want to create new Ogre sceneManager
     emit createOgre(name);
-    LogInfo("Registered SyncManager to scene " + name.toStdString());
-    if (client_)
+    if (!IsServer())
         emit setClientActiveConnection(attachedConnection);
+
 }
 
 void TundraLogicModule::RemoveSyncManagerFromScene(const QString &name)
 {
-    syncManager_ = 0;
-    delete syncManager_;
     SyncManager *sm = syncManagers_.take(name);
     delete sm;
     emit deleteOgre(name);
@@ -173,8 +171,8 @@ void TundraLogicModule::changeScene(const QString &name)
     {
         emit setOgre(name);
         framework_->Scene()->SetDefaultScene(name);
-        syncManager_ = syncManagers_[name];
-        if (client_)
+        activeSyncManager = name;
+        if (!IsServer())
             emit setClientActiveConnection(connection);
     }
 }
@@ -190,7 +188,7 @@ unsigned short TundraLogicModule::Grep(const QString name)
 // This method is used by server to get syncmanager registered to it's scene
 SyncManager *TundraLogicModule::GetSyncManager()
 {
-    return syncManager_;
+    return syncManagers_["TundraServer_0"];
 }
 
 void TundraLogicModule::Update(f64 frametime)
@@ -235,8 +233,8 @@ void TundraLogicModule::Update(f64 frametime)
         if (server_)
             server_->Update(frametime);
         // Run scene sync
-        if (syncManager_)
-            syncManager_->Update(frametime);
+        if (syncManagers_[activeSyncManager])
+            syncManagers_[activeSyncManager]->Update(frametime);
         // Run scene interpolation
         Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
         if (scene)
@@ -520,8 +518,8 @@ bool TundraLogicModule::HandleEvent(event_category_id_t category_id, event_id_t 
             client_->HandleKristalliEvent(event_id, data);
         if (server_)
             server_->HandleKristalliEvent(event_id, data);
-        if (syncManager_)
-            syncManager_->HandleKristalliEvent(event_id, data);
+        if (syncManagers_[activeSyncManager])
+            syncManagers_[activeSyncManager]->HandleKristalliEvent(event_id, data);
     }
     
     return false;

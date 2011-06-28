@@ -11,28 +11,17 @@
 #include "StableHeaders.h"
 #include "EC_MenuContainer.h"
 #include "EC_MenuItem.h"
-#include "IModule.h"
 #include "Entity.h"
-#include "LoggingFunctions.h"
-#include "AssetAPI.h"
 
 #include <Ogre.h>
-#include <EC_OgreCamera.h>
 #include "RenderServiceInterface.h"
 
-#include <QStringListModel>
-#include <QListView>
 #include <QtGui>
 #include "InputAPI.h"
-
-#include "SceneInteract.h"
-
+#include "AssetAPI.h"
 #include "SceneManager.h"
-#include "UiAPI.h"
-#include "SceneAPI.h"
 
-#include <QLabel>
-
+#include "LoggingFunctions.h"
 #include "MemoryLeakCheck.h"
 
 #define SUBMENUCLOSE 0
@@ -46,6 +35,7 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     subMenu_clicked_(false),
     subMenu_(false),
     subMenuIsScrolling(false),
+    follow(this, "Follow camera", false),
     numberOfMenuelements_(0),
     selected_(0),
     previousSelected_(0),
@@ -59,7 +49,8 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
 
     // Connect signals from IComponent
     //connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuContainer()), Qt::UniqueConnection);
-    connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
+    //connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
+    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
     QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
     renderTimer_->setInterval(40);
@@ -687,8 +678,6 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem()
 
     ComponentPtr parentPlaceable = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
     entity_id_t id = sceneManager_->GetNextFreeIdLocal();
-
-    //LogInfo("ID: " + ToString(id));
     Scene::EntityPtr entity_ = sceneManager_->CreateEntity(id, QStringList(), AttributeChange::LocalOnly, false);
 
     //LogInfo("Pointer " + ToString(entity_));
@@ -727,4 +716,74 @@ EC_Placeable *EC_MenuContainer::GetOrCreatePlaceableComponent()
 void EC_MenuContainer::ComponentRemoved(IComponent *component, AttributeChange::Type change)
 {
 
+}
+
+void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::Type change)
+{
+    if (attribute == &follow)
+    {
+        Scene::Entity *parent = GetParentEntity();
+        Scene::EntityPtr avatarCameraPtr = parent->GetScene()->GetEntityByName("AvatarCamera");
+        Scene::EntityPtr freeLookCameraPtr = parent->GetScene()->GetEntityByName("FreeLookCamera");
+
+        if(follow.Get() == true)
+        {
+            if(avatarCameraPtr)
+            {
+                Scene::Entity *avatarCamera = avatarCameraPtr.get();
+                GetOrCreatePlaceableComponent()->SetParent(avatarCamera->GetComponent("EC_Placeable"));
+                //LogInfo("follow avatarCamera is active");
+            }
+            else if(freeLookCameraPtr)
+            {
+                Scene::Entity *freeLookCamera = freeLookCameraPtr.get();
+                GetOrCreatePlaceableComponent()->SetParent(freeLookCamera->GetComponent("EC_Placeable"));
+                //LogInfo("follow freeLookCamera is active");
+            }
+            distance.x=0;
+            distance.y=-2;
+            distance.z=-12;
+
+            Transform entityTransform;
+            entityTransform.position=distance;
+
+            GetOrCreatePlaceableComponent()->settransform(entityTransform);
+
+        }
+        else
+        {
+            GetParentEntity()->RemoveComponent(GetParentEntity()->GetComponent("EC_Placeable"));
+            ComponentPtr parentPlaceable = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
+
+            distance.z=-12;
+            distance.y=-2;
+
+            if(cameraPlaceable)
+            {
+                Transform cameraTransform = cameraPlaceable->gettransform();
+                Vector3df cameraPosition = cameraTransform.position;
+
+                distance = cameraPlaceable->GetRelativeVector(distance);
+
+                ownEntityPos.x = cameraPosition.x+distance.x;
+                ownEntityPos.y = cameraPosition.y+distance.y;
+                ownEntityPos.z = cameraPosition.z+distance.z;
+
+                Transform entityTransform;
+                entityTransform.position=ownEntityPos;
+                entityTransform.rotation=cameraTransform.rotation;
+
+                //LogInfo(ToString(entityTransform.position));
+                //LogInfo(ToString(cameraTransform.position));
+
+                GetOrCreatePlaceableComponent()->settransform(entityTransform);
+                for(int i=0; i<MenuItemList_.count();i++)
+                {
+                    MenuItemList_.at(i)->SetMenuContainerEntity(parentPlaceable);
+                }
+            }
+            else
+                LogError("Couldn't get OgreCamera Placeable");
+        }
+    }
 }

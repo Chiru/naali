@@ -116,6 +116,10 @@ public:
     /// Destructor.
     ~EC_MenuContainer();
 
+    //! Specifies whether menu is following a camera or not.
+    Q_PROPERTY(bool follow READ getfollow WRITE setfollow);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, follow);
+
     ///! Boolean for interactive mode, if true it will show context menus on mouse click events.
     //Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     //DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
@@ -159,6 +163,13 @@ private slots:
 
     /// Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
+
+    //! Handle attributechange
+    /*! \param attribute Attribute that changed.
+        \param change Change type.
+     */
+
+
 
     /// Create placeable component or if there allready is one in parent entity returns pointer to that one.
     EC_Placeable *GetOrCreatePlaceableComponent();

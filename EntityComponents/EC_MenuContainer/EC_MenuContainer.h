@@ -161,15 +161,11 @@ private slots:
     /// Monitors this entitys removed components.
     void ComponentRemoved(IComponent *component, AttributeChange::Type change);
 
-    /// Monitors this components Attribute changes.
-    void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
-
     //! Handle attributechange
     /*! \param attribute Attribute that changed.
         \param change Change type.
      */
-
-
+    void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
     /// Create placeable component or if there allready is one in parent entity returns pointer to that one.
     EC_Placeable *GetOrCreatePlaceableComponent();

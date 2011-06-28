@@ -205,7 +205,7 @@ void Client::Logout(bool fail, unsigned short removedConnection_)
 
 bool Client::IsConnected() const
 {
-    return client_id_ == LoggedIn;
+    return loginstate_ == LoggedIn;
 }
 
 bool Client::checkIfConnected(QString address, QString port)

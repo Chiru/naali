@@ -1,8 +1,9 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   EC_Menu.cpp
- *  @brief  EC_Menu creates 3D Menu component in to scene.
+ *  @file   EC_MenuItem.cpp
+ *  @brief  EC_MenuItem creates single element of 3D Menu component in to scene.
  *  @note   no notes
  */
 
@@ -12,31 +13,9 @@
 #include "EC_3DCanvas.h"
 #include "EC_Mesh.h"
 #include "EC_Placeable.h"
-
-#include "IModule.h"
 #include "Entity.h"
+
 #include "LoggingFunctions.h"
-
-
-
-#include <Ogre.h>
-#include <EC_OgreCamera.h>
-#include "RenderServiceInterface.h"
-
-#include <QStringListModel>
-#include <QListView>
-//#include <QMouseEvent>
-//#include "MouseEvent.h"
-#include "InputAPI.h"
-
-#include "SceneInteract.h"
-
-#include "SceneManager.h"
-#include "UiAPI.h"
-#include "SceneAPI.h"
-
-#include <QLabel>
-
 #include "MemoryLeakCheck.h"
 
 DEFINE_POCO_LOGGING_FUNCTIONS("EC_MenuItem")
@@ -45,8 +24,7 @@ EC_MenuItem::EC_MenuItem(IModule *module) :
     IComponent(module->GetFramework()),
     renderSubmeshIndex(this, "Render Submesh", 0),
     interactive(this, "Interactive", false),
-    phi(this, "Phi", 0.0),
-    ent_clicked_(false)
+    phi(this, "Phi", 0.0)
 {
     // Connect signals from IComponent
     connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuItem()), Qt::UniqueConnection);
@@ -57,8 +35,6 @@ EC_MenuItem::EC_MenuItem(IModule *module) :
 
 EC_MenuItem::~EC_MenuItem()
 {
-    SAFE_DELETE_LATER(listview_);
-
 }
 
 void EC_MenuItem::PrepareMenuItem()
@@ -88,12 +64,6 @@ void EC_MenuItem::PrepareMenuItem()
         connect(parent, SIGNAL(ComponentAdded(IComponent*, AttributeChange::Type)), SLOT(ComponentAdded(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
         return;
     }
-    else
-    {
-            //MeshList_.at(i)->SetName("meshname"+i);
-            Mesh_->setmeshRef("local://rect_plane.mesh");
-            //Mesh->SetAdjustPosition(position);
-    }
 
     EC_Placeable *placeable = GetOrCreatePlaceableComponent();
     if (!placeable)
@@ -110,39 +80,27 @@ void EC_MenuItem::PrepareMenuItem()
         connect(parent, SIGNAL(ComponentAdded(IComponent*, AttributeChange::Type)), SLOT(ComponentAdded(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
         return;
     }
-    else
-    {
-        //view_ = new QDeclarativeView;
-        //view_->setSource(QUrl::fromLocalFile("./data/qmlfiles/testi.qml"));
-        //view_->setFixedSize(400, 400);
-
-        /// \TODO Add dynamic data import mechanishm
-        //Some hardcoded testmaterial.
-
-        //QStringList TestList;
-        //TestList<<"list1"<<"list2"<<"list3"<<"list4"<<"list5"<<"list6"<<"list7"<<"list8"<<"list9"<<"list10"<<"list11"<<"list12";
-
-        //listview_ = new QListView();
-
-        //LogInfo("setModel");
-        //listview_->setModel(new QStringListModel(TestList));
-
-        //LogInfo("SetWidget");
-
-        //Canvas_->SetMesh(MeshList_.at(i));
-        //Canvas_->SetSubmesh(0);
-        //Canvas_->SetWidget(listview_);
-        //Canvas_->Update();
-
-    }
 }
 
-void EC_MenuItem::SetMenuItemData(QWidget *data)
+void EC_MenuItem::SetMenuItemMesh(QString meshref, QStringList materials)
 {
-    //listview_ = new QListView();
-    //listview_->setModel(new QStringListModel(datalist));
+    EC_Mesh *Mesh_ = GetOrCreateMeshComponent();
+    Mesh_->setmeshRef(meshref);
+
+    AssetReferenceList materialList;
+    for(int i=0; i<materials.count();i++)
+    {
+        materialList.Append(AssetReference(materials.at(i)));
+    }
+    AttributeChange::Type type = AttributeChange::Default;
+    Mesh_->meshMaterial.Set(materialList, type);
+
+}
+
+void EC_MenuItem::SetMenuItemWidget(int subMeshIndex, QWidget *data)
+{
     EC_3DCanvas *Canvas_ = GetOrCreateCanvasComponent();
-    Canvas_->SetSubmesh(0);
+    Canvas_->SetSubmesh(subMeshIndex);
     //LogInfo("Item Data Ptr: " + ToString(data));
     Canvas_->SetWidget(data);
 }
@@ -158,19 +116,9 @@ void EC_MenuItem::SetMenuContainerEntity(ComponentPtr MenuContainer)
 {
 
     //setter-function for setting entity position.
-    IComponent *iComponent = GetParentEntity()->GetComponent("EC_Placeable").get();
-    EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
+    EC_Placeable *placeable = GetOrCreatePlaceableComponent();
     if(placeable && MenuContainer)
         placeable->SetParent(MenuContainer);
-    else
-        LogInfo("Couldn't get placeable component!");
-
-}
-
-int EC_MenuItem::GetNumberOfSubItems()
-{
-    /// \todo when adding data, it sets this value to attribute.
-    return 7;
 }
 
 void EC_MenuItem::SetMenuItemPosition(Vector3df position)
@@ -178,25 +126,17 @@ void EC_MenuItem::SetMenuItemPosition(Vector3df position)
     GetOrCreatePlaceableComponent()->SetPosition(position);
 }
 
-
-void EC_MenuItem::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)
-{
-}
-
-
 EC_Mesh* EC_MenuItem::GetOrCreateMeshComponent()
 {
-    EC_Mesh *mesh;
-    if (GetParentEntity())
+    IComponent *iComponent =  GetParentEntity()->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+    if (iComponent)
     {
-
-        IComponent *iComponent =  GetParentEntity()->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
-        mesh = dynamic_cast<EC_Mesh*>(iComponent);
+        EC_Mesh *mesh = dynamic_cast<EC_Mesh*>(iComponent);
         return mesh;
     }
     else
     {
-        LogError("Couldn't get parent entity, returning empty QList");
+        LogError("Couldn't get or greate EC_Mesh, returning null pointer");
         return 0;
     }
 
@@ -204,28 +144,45 @@ EC_Mesh* EC_MenuItem::GetOrCreateMeshComponent()
 
 EC_3DCanvas* EC_MenuItem::GetOrCreateCanvasComponent()
 {
-    if (!GetParentEntity())
-        return 0;
     IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_3DCanvas", AttributeChange::LocalOnly, false).get();
-    EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
-
-    /// \TODO some error handling would be nice..
-    return canvas;
+    if (iComponent)
+    {
+        EC_3DCanvas *canvas = dynamic_cast<EC_3DCanvas*>(iComponent);
+        return canvas;
+    }
+    else
+    {
+        LogError("Couldn't get or greate EC_3DCanvas");
+        return 0;
+    }
 }
 
 EC_Placeable *EC_MenuItem::GetOrCreatePlaceableComponent()
 {
-    if (!GetParentEntity())
-        return 0;
     IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
-    EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
-    if(placeable)
+    if(iComponent)
+    {
+        EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
         return placeable;
+    }
     else
+    {
+        LogError("Couldn't get or create EC_Placeable");
         return 0;
+    }
 }
 
 void EC_MenuItem::ComponentRemoved(IComponent *component, AttributeChange::Type change)
+{
+
+}
+
+void EC_MenuItem::ComponentAdded(IComponent *component, AttributeChange::Type change)
+{
+
+}
+
+void EC_MenuItem::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)
 {
 
 }

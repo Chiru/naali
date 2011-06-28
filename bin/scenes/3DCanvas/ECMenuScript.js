@@ -1,6 +1,7 @@
 engine.ImportExtension("qt.core");
 engine.ImportExtension("qt.gui");
 
+//Each menutype must have own js-file to specify proper functionality
 var MenuEntity;
 var screenEntity;
 var menuArray;
@@ -23,9 +24,26 @@ function Create3DMenu()
     var MenuComponent = MenuEntity.GetOrCreateComponentRaw("EC_MenuContainer");
     scene.EmitEntityCreatedRaw(MenuEntity);
     
-    var menuData = generateMenuData();
-    MenuComponent.SetMenuData(menuData);    
+    // re-enable next steps if you want to use images as menu data
+    /*var menuData = generateMenuData();
+    MenuComponent.SetMenuWidgets(menuData);
     MenuComponent.OnMenuSelection.connect(MenuItemSelected);
+    */
+
+    MenuComponent.PrepareMenuContainer(1, 4.0);
+
+    //MenuComponent.AddComponentToMenu("local://battery.mesh", ["local://battery.Material.0.material", "local://battery.Material.1.material", "local://battery.Material.2.material"]);
+    MenuComponent.AddComponentToMenu("local://mailbox.mesh",["local://mailbox.Material.0.material","local://mailbox.Material.1.material","local://mailbox.Material.2.material","local://mailbox.Material.3.material"]);
+    MenuComponent.AddComponentToMenu("local://chrome.mesh",["local://chrome.Material.0.material","local://chrome.Material.0.material"]);
+    MenuComponent.AddComponentToMenu("local://chatbuble.mesh",["local://chatbuble.Material.0.material","local://chatbuble.Material.1.material"]);
+    MenuComponent.AddComponentToMenu("local://facebook.mesh",["local://facebook.Material.0.material","local://facebook.Material.1.material"]);
+    MenuComponent.AddComponentToMenu("local://notebook.mesh",["local://notebook.Material.0.material"]);
+    MenuComponent.AddComponentToMenu("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    MenuComponent.AddComponentToMenu("local://calculator.mesh",["local://calculator.Material.0.material","local://calculator.Material.1.material","local://calculator.Material.2.material"]);
+    MenuComponent.AddComponentToMenu("local://chessboard.mesh",["local://chessboard.Material.0.material","local://chessboard.Material.1.material"]);
+    MenuComponent.AddComponentToMenu("local://notes.mesh",["local://notes.Material.0.material","local://notes.Material.1.material","local://notes.Material.2.material"]);
+    MenuComponent.AddComponentToMenu("local://skype.mesh",["local://skype.Material.0.material"]);
+    MenuComponent.AddComponentToMenu("local://radio.mesh",["local://radio.Material.0.material","local://radio.Material.1.material","local://radio.Material.2.material"]);
 }
 
 function Close3DMenu()
@@ -40,6 +58,7 @@ function Close3DMenu()
         print("Couldn't get entity ID!");
     }
 }
+
 
 function generateMenuData()
 {
@@ -69,6 +88,8 @@ function generateMenuData()
         var dataWidget = new QLabel();
         var fileInfo = dirList[i];
         dataWidget.setText(fileInfo);
+
+        //hardcoded fix to see whole text.
         dataWidget.setFixedWidth(65);
         
         //print("i: " + i + " dir: " + fileInfo);

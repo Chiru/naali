@@ -1,4 +1,5 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
  *  @file   EC_Template.h
@@ -33,7 +34,6 @@
 #include <QPointer>
 
 #include "EC_Placeable.h"
-//#include <QtDeclarative/QtDeclarative>
 
 /**
 <table class="header">
@@ -41,7 +41,6 @@
 <td>
 <h2>EC_MenuContainer</h2>
 EC_MenuContainer Component. This component creates subentities with EC_MenuItem component and is parent entity for those.
-This component make sure that Menu work as a whole.
 
 Registered by RexLogic::RexLogicModule.
 
@@ -104,6 +103,7 @@ private:
     int previousSelected_;
     int subMenuItemSelected_;
     int numberOfMenuelements_;
+    int menulevels_;
 
     //QDeclarativeView *view_;
     //void SetEntityPosition();
@@ -115,6 +115,10 @@ private:
 public:
     /// Destructor.
     ~EC_MenuContainer();
+
+    //! Specifies whether menu is following a camera or not.
+    Q_PROPERTY(bool follow READ getfollow WRITE setfollow);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, follow);
 
     ///! Boolean for interactive mode, if true it will show context menus on mouse click events.
     //Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
@@ -129,19 +133,27 @@ public slots:
     void Render();
 
     /// Handles kinetic scrolling for both, menu and submenu items.
-    void kineticScroller();
+    void KineticScroller();
 
     /// Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
 
     /// Sets data for MenuContainer.
     /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
-    void SetMenuData(QList<QWidget*>);
+    void SetMenuWidgets(QList<QWidget*>);
+
+    /// Add component to menu
+    /// \param QString reference for mesh to use.
+    /// \param QStringList materialreferences for that mesh.
+    void AddComponentToMenu(QString, QStringList);
+
+    /// Prepares MenuContainer component
+    /// \param int number of menulayers
+    /// \param float menu radius
+    void PrepareMenuContainer(int, float);
 
 
 private slots:
-    /// Prepares everything related to the parent widget and other needed components.
-    void PrepareMenuContainer();
 
     /// Monitors this entitys added components.
     void ComponentAdded(IComponent *component, AttributeChange::Type change);
@@ -152,17 +164,24 @@ private slots:
     /// Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
+    //! Handle attributechange
+    /*! \param attribute Attribute that changed.
+        \param change Change type.
+     */
+
+
+
+    /// Create placeable component or if there allready is one in parent entity returns pointer to that one.
     EC_Placeable *GetOrCreatePlaceableComponent();
 
-    /// Handles entity action WebViewControllerChanged
-    /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
-    void ActionControllerChanged(QString id, QString newController);
+    /// Centers menuitems after rotation, so that selectet item is always nearest one.
+    void CenterAfterRotation();
 
-    void centerAfterRotation();
-    void setMenuContainerPosition();
+    /// Sets MenuContainer's position in front of camera.
+    void SetMenuContainerPosition();
 
     /// \param menuIndex indicates which MenuItem was selected when this function were called.
-    void createSubMenu(int menuIndex);
+    void CreateSubMenu(int menuIndex);
 
     EC_MenuItem* CreateMenuItem();
 

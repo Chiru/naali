@@ -70,15 +70,20 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
 
 EC_MenuContainer::~EC_MenuContainer()
 {
-    //loop MenuItemList and delete every entity from there.
+    //if sceneManager is not found the client is allready running down.
     Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
+    if(!sceneManager_)
+    {
+        MenuItemList_.clear();
+        subMenuItemList_.clear();
+    }
+
+    //loop MenuItemList and subMenuItemList to clear all data from there.
     if(MenuItemList_.count()>0)
     {
-        //If menu is open when viewer/server is closed, some of these entities will be deleted by some other component and this will crash.
-        /// \todo Fix bug that client crashes when closing if menu is open.
         for(int i=0; i<MenuItemList_.count(); i++)
         {
-            entity_id_t id = MenuItemList_.at(i)->GetParentEntity()->GetId();
+            entity_id_t id = MenuItemList_.value(i)->GetParentEntity()->GetId();
             if(id)
                 sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
         }
@@ -88,12 +93,13 @@ EC_MenuContainer::~EC_MenuContainer()
     {
         for(int i=0; i<subMenuItemList_.count(); i++)
         {
-            entity_id_t id = subMenuItemList_.at(i)->GetParentEntity()->GetId();
+            entity_id_t id = subMenuItemList_.value(i)->GetParentEntity()->GetId();
             if(id)
                 sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
         }
         subMenuItemList_.clear();
     }
+
     SAFE_DELETE(scrollerTimer_);
     SAFE_DELETE(renderTimer_);
 }
@@ -127,12 +133,6 @@ void EC_MenuContainer::AddComponentToMenu(QString meshref, QStringList materials
         MenuItemList_.at(i)->setphi(phi);
         MenuItemList_.at(i)->SetMenuItemPosition(position);
     }
-    /*for (int i=0; i<materials.count();i++)
-    {
-        AssetTransferPtr transfer = framework_->Asset()->RequestAsset(materials.at(i));
-
-        //connect(transfer.get(), SIGNAL(Loaded(AssetPtr)), this, SLOT(AssetLoaded(AssetPtr)));
-    }*/
 
     /// \todo refactor numberOfMenuelements_ usage
     numberOfMenuelements_ = MenuItemList_.count();
@@ -508,13 +508,17 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             if(subMenu_clicked_)
                 subMenuIsScrolling = true;
 
-            scrollerTimer_->setInterval(scrollerTimer_Interval);
-            scrollerTimer_->start();
+            if(scrollerTimer_)
+            {
+                scrollerTimer_->setInterval(scrollerTimer_Interval);
+                scrollerTimer_->start();
+            }
         }
         else
         {
             CenterAfterRotation();
-            scrollerTimer_->stop();
+            if(scrollerTimer_)
+                scrollerTimer_->stop();
             speed_=0;
         }
         ent_clicked_ = false;
@@ -647,27 +651,30 @@ void EC_MenuContainer::CenterAfterRotation()
     }
     else
     {
-        position.x = radius_ * cos( phi );
-        position.z = radius_ * sin( phi );
-
-        MenuItemList_.at(selected_)->SetMenuItemPosition(position);
-        MenuItemList_.at(selected_)->setphi(phi);
-
-        //LogInfo("Selected planar: " + ToString(selected_));
-        int j = selected_;
-        for (int i=1; i<MenuItemList_.count(); i++)
+        if(MenuItemList_.count()>0)
         {
-            j++;
+            position.x = radius_ * cos( phi );
+            position.z = radius_ * sin( phi );
 
-            if(j==MenuItemList_.count())
-                j=0;
+            MenuItemList_.at(selected_)->SetMenuItemPosition(position);
+            MenuItemList_.at(selected_)->setphi(phi);
 
-            phi = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
-            position.x = radius_ * cos(phi);
-            position.z = radius_ * sin(phi);
+            //LogInfo("Selected planar: " + ToString(selected_));
+            int j = selected_;
+            for (int i=1; i<MenuItemList_.count(); i++)
+            {
+                j++;
 
-            MenuItemList_.at(j)->setphi(phi);
-            MenuItemList_.at(j)->SetMenuItemPosition(position);
+                if(j==MenuItemList_.count())
+                    j=0;
+
+                phi = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
+                position.x = radius_ * cos(phi);
+                position.z = radius_ * sin(phi);
+
+                MenuItemList_.at(j)->setphi(phi);
+                MenuItemList_.at(j)->SetMenuItemPosition(position);
+            }
         }
     }
 }

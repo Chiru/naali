@@ -64,7 +64,6 @@ namespace Scene
         
         // Do not send entity removal or scene cleared events on destruction
         RemoveAllEntities(false);
-        
         emit Removed(this);
     }
 
@@ -1208,7 +1207,7 @@ namespace Scene
         newInterp.start = attr->Clone();
         newInterp.end = endvalue;
         newInterp.length = length;
-        
+
         interpolations_.push_back(newInterp);
         return true;
     }

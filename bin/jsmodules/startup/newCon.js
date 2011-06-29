@@ -1,10 +1,5 @@
 if (!server.IsAboutToStart())
 {
-	//engine.ImportExtension("qt.core");
-    //engine.ImportExtension("qt.gui");
-    
-	sceneAPI = framework.Scene();
-
     client.createOgre.connect(CreateScenemanager);
 	client.deleteOgre.connect(DeleteScenemanager);
 	client.setOgre.connect(SetScenemanager);
@@ -13,7 +8,6 @@ if (!server.IsAboutToStart())
 	{
 		framework.renderer.CreateSceneManager(sceneName);
 		framework.renderer.SetSceneManager(sceneName);
-		print("Created new Ogre scenemanager " + sceneName);
 	}
 
 	function DeleteScenemanager(sceneName)
@@ -26,6 +20,5 @@ if (!server.IsAboutToStart())
 	function SetScenemanager(sceneName)
 	{
 		framework.renderer.SetSceneManager(sceneName);
-		print("Changed Ogre scenemanager to " + sceneName);
-	}	
+	}
 }

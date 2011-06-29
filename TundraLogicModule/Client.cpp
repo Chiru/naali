@@ -50,10 +50,14 @@ Client::Client(TundraLogicModule* owner) :
     client_id_list_.clear();
     reconnect_list_.clear();
     properties_list_.clear();
+
+    connect(owner_, SIGNAL(setClientActiveConnection(QString, unsigned short)), this, SLOT(setActiveConnection(QString, unsigned short)));
 }
 
 Client::~Client()
 {
+    while (!scenenames_.isEmpty())
+        Logout(false, owner_->Grep(scenenames_.begin().value()));
 }
 
 void Client::Update(f64 frametime)
@@ -99,17 +103,16 @@ void Client::Login(const QUrl& loginUrl)
 
 void Client::Login(const QString& address, unsigned short port, const QString& username, const QString& password, const QString &protocol)
 {
-    // Make sure to logout, our scene manager gets confused when you login again
-    // when already connected to another or same server.
-    if (IsConnected())
-        Logout();
+    // Check if we already have a connection to this specific IP:port and if so, then switch to it
+    if (checkIfConnected(address, QString::number(port)))
+        return;
 
     SetLoginProperty("address", address);
     SetLoginProperty("port", QString::number(port));
     SetLoginProperty("username", username);
     SetLoginProperty("password", password);
     SetLoginProperty("protocol", protocol);
-    
+
     kNet::SocketTransportLayer transportLayer = kNet::InvalidTransportLayer;
     if (protocol.toLower() == "tcp")
         transportLayer = kNet::SocketOverTCP;
@@ -134,7 +137,6 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
     }
 
     QString newConName = getUniqueSceneName();
-    TundraLogicModule::LogInfo("Using " + newConName.toStdString() + " as key for this connection attempt!");
 
     owner_->GetKristalliModule()->Connect(address.toStdString().c_str(), port, protocol);
     loginstate_ = ConnectionPending;
@@ -144,36 +146,29 @@ void Client::Login(const QString& address, unsigned short port, kNet::SocketTran
 
 void Client::Logout(bool fail, unsigned short removedConnection_)
 {
-    TundraLogicModule::LogInfo("Client::Logout method");
     QMapIterator<unsigned short, Ptr(kNet::MessageConnection)> sourceIterator = owner_->GetKristalliModule()->GetConnectionArray();
 
-    TundraLogicModule::LogInfo("Checking if sourceiterator has items!");
     if (!sourceIterator.hasNext())
         return;
 
-    TundraLogicModule::LogInfo("Yes it had!");
-    // Scene to be removed is TundraClient_X | X = 0, 1, 2, 3, ..., n; n â‚¬ Z+
+    // Scene to be removed is TundraClient_X | X = 0, 1, 2, 3, ..., n; n ¤ Z+
     // removedConnection_ indicates which scene we are about to disconnect.
     QString sceneToRemove = "TundraClient_";
     sceneToRemove.append(QString("%1").arg(removedConnection_));
 
     if (loginstate_list_[sceneToRemove] != NotConnected)
     {
-        TundraLogicModule::LogInfo("Loginstate was: " + ToString(loginstate_list_[sceneToRemove]));
-        TundraLogicModule::LogInfo("Client::Logout, emitting aboutToDisconnect");
+        // This signal is catched in TundraLogicModule.cpp. This changes scene to soonToBeDisconnected scene.
         emit aboutToDisconnect(sceneToRemove);
         if (GetConnection(removedConnection_))
         {
-            TundraLogicModule::LogInfo("Client::Logout, disconnecting connection!");
             owner_->GetKristalliModule()->Disconnect(fail, removedConnection_);
             TundraLogicModule::LogInfo(sceneToRemove.toStdString() + " disconnected!");
         }
         
         loginstate_ = NotConnected;
         client_id_ = 0;
-        TundraLogicModule::LogInfo("Logout: Event tundra_disconnected!");
         framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_DISCONNECTED, 0);
-        TundraLogicModule::LogInfo("Removing scene!");
         framework_->Scene()->RemoveScene(sceneToRemove);
 
         // We remove TundraClient_X from the scenenames_ map and when next new connection happens
@@ -184,8 +179,8 @@ void Client::Logout(bool fail, unsigned short removedConnection_)
         client_id_list_.remove(sceneToRemove);
         properties_list_.remove(sceneToRemove);
         scenenames_.remove(removedConnection_);
-        TundraLogicModule::LogInfo("DEBUG: Scenename " + sceneToRemove.toStdString() + " now available for usage!");
 
+        // Check if we have connections up and running and switch to it.
         if (!scenenames_.isEmpty())
             owner_->changeScene(scenenames_.constBegin().value());
 
@@ -213,6 +208,28 @@ bool Client::IsConnected() const
     return loginstate_ == LoggedIn;
 }
 
+bool Client::checkIfConnected(QString address, QString port)
+{
+    unsigned short counter = 0;
+    QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
+
+    while (propertiesIterator.hasNext())
+    {
+        propertiesIterator.next();
+        std::map<QString, QString> temp = propertiesIterator.value();
+        QString tempAddress = temp["address"];
+        QString tempPort = temp["port"];
+
+        if (address == tempAddress && port == tempPort)
+        {
+            emitChangeSceneSignal("TundraClient_" + QString::number(counter));
+            return true;
+        }
+        counter++;
+    }
+    return false;
+}
+
 void Client::SetLoginProperty(QString key, QString value)
 {
     key = key.trimmed();
@@ -224,6 +241,8 @@ void Client::SetLoginProperty(QString key, QString value)
 
 QString Client::GetLoginProperty(QString key)
 {
+    // Multiconnection addition. Check what connection is active and set property.
+    properties = properties_list_["TundraClient_" + QString::number(activeConnection)];
     key = key.trimmed();
     if (properties.count(key) > 0)
         return properties[key];
@@ -288,19 +307,14 @@ void Client::CheckLogin()
         case ConnectionPending:
             if ((connectionIterator.value().ptr()) && (connectionIterator.value().ptr()->GetConnectionState() == kNet::ConnectionOK))
             {
-                Ptr(kNet::MessageConnection) temppis = connectionIterator.value();
+                Ptr(kNet::MessageConnection) messageSender = connectionIterator.value();
                 loginstateIterator.value() = ConnectionEstablished;
                 MsgLogin msg;
                 emit AboutToConnect(); // This signal is used as a 'function call'. Any interested party can fill in
                 // new content to the login properties of the client object, which will then be sent out on the line below.
-                // Temporary solution. Used because LoginPropertiesAsXml uses properties variable.
-                std::map<QString, QString> temp = properties;
                 properties = propertiesIterator.value();
                 msg.loginData = StringToBuffer(LoginPropertiesAsXml().toStdString());
-                properties = temp;
-                // connectionIterator.value().ptr()->Send(msg) was not qualified statement according to compiler so had to make
-                // temporary knet::mescon to send login message.
-                temppis.ptr()->Send(msg);
+                messageSender.ptr()->Send(msg);
             }
             break;
         case LoggedIn:
@@ -381,7 +395,7 @@ void Client::HandleKristalliMessage(MessageConnection* source, message_id_t id, 
 
 void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& msg)
 {
-    client_id_ = msg.userID;   // This is here for now. Needed by simpleavatar.js ClientInitialization.
+    //client_id_ = msg.userID;   // This is here for now. Needed by simpleavatar.js ClientInitialization.
 
     if (msg.success)
     {
@@ -394,8 +408,6 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
         QMutableMapIterator<QString, bool> reconnectIterator(reconnect_list_);
         QMapIterator<unsigned short, Ptr(kNet::MessageConnection)> sourceIterator = owner_->GetKristalliModule()->GetConnectionArray();
 
-        TundraLogicModule::LogInfo("DEBUG: Locating loginReply sender!");
-
         // This while loop locates which messageconnection send the message. When we know it we also know if it is a reconnect or not.
         while (sourceIterator.hasNext())
         {
@@ -406,7 +418,6 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
 
             if (sourceIterator.value().ptr() == source)
             {
-                TundraLogicModule::LogInfo("Connection sender found! It was number: " + ToString(conNumber) + " from the KPM messageconnection list!");
                 break;
             }
             conNumber++;
@@ -540,6 +551,17 @@ void Client::emitChangeSceneSignal(const QString &name)
     unsigned short key = number.toInt();
     if (scenenames_.contains(key))
         emit changeScene(name);
+}
+
+void Client::setActiveConnection(const QString& name, unsigned short con)
+{
+    client_id_ = client_id_list_[name];
+    activeConnection = con;
+}
+
+unsigned short Client::getActiveConnection() const
+{
+    return activeConnection;
 }
 
 }

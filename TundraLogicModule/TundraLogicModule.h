@@ -94,9 +94,6 @@ public:
     /// Return pointer to KristalliProtocolModule for convenience
     const boost::shared_ptr<KristalliProtocol::KristalliProtocolModule>& GetKristalliModule() const { return kristalliModule_; }
     
-    /// Return syncmanager
-    //const boost::shared_ptr<SyncManager>& GetSyncManager() const { return syncManager_; }
-    
     /// Return client
     const boost::shared_ptr<Client>& GetClient() const { return client_; }
     
@@ -108,6 +105,9 @@ public slots:
     SyncManager* GetSyncManager();
     // changeScene
     void changeScene(const QString&);
+
+    // Grep number out of connection name
+    unsigned short Grep(const QString);
     
 private slots:
     void StartupSceneLoaded(AssetPtr asset);
@@ -123,16 +123,16 @@ signals:
     void createOgre(const QString&);
     void deleteOgre(const QString&);
     void setOgre(const QString&);
+    void setClientActiveConnection(const QString&, unsigned short);
 
 private:
+
     /// Handle a Kristalli protocol message
     void HandleKristalliMessage(kNet::MessageConnection* source, kNet::message_id_t id, const char* data, size_t numBytes);
     
     /// Load the startup scene
     void LoadStartupScene();
     
-    // Currently active syncmanager
-    SyncManager *syncManager_;
     // Syncmanager array
     QMap<QString, SyncManager*> syncManagers_;
 
@@ -158,6 +158,9 @@ private:
     bool autostartserver_;
     //! Autostart server port
     short autostartserver_port_;
+
+    // Active syncManager
+    QString activeSyncManager;
 
 };
 

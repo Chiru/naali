@@ -159,11 +159,6 @@ public:
     QVector3D GetQPosition() const;
     void SetQPosition(QVector3D newpos);
 
-    //! get node orientation
-    QQuaternion GetQOrientation() const;
-    //! set node orientation
-    void SetQOrientation(QQuaternion newrot);
-
     //! get node orientation as euler (degrees)
     QVector3D GetQOrientationEuler() const;
     //! set node orientation as euler (degrees)
@@ -219,6 +214,12 @@ public slots:
 
     Vector3df GetDerivedPosition(); 
     Quaternion GetDerivedOrientation();
+
+    //! get node orientation
+    QQuaternion GetQOrientation() const;
+
+    //! set node orientation
+    void SetQOrientation(QQuaternion newrot);
 
     //! yaws the node
     /*! \param radians how many radians to yaw

@@ -1,9 +1,9 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   EC_Template.h
- *  @brief  EC_Template is empty template for EC components.
- *          This componen can be used as a template when creating new EC components.
+ *  @file   EC_MenuItem.h
+ *  @brief  EC_MenuItem is part of 3Dmenu and it is used by EC_MenuContainer.
  *  @note   no notes
  *
  */
@@ -15,18 +15,11 @@
 #include "IAttribute.h"
 #include "Declare_EC.h"
 
-#include <Ogre.h>
-#include "SceneFwd.h"
-#include "InputFwd.h"
+//#include "SceneFwd.h"
+//#include "InputFwd.h"
 
 #include <QString>
-#include <QSize>
-#include <QPointer>
-#include <QPoint>
-#include <QTimer>
-#include <QMenu>
 #include <QList>
-#include <QPointer>
 
 #include "EC_Placeable.h"
 
@@ -62,10 +55,6 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-class EC_OgreCamera;
-class QListView;
-class QMouseEvent;
-class RaycastResult;
 
 class EC_MenuItem : public IComponent
 {
@@ -76,10 +65,6 @@ private:
     /// Constuctor.
     /// @param module Owner module.
     explicit EC_MenuItem(IModule *module);
-    QPointer<QListView> listview_;
-
-    bool ent_clicked_;
-    int selected_;
 
 public:
     /// Destructor.
@@ -96,13 +81,6 @@ public:
     Q_PROPERTY(float phi READ getphi WRITE setphi);
     DEFINE_QPROPERTY_ATTRIBUTE(float, phi);
 
-    /*Q_PROPERTY(float phiVertical READ getphiVertical WRITE setphiVertical);
-    DEFINE_QPROPERTY_ATTRIBUTE(float, phiVertical);
-
-    Q_PROPERTY(float phiHorizontal READ getphiHorizontal WRITE setphiHorizontal);
-    DEFINE_QPROPERTY_ATTRIBUTE(float, phiHorizontal);
-    */
-
 public slots:
     //! Setter for EC_Placeable parameters
     void SetMenuContainerEntity(ComponentPtr);
@@ -110,9 +88,10 @@ public slots:
     //! Setter for entity position
     void SetMenuItemPosition(Vector3df);
 
-    void SetMenuItemData(QWidget*);
+    void SetMenuItemWidget(int, QWidget*);
 
-    int GetNumberOfSubItems();
+    //! Setter for what mesh to use in this menuitem
+    void SetMenuItemMesh(QString, QStringList);
 
     void Update();
 

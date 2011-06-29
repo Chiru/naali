@@ -74,6 +74,7 @@ Server::Server(TundraLogicModule* owner) :
 
 Server::~Server()
 {
+    Stop();
 }
 
 void Server::Update(f64 frametime)
@@ -98,7 +99,7 @@ bool Server::Start(unsigned short port)
         // Create the default server scene
         /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?
         // SyncManager is registered to scene after scene creation via signaling.
-        Scene::ScenePtr scene = framework_->Scene()->CreateScene("TundraServer_", true);
+        Scene::ScenePtr scene = framework_->Scene()->CreateScene("TundraServer_0", true);
         framework_->Scene()->SetDefaultScene(scene);
         
         // Create an authoritative physics world
@@ -120,10 +121,10 @@ bool Server::Start(unsigned short port)
 
 void Server::Stop()
 {
-    if (!owner_->IsServer())
+    if (owner_->IsServer())
     {
         owner_->GetKristalliModule()->StopServer();
-        framework_->Scene()->RemoveScene("TundraServer_");
+        framework_->Scene()->RemoveScene("TundraServer_0");
         
         emit ServerStopped();
     }

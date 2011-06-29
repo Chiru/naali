@@ -87,7 +87,7 @@ namespace
 }
 
 static const int cInitialAttempts = 1;
-static const int cReconnectAttempts = 3;
+static const int cReconnectAttempts = 5;
 
 KristalliProtocolModule::KristalliProtocolModule()
 :IModule(NameStatic())
@@ -205,7 +205,7 @@ void KristalliProtocolModule::Update(f64 frametime)
         const int cReconnectTimeout = 5 * 1000.f;
         if (reconnectTimer.Test())
         {
-            if (reconnectAttempts)
+            if (true)
             {
                 PerformConnection();
                 --reconnectAttempts;
@@ -233,7 +233,6 @@ void KristalliProtocolModule::Update(f64 frametime)
             {
                 // Associative QMap stores all items sorted by Key. If array has one item terminated,
                 // we fill it with next succesfull connection. Same is done in client.
-                //LogInfo("Inserting properties to: " + ToString(connection));
                 serverConnection_map_.insert(connection, serverConnection);
                 serverIp_list_.insert(connection,serverIp);
                 serverPort_list_.insert(connection,serverPort);
@@ -526,11 +525,11 @@ void KristalliProtocolModule::removeConnectionProperties()
 {
     for (int counter = 0; counter < cleanupList.length(); counter++)
     {
-        serverIp_list_.removeAt(cleanupList[counter]);
-        serverPort_list_.removeAt(cleanupList[counter]);
-        serverTransport_list_.removeAt(cleanupList[counter]);
-        reconnectAttempts_list_.removeAt(cleanupList[counter]);
-        reconnectTimer_list_.removeAt(cleanupList[counter]);
+        serverIp_list_.remove(cleanupList[counter]);
+        serverPort_list_.remove(cleanupList[counter]);
+        serverTransport_list_.remove(cleanupList[counter]);
+        reconnectAttempts_list_.remove(cleanupList[counter]);
+        reconnectTimer_list_.remove(cleanupList[counter]);
         serverConnection_map_.remove(cleanupList[counter]);
     }
     cleanup = false;

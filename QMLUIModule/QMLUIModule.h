@@ -11,6 +11,9 @@
 #include "ModuleLoggingFunctions.h"
 #include "SceneManager.h"
 #include "UiProxyWidget.h"
+#include "EC_Script.h"
+#include "ScriptAsset.h"
+
 
 #include <QtDeclarative>
 
@@ -67,7 +70,7 @@ private:
     static std::string type_name_static_;
 
     /// 2D UI widget.
-    QMLWidget *window_;
+    QDeclarativeView *declarativeview_;
 
     /// Input context for this module.
     boost::shared_ptr<InputContext> input_;
@@ -85,7 +88,11 @@ private:
     UiProxyWidget *qmluiproxy_;
 
     /// QObject for connecting signals to QDeclarativeView
-    QObject *QMLUI;
+    QObject *qmlui_;
+
+    void CreateQDeclarativeView();
+
+    bool view_created_;
 
 
 public slots:
@@ -107,6 +114,16 @@ public slots:
 
     /// Handles changes in QML-status
     void QMLStatus(QDeclarativeView::Status);
+
+    //! New component has been added to scene.
+    void ComponentAdded(Scene::Entity* entity, IComponent* comp, AttributeChange::Type change);
+
+    //! Component has been removed from scene.
+    void ComponentRemoved(Scene::Entity* entity, IComponent* comp, AttributeChange::Type change);
+
+    void ScriptAssetChanged(ScriptAssetPtr newScript);
+
+    void SceneAdded(const QString &name);
 
 signals:
 

@@ -64,6 +64,7 @@ namespace Scene
         
         // Do not send entity removal or scene cleared events on destruction
         RemoveAllEntities(false);
+
         emit Removed(this);
     }
 

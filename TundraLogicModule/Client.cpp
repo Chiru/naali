@@ -72,7 +72,7 @@ void Client::Login(const QUrl& loginUrl)
     QString protocol = loginUrl.queryItemValue("protocol").trimmed().toLower();
     QString address = loginUrl.host();
     int port = loginUrl.port();
-
+    TundraLogicModule::LogInfo("Protocol: " + protocol.toStdString());
     // Validation: Username and address is the minimal set that with we can login with
     if (username.isEmpty() || address.isEmpty())
         return;
@@ -100,12 +100,14 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
     SetLoginProperty("username", username);
     SetLoginProperty("password", password);
     SetLoginProperty("protocol", protocol);
-    
+
     kNet::SocketTransportLayer transportLayer = kNet::InvalidTransportLayer;
     if (protocol.toLower() == "tcp")
         transportLayer = kNet::SocketOverTCP;
     else if (protocol.toLower() == "udp")
         transportLayer = kNet::SocketOverUDP;
+    else if (protocol.toLower() == "sctp")
+	transportLayer = kNet::SocketOverSCTP;
     Login(address, port, transportLayer);
 }
 

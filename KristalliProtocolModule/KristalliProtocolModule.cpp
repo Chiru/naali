@@ -125,8 +125,14 @@ void KristalliProtocolModule::Initialize()
     defaultTransport = kNet::SocketOverTCP;
     const boost::program_options::variables_map &options = framework_->ProgramOptions();
     if (options.count("protocol") > 0)
+    {
+	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "tcp")
+	    defaultTransport = kNet::SocketOverTCP;
         if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "udp")
             defaultTransport = kNet::SocketOverUDP;
+	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "sctp")
+	    defaultTransport = kNet::SocketOverSCTP;
+    }
 }
 
 void KristalliProtocolModule::PostInitialize()
@@ -254,6 +260,8 @@ void KristalliProtocolModule::PerformConnection()
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
+    if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
+	serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
 }
 
 void KristalliProtocolModule::Disconnect()
@@ -318,6 +326,9 @@ void KristalliProtocolModule::NewConnectionEstablished(kNet::MessageConnection *
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(false);
+    // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
+    if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
+	source->GetSocket()->SetNaglesAlgorithmEnabled(false);
 
     LogInfo("User connected from " + source->RemoteEndPoint().ToString() + ", connection ID " + ToString((int)connection->userID));
     

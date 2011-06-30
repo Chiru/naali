@@ -90,7 +90,7 @@ signals:
 public slots:
     /// Connects and logs in. The QUrl's query parameters will be evaluated for the login data.
     /** Minimum information needed to try a connection in the url are host and username.
-        URL syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp}]
+	URL syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp|sctp}]
         URL examples: tundra://server.com/?username=John tundra://server.com:5432/?username=John&password=pWd123&protocol=udp 
         @param loginUrl The login URL.
         @note The destination port is obtained from the URL's port, not from a query parameter. If no port present, using Tundra's default port 2345.

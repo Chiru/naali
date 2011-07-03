@@ -1234,7 +1234,7 @@ QString GetResourceTypeFromResourceFileName(const char *name)
     if (IsFileOfType(file, openAssImpFileTypes, NUMELEMS(openAssImpFileTypes)))
         return "OgreMesh"; // We use the OgreMeshResource type for mesh files opened using the Open Asset Import Library.
 
-    if (file.endsWith(".js") || file.endsWith(".py"))
+    if (file.endsWith(".js") || file.endsWith(".py") || file.endsWith(".qml"))
         return "Script";
 
     if (file.endsWith(".ntf"))

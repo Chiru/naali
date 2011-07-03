@@ -131,7 +131,7 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
         else
         {
             renderTimer_->stop();
-            LogInfo("Unable to draw the QML component, because it has no size defined!");
+            LogError("Unable to draw the QML component, because it has no size defined!");
             qml_ready = false;
         }
     }
@@ -151,13 +151,14 @@ void EC_QML::QMLStatus(QDeclarativeView::Status qmlstatus)
     else if (qmlstatus == QDeclarativeView::Error)
     {
         renderTimer_->stop();
-        LogInfo("One or more errors has occurred.");
+        LogError("One or more errors has occurred.");
         qml_ready = false;
     }
     else
     {
         renderTimer_->stop();
         qml_ready = false;
+        LogError("Unknown QDeclarativeView status!");
     }
 }
 
@@ -298,6 +299,7 @@ void EC_QML::ComponentAdded(IComponent *component, AttributeChange::Type change)
     }
     else if (component->TypeName()==EC_Placeable::TypeNameStatic())
     {
+        return;
     }
 }
 

@@ -8,7 +8,8 @@
 
 #define BUILDING_DLL // for dll import/export declarations
 #define CreateEvent  CreateEventW // for \boost\asio\detail\win_event.hpp and \boost\asio\detail\win_iocp_handle_service.hpp
-#include <mumbleclient/client_lib.h>
+#include <libmumbleclient/client_lib.h>
+#include <libmumbleclient/logging.h>
 #undef BUILDING_DLL // for dll import/export declarations
 
 #include "MemoryLeakCheck.h"
@@ -25,6 +26,7 @@ namespace MumbleLib
         MumbleVoip::MumbleVoipModule::LogDebug("Mumble library mainloop started");
         try
         {
+            mumble_lib->SetLogLevel(MumbleClient::logging::LOG_FATAL);
             mumble_lib->Run();
         }
         catch(std::exception &e)

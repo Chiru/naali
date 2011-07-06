@@ -10,21 +10,21 @@ set -x
 #---- Set variables for the build
 nprocs=`grep -c "^processor" /proc/cpuinfo` 
 export QTBUILDDIR=$HOME/qt
-export QTTARGETDIR=/usr/local/qt-releases/v4.7.3
+export QTVERSION=v4.7.3
+export QTTARGETDIR=/usr/local/qt-releases/$QTVERSION
 #export QTINSTALLDIR=/usr/local/qt-releases/qt
 mkdir -p $QTBUILDDIR
 cd $QTBUILDDIR
-
-export QTDIR=$QTINSTALLDIR
+export QTDIR=$QTTARGETDIR
 export PATH=$QTDIR/bin:$PATH
 
 #---- Make sure some extra dependencies are present for builds
-sudo aptitude install libxv-dev libbluetooth-dev
+sudo aptitude -y install libxv-dev libbluetooth-dev libdbus-1-dev
 
 #---- Build QT
 git clone git://gitorious.org/qt/qt.git
 cd qt
-git checkout v4.7.3
+git checkout $QTVERSION
 ./configure --prefix=$QTTARGETDIR --disable-qt3support -dbus -phonon-backend | tee qt.configure.log
 make -j $nprocs | tee qt.build.log
 sudo make install | tee qt.install.log

@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>310</width>
+    <width>318</width>
     <height>50</height>
    </rect>
   </property>
@@ -17,7 +17,6 @@
    <string notr="true">QWidget {
 	background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1,
                                        stop: 0 #E0E0E0, stop: 1 #FFFFFF);
-	titlebar-normal-icon: url(data/assets/user.png);
 }</string>
   </property>
   <widget class="QPushButton" name="participantsList">
@@ -46,14 +45,13 @@
    </property>
    <property name="styleSheet">
     <string notr="true">color: green; 
-border-image: url(./data/assets/user.png) 3 3 3 3;
 border-top: 3px transparent;
 border-bottom: 3px transparent;
 border-right: 3px transparent;
 border-left: 3px transparent;</string>
    </property>
    <property name="text">
-    <string/>
+    <string>P</string>
    </property>
    <property name="iconSize">
     <size>
@@ -106,7 +104,7 @@ border-left: 3px transparent;</string>
    </property>
    <property name="minimumSize">
     <size>
-     <width>106</width>
+     <width>130</width>
      <height>20</height>
     </size>
    </property>
@@ -128,7 +126,6 @@ QComboBox::drop-down {
 	border-bottom-right-radius: 3px;
 }
 QComboBox::down-arrow {
-     image: url(data/assets/arrow_down.png);
 }
 
 QComboBox QAbstractItemView{
@@ -158,14 +155,13 @@ QComboBox QAbstractItemView{
    </property>
    <property name="styleSheet">
     <string notr="true">color: green; 
-border-image: url(./data/assets/status_offline.png) 3 3 3 3;
 border-top: 3px transparent;
 border-bottom: 3px transparent;
 border-right: 3px transparent;
 border-left: 3px transparent;</string>
    </property>
    <property name="text">
-    <string/>
+    <string>T</string>
    </property>
   </widget>
   <widget class="QLabel" name="numberOfParticipants">

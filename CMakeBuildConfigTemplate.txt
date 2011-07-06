@@ -179,6 +179,7 @@ add_subdirectory(CAVEStereoModule)          # Implements CAVE and Stereoscopy fu
 add_subdirectory(SceneStructureModule)      # Allows accessing, editing, importing and exporting of scene structure data
 #add_subdirectory(ARModule)                 # Augmented reality module
 #add_subdirectory(MobilityModule)            # Listens and relays mobility related data such as device battery levels etc.
+#add_subdirectory(MumbleVoipModule)          # VOIP communication using the Mumble library. Depends on OgreRenderingModule.
 if (OGREASSETEDITOR)
     add_subdirectory(OgreAssetEditorModule) # Enables Ogre-specific asset editors. Depends on OgreRenderingModule.
 endif()
@@ -191,7 +192,6 @@ if (DECLARATIVE_ENABLED)
 endif()
 
 if (MSVC)
-    add_subdirectory(MumbleVoipModule)      # VOIP communication using the Mumble library. Depends on OgreRenderingModule.
     add_subdirectory(CameraInputModule)     # Camera input module depends on opencv library.
 else()
                                             # \todo Include MumbleVoip and CameraInputModule on linux. For CameraInputModule ConfigurePackages.cmake 

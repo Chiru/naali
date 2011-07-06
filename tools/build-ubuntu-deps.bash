@@ -230,6 +230,39 @@ else
     touch $tags/$what-done
 fi
 
+cd $build
+what=celt
+ver=v0.11.3
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    git clone git://git.xiph.org/$what.git
+    cd $what
+    git checkout $ver
+    ./autogen.sh
+    ./configure --prefix=$prefix
+    make -j $nprocs
+    make install
+    touch $tags/$what-done
+fi
+
+cd $build
+what=libmumbleclient
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    git clone git://github.com/msantala/libmumbleclient.git
+    cd $what
+    cmake .
+    make -j $nprocs
+    mkdir $prefix/include/mumbleclient
+    cp *.h $prefix/include/mumbleclient
+    cp libmumbleclient.so $prefix/lib/
+    touch $tags/$what-done
+fi
+
 ln -fvs /usr/include/xmlrpc-epi/*.h $prefix/include/
 
 if lsb_release -c | grep -q lucid; then

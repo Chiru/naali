@@ -54,7 +54,7 @@ if lsb_release -c | egrep -q "lucid|maverick|natty"; then
 	 ccache libqt4-dev python-dev zlib1g-dev libois-dev libcppunit-dev \
 	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
 	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev \
-	 liboil0.3-dev mercurial unzip xsltproc $more
+	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \

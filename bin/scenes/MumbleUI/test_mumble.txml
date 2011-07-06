@@ -16,11 +16,11 @@
   <component type="EC_VoiceChannel" sync="1">
    <attribute value="mumble" name="protocol"/>
    <attribute value="1.2.2" name="version"/>
-   <attribute value="localhost" name="serveraddress"/>
+   <attribute value="chiru.cie.fi" name="serveraddress"/>
    <attribute value="" name="serverpassword"/>
-   <attribute value="test" name="username"/>
-   <attribute value="Public" name="channelname"/>
-   <attribute value="Root" name="channelid"/>
+   <attribute value="notused" name="username"/>
+   <attribute value="Root" name="channelname"/>
+   <attribute value="0" name="channelid"/>
    <attribute value="true" name="enabled"/>
   </component>
   <component type="EC_Name" sync="1">

@@ -323,6 +323,13 @@ QPushButton::pressed {
                     </property>
                    </widget>
                   </item>
+                  <item>
+                   <widget class="QRadioButton" name="radioButton_ProtocolSCTP">
+                    <property name="text">
+                     <string>SCTP</string>
+                    </property>
+                   </widget>
+                  </item>
                  </layout>
                 </item>
                </layout>

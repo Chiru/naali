@@ -31,6 +31,11 @@
 #include "UiGraphicsView.h"
 #endif
 
+#ifdef _POSIX_C_SOURCE
+#include <unistd.h>
+#include <signal.h>
+#endif
+
 #include "MemoryLeakCheck.h"
 
 using namespace Foundation;
@@ -155,10 +160,13 @@ void Application::Go()
     // Install QObject event filter for QApplication, every thing runs trough this filter
     installEventFilter(this);
 
+#ifdef NDEBUG
     try
     {
+#endif
         frameTimer_->start(1);
         exec();
+#ifdef NDEBUG
     }
     catch(const std::exception &e)
     {
@@ -170,6 +178,7 @@ void Application::Go()
         RootLogCritical(std::string("Application::Go() caught an unknown exception!"));
         throw;
     }
+#endif
 }
 
 bool Application::eventFilter(QObject *obj, QEvent *event)
@@ -348,5 +357,14 @@ void Application::AboutToExit()
     
     // If no-one canceled the exit as a response to the signal, exit
     if (framework->IsExiting())
+    {
+#ifdef _POSIX_C_SOURCE
+        // workaround for exit hang with ATI proprietary driver on linux
+        alarm(5);
+        signal(SIGALRM, _exit); // exit status ends up as the signal #
+#endif
         quit();
+    }
+    else
+        RootLogInfo("Exit cancelled");
 }

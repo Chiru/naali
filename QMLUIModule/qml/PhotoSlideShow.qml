@@ -56,7 +56,7 @@ Rectangle {
 
     Timer {
         id: timer
-        interval: 60000; running: false; repeat: true
+        interval: 10000; running: true; repeat: true
         onTriggered: {
             if (imagePath.currentIndex == folderModel.count - 1)
             {

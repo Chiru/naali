@@ -316,10 +316,17 @@ void EC_Placeable::SetQPosition(QVector3D newpos)
 QQuaternion EC_Placeable::GetQOrientation() const 
 {
     const Transform& trans = transform.Get();
-    Quaternion orientation(DEGTORAD * trans.rotation.x,
-                      DEGTORAD * trans.rotation.y,
-                      DEGTORAD * trans.rotation.z);
-    return QQuaternion(orientation.w, orientation.x, orientation.y, orientation.z);
+
+    float x = trans.rotation.x * DEGTORAD;
+    float y = trans.rotation.y * DEGTORAD;
+    float z = trans.rotation.z * DEGTORAD;
+
+    float q0 = cosf(x/2)*cosf(y/2)*cosf(z/2) + sinf(x/2)*sinf(y/2)*sinf(z/2);
+    float q1 = sinf(x/2)*cosf(y/2)*cosf(z/2) - cosf(x/2)*sinf(y/2)*sinf(z/2);
+    float q2 = cosf(x/2)*sinf(y/2)*cosf(z/2) + sinf(x/2)*cosf(y/2)*sinf(z/2);
+    float q3 = cosf(x/2)*cosf(y/2)*sinf(z/2) - sinf(x/2)*sinf(y/2)*cosf(z/2);
+
+    return QQuaternion(q0, q1, q2, q3);
 }
 
 void EC_Placeable::SetQOrientation(QQuaternion newort)
@@ -529,3 +536,15 @@ Vector3df EC_Placeable::GetRelativeVector(const Vector3df& vec)
     return GetOrientation() * vec;
 }
 
+//derived* getters to help with parented objs
+Vector3df EC_Placeable::GetDerivedPosition() 
+{
+    const Ogre::Vector3 v = link_scene_node_->_getDerivedPosition();
+    return Vector3df(v.x, v.y, v.z);
+}
+
+Quaternion EC_Placeable::GetDerivedOrientation() 
+{
+    const Ogre::Quaternion q = link_scene_node_->_getDerivedOrientation();
+    return Quaternion(q.x, q.y, q.z, q.w);
+}

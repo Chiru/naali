@@ -11,6 +11,7 @@
 #include "IComponent.h"
 #include "IAttribute.h"
 #include "EC_Name.h"
+#include "ChangeRequest.h"
 
 #include "Framework.h"
 #include "ComponentManager.h"
@@ -64,7 +65,7 @@ namespace Scene
         
         // Do not send entity removal or scene cleared events on destruction
         RemoveAllEntities(false);
-        
+
         emit Removed(this);
     }
 
@@ -390,6 +391,14 @@ namespace Scene
     void SceneManager::EmitActionTriggered(Scene::Entity *entity, const QString &action, const QStringList &params, EntityAction::ExecutionType type)
     {
         emit ActionTriggered(entity, action, params, type);
+    }
+
+    //before-the-fact counterparts for the modification signals above, for permission checks etc.
+    bool SceneManager::AllowModifyEntity(UserConnection* user, Scene::Entity *entity)
+    {
+        ChangeRequest req;
+        emit AboutToModifyEntity(&req, user, entity);
+        return req.allowed;
     }
 
     QVariantList SceneManager::GetEntityIdsWithComponent(const QString &type_name) const
@@ -1208,7 +1217,7 @@ namespace Scene
         newInterp.start = attr->Clone();
         newInterp.end = endvalue;
         newInterp.length = length;
-        
+
         interpolations_.push_back(newInterp);
         return true;
     }

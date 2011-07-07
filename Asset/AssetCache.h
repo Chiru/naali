@@ -115,6 +115,12 @@ public slots:
     /// \param QString File path to the file the jar will read/write cookies to/from.
     CookieJar *NewCookieJar(const QString &cookieDiskFile);
 
+    /// Genrates the absolute path to an data asset cache entry.
+    /// Made this public for QMLUIModule -Olli K.
+    QString GetAbsoluteDataFilePath(const QString &filename);
+
+
+
 private slots:
     /// Writes metadata into a file. Helper function for the QNetworkDiskCache overrides.
     bool WriteMetadata(const QString &filePath, const QNetworkCacheMetaData &metaData);
@@ -129,9 +135,6 @@ private slots:
 
     /// Genrates the absolute path to an asset cache entry. Helper function for the QNetworkDiskCache overrides.
     QString GetAbsoluteFilePath(bool isMetaData, const QUrl &url);
-
-    /// Genrates the absolute path to an data asset cache entry.
-    QString GetAbsoluteDataFilePath(const QString &filename);
 
     /// Removes all files from a directory. Will not delete the folder itself or any subfolders it has.
     void ClearDirectory(const QString &absoluteDirPath);

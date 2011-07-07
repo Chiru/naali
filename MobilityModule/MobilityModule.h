@@ -22,12 +22,20 @@
 
 #include <QtScript>
 
-using namespace QtMobility;
+/// Needed for MOC to regocnize params in signals/slots to be the same.
+/// Feel free to change if there's a better way to overcome this annoyance.
+using QtMobility::QSystemInfo;
+using QtMobility::QSystemDeviceInfo;
+using QtMobility::QSystemNetworkInfo;
+using QtMobility::QSystemDisplayInfo;
+
 
 /// Acts as an proxy between mobility related data and rest of the modules.
+/// Currently uses QtMobility as the only source of the information.
+/// \note Functionality only tested on Linux platform. Some modifications
+///       maybe needed in order to use the module on Windows/Mac because
+///       of the status of the QtMobility project.
 /// \todo Interface MCE daemon once it becomes part of MeeGo.
-/// \todo Move enums and value mappings outside the module to remove compile
-/// time dependencies to these values.
 class MobilityModule : public QObject, public IModule
 {
     Q_OBJECT
@@ -254,18 +262,17 @@ signals:
     void batteryLevelCritical();
 
     /// Emitted when network status changes (offline/online/roaming...)
-    /// \note Not tested on ConnMan backend. On NetworkManager, only signals Connected and Disconnected states.
+    /// \note Not tested on ConnMan backend. With NetworkManager, only signals Connected and Disconnected states.
     void networkStateChanged(MobilityModule::NetworkState networkState);
 
     /// Emitted when network mode changes
-    /// \note Currently unimplemented
     void networkModeChanged(MobilityModule::NetworkMode networkMode);
 
     /// Emitted when network quality changes
     /// \note Currently unimplemented
     void networkQualityChanged(int networkQuality);
 
-    /// Emitted when screen status changes (not implemented yet)
+    /// Emitted when screen status changes
     /// \note Currently unimplemented
     void screenStateChanged(MobilityModule::ScreenState screenState);
 };

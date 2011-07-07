@@ -58,16 +58,17 @@ macro (configure_poco)
 endmacro (configure_poco)
 
 macro (configure_qt4)
+
     sagase_configure_package (QT4 
-        NAMES Qt4 4.6.1
+        NAMES Qt4 4.7.0
         COMPONENTS QtCore QtGui QtWebkit QtScript QtScriptTools QtXml QtNetwork QtUiTools
         PREFIXES ${ENV_NAALI_DEP_PATH} ${ENV_QT_DIR})
 
     # FindQt4.cmake
     if (QT4_FOUND AND QT_USE_FILE)
-	
+
         include (${QT_USE_FILE})
-		
+
         set (QT4_INCLUDE_DIRS 
             ${QT_INCLUDE_DIR}
             ${QT_QTCORE_INCLUDE_DIR}
@@ -81,10 +82,9 @@ macro (configure_qt4)
             ${QT_PHONON_INCLUDE_DIR}
             ${QT_QTDBUS_INCLUDE_DIR})
 
-		
         set (QT4_LIBRARY_DIR  
             ${QT_LIBRARY_DIR})
-		
+
         set (QT4_LIBRARIES 
             ${QT_LIBRARIES}
             ${QT_QTCORE_LIBRARY}
@@ -97,9 +97,9 @@ macro (configure_qt4)
             ${QT_QTWEBKIT_LIBRARY}
             ${QT_PHONON_LIBRARY}
             ${QT_QTDBUS_LIBRARY})
-            
+
         set (QT4_MKSPECS ${QT_MKSPECS_DIR})
-		
+
     endif ()
     
     sagase_configure_report (QT4)
@@ -141,52 +141,58 @@ macro (configure_python_qt)
 endmacro (configure_python_qt)
 
 macro (configure_ogre)
-    if ("$ENV{OGRE_HOME}" STREQUAL "" OR NOT WIN32)
+   
+    if (NOT WIN32)
+        # Mac
         if (APPLE)
-    	  FIND_LIBRARY(OGRE_LIBRARY NAMES Ogre)
+    	  FIND_LIBRARY (OGRE_LIBRARY NAMES Ogre)
     	  set (OGRE_INCLUDE_DIRS ${OGRE_LIBRARY}/Headers)
     	  set (OGRE_LIBRARIES ${OGRE_LIBRARY})
+        # Linux
         else ()
             sagase_configure_package (OGRE 
-            NAMES Ogre OgreSDK ogre OGRE
-            COMPONENTS Ogre ogre OGRE OgreMain 
-            PREFIXES ${ENV_OGRE_HOME} ${ENV_NAALI_DEP_PATH})
+                NAMES Ogre OgreSDK ogre OGRE
+                COMPONENTS Ogre ogre OGRE OgreMain 
+                PREFIXES ${ENV_OGRE_HOME} ${ENV_NAALI_DEP_PATH})
         endif ()
-
-        sagase_configure_report (OGRE)
-    else()
-        # DX blitting define for naali
-        add_definitions(-DUSE_D3D9_SUBSURFACE_BLIT)
-        include_directories($ENV{OGRE_HOME})
-        # Ogre built from sources
-        include_directories($ENV{OGRE_HOME}/include) 
-        include_directories($ENV{OGRE_HOME}/include/RenderSystems/Direct3D9/include)
-        include_directories($ENV{OGRE_HOME}/RenderSystems/Direct3D9/include)
-        # Ogre official sdk
-        include_directories($ENV{OGRE_HOME}/include/OGRE) 
-        include_directories($ENV{OGRE_HOME}/include/OGRE/RenderSystems/Direct3D9)
-        link_directories($ENV{OGRE_HOME}/lib)
         
-        # Print some fake sagase reporting as we cant fill 
-        # OGRE_INCLUDE_DIRS and OGRE_LIBRARIES lists due to link_ogre() logic
-        message (STATUS "** Configuring OGRE")
-        message (STATUS "-- Using OGRE_HOME environment variable")
-        message (STATUS "       " $ENV{OGRE_HOME})
-        message (STATUS "-- Include Directories:")
-        message (STATUS "       " $ENV{OGRE_HOME}/include)
-        message (STATUS "       " $ENV{OGRE_HOME}/include/OGRE)
-        message (STATUS "-- Library Directories:")
-        message (STATUS "       " $ENV{OGRE_HOME}/lib)
-        message (STATUS "-- Libraries:")
-        message (STATUS "        OgreMain.lib")
-        message (STATUS "        RenderSystem_Direct3D9.lib")
-        message (STATUS "-- Debug Libraries:")
-        message (STATUS "        OgreMain_d.lib")
-        message (STATUS "        RenderSystem_Direct3D9_d.lib")
-        message (STATUS "-- Defines:")
-        message (STATUS "        USE_D3D9_SUBSURFACE_BLIT")
+        sagase_configure_report (OGRE)
+        
+    else ()
+        # Find ogre
+        if (DirectX_FOUND)
+            set (TUNDRA_OGRE_NEEDED_COMPONENTS Ogre ogre OGRE OgreMain RenderSystem_Direct3D9)
+        else ()
+            set (TUNDRA_OGRE_NEEDED_COMPONENTS Ogre ogre OGRE OgreMain)
+        endif()
+        
+        sagase_configure_package (OGRE 
+            NAMES Ogre OgreSDK ogre OGRE
+            COMPONENTS ${TUNDRA_OGRE_NEEDED_COMPONENTS}
+            PREFIXES ${ENV_OGRE_HOME} ${ENV_NAALI_DEP_PATH})
+
+        # Report ogre then search check directx
+        sagase_configure_report (OGRE)
+        
+        # DirectX SDK found, use DX9 surface blitting
+        message (STATUS "** Configuring DirectX")
+        if (DirectX_FOUND)
+            message (STATUS "-- Include Directories:")
+            message (STATUS "       " ${DirectX_INCLUDE_DIR})
+            message (STATUS "-- Library Directories:")
+            message (STATUS "       " ${DirectX_LIBRARY_DIR})
+            message (STATUS "-- Defines:")
+            message (STATUS "        USE_D3D9_SUBSURFACE_BLIT")
+            
+            add_definitions (-DUSE_D3D9_SUBSURFACE_BLIT)
+            include_directories (${DirectX_INCLUDE_DIR})
+            link_directories (${DirectX_LIBRARY_DIR})
+        else ()
+            message (STATUS "DirectX not found!")
+            message (STATUS "-- Install DirextX SDK to enable additional features.")
+        endif()
         message (STATUS "")
-    endif()    
+    endif ()
 endmacro (configure_ogre)
 
 macro(link_ogre)
@@ -403,12 +409,36 @@ endif()
 endmacro (configure_vorbis)
 
 macro (configure_mumbleclient)
+    # Not in use currently, remove later if deemed unnecessary.
     sagase_configure_package(MUMBLECLIENT
         NAMES mumbleclient
         COMPONENTS mumbleclient client
         PREFIXES ${ENV_NAALI_DEP_PATH}/libmumbleclient)
     sagase_configure_report (MUMBLECLIENT)
 endmacro (configure_mumbleclient)
+
+macro(use_package_mumbleclient)
+    message (STATUS "** Configuring mumbleclient")
+    if (WIN32)
+        # Not implemented
+        message (FATAL_ERROR "!! use_package_mumbleclient not implemented for WIN32")
+    else()
+        if ("$ENV{MUMBLECLIENT_DIR}" STREQUAL "")
+            set(MUMBLECLIENT_DIR ${ENV_NAALI_DEP_PATH})
+        endif()
+        message (STATUS "-- Include Directories:")
+        message (STATUS "       " ${MUMBLECLIENT_DIR}/include/mumbleclient)
+        include_directories(${MUMBLECLIENT_DIR}/include/mumbleclient)
+        message (STATUS "-- Library Directories:")
+        message (STATUS "       " ${MUMBLECLIENT_DIR}/lib)
+        link_directories(${MUMBLECLIENT_DIR}/lib)
+    endif()
+endmacro()
+
+macro(link_package_mumbleclient)
+    target_link_libraries(${TARGET_NAME} debug mumbleclient)
+    target_link_libraries(${TARGET_NAME} optimized mumbleclient)
+endmacro()
 
 macro (configure_openssl)
     sagase_configure_package(OPENSSL
@@ -456,7 +486,6 @@ macro(use_package_knet)
     link_directories(${KNET_DIR}/lib)
     if (UNIX)    
         add_definitions(-DUNIX)
-        add_definitions(-DKNET_USE_BOOST)
     endif()
 endmacro()
 
@@ -496,7 +525,8 @@ macro(use_package_assimp)
            set(ASSIMP_DIR ${ENV_NAALI_DEP_PATH}/assimp)
         endif()
         include_directories(${ASSIMP_DIR}/include)
-        link_directories(${ASSIMP_DIR}/lib/assimp_debug_Win32)
+        link_directories(${ASSIMP_DIR}/lib) # VC10 deps way, no subfolders, dynamic
+        link_directories(${ASSIMP_DIR}/lib/assimp_debug_Win32) # VC9 deps way, in subfolder, static
         link_directories(${ASSIMP_DIR}/lib/assimp_release_Win32)
     else() # Linux, note: mac will also come here..
         if ("$ENV{ASSIMP_DIR}" STREQUAL "")
@@ -512,107 +542,6 @@ macro(link_package_assimp)
     if (WIN32)
         target_link_libraries(${TARGET_NAME} debug assimpd)
     endif()
-endmacro()
-
-macro(use_package_qtmobility)
-        message (STATUS "** Configuring QtMobility")
-        
-        if(EXISTS "${QT4_MKSPECS}/features/mobility.prf")
-        
-            message (STATUS "-- Using mkspecs file")
-            message (STATUS "       " ${QT4_MKSPECS}/features/mobility.prf)
-        
-            file (READ ${QT_MKSPECS_DIR}/features/mobility.prf MOBILITY_CONFIG_FILE)
-            
-            string( REGEX MATCH "MOBILITY_PREFIX=([^\n]+)" QTMOBILITY_PREFIX "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_PREFIX ${CMAKE_MATCH_1})
-            
-            string( REGEX MATCH "MOBILITY_INCLUDE=([^\n]+)" QTMOBILITY_INCLUDE "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_INCLUDE ${CMAKE_MATCH_1})
-            
-            string( REGEX MATCH "MOBILITY_LIB=([^\n]+)" QTMOBILITY_LIBRARY "${MOBILITY_CONFIG_FILE}")
-            set (QTMOBILITY_LIBRARY ${CMAKE_MATCH_1})
-            
-            message (STATUS "-- Include Directories:")
-            
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtBearer)
-            include_directories(${QTMOBILITY_INCLUDE}/QtBearer)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
-            include_directories(${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtLocation)
-            include_directories(${QTMOBILITY_INCLUDE}/QtLocation)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtServiceFramework)
-            include_directories(${QTMOBILITY_INCLUDE}/QtServiceFramework)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSystemInfo)
-            include_directories(${QTMOBILITY_INCLUDE}/QtSystemInfo)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMultimediaKit)
-            include_directories(${QTMOBILITY_INCLUDE}/QtMultimediaKit)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtContacts)
-            include_directories(${QTMOBILITY_INCLUDE}/QtContacts)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtVersit)
-            include_directories(${QTMOBILITY_INCLUDE}/QtVersit)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSensors)
-            include_directories(${QTMOBILITY_INCLUDE}/QtSensors)
-            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMobility)
-            include_directories(${QTMOBILITY_INCLUDE}/QtMobility)
-            
-            message (STATUS "-- Library Directories:")
-            
-            message (STATUS "       " ${QTMOBILITY_LIBRARY})
-            link_directories(${QTMOBILITY_LIBRARY})
-            
-            message (STATUS "")
-            
-        else ()
-            
-            # mkspecs file for QtMobility not found, halt.
-            message (FATAL_ERROR "!! Unable to locate QtMobility mkspecs file")
-            
-        endif ()
-endmacro()
-
-macro(link_package_qtmobility)
-    target_link_libraries(${TARGET_NAME} optimized QtBearer optimized QtPublishSubscribe optimized QtLocation
-                          optimized QtServiceFramework optimized QtSystemInfo optimized QtMultimediaKit
-                          optimized QtContacts optimized QtVersit optimized QtSensors)
-endmacro()
-
-macro(use_package_qtdeclarative)
-
-        message (STATUS "** Configuring QtDeclarative")
-
-	if(EXISTS "${QT_INCLUDE_DIR}/QtDeclarative/QtDeclarative")
-
-		message (STATUS "       " "QtDeclarative found!")
-
-		
-		set(QTDECLARATIVE_INCLUDE ${QT_INCLUDE_DIR}/QtDeclarative)
-		set(QTDECLARATIVE_LIBRARY ${QT4_LIBRARY_DIR})
-
-		message (STATUS "-- Include Directories:")
-
-		message (STATUS "       " ${QTDECLARATIVE_INCLUDE})
-        	include_directories(${QTDECLARATIVE_INCLUDE})
-
-		
-
-		message (STATUS "-- Library Directories:")
-
-		message (STATUS "       " ${QTDECLARATIVE_LIBRARY})
-		link_directories(${QTDECLARATIVE_LIBRARY})
-
-		message (STATUS "")
-	else ()
-		message (FATAL_ERROR "!! QtDeclarative not found!")
-
-	endif ()
-
-        
-
-endmacro()
-
-macro(link_package_qtdeclarative)
-    target_link_libraries(${TARGET_NAME} optimized QtDeclarative)
 endmacro()
 
 macro(configure_package_opencv)
@@ -683,3 +612,85 @@ macro(link_package_opencv)
     TARGET_LINK_LIBRARIES(${TARGET_NAME} ${OpenCV_LIBS})
 endmacro()
 
+macro(use_package_qtmobility)
+        message (STATUS "** Configuring QtMobility")
+        
+        # Use the mobility.prf for determining QtMobility installation location
+        # \todo Verify this works in Windows
+        if(EXISTS "${QT4_MKSPECS}/features/mobility.prf")
+        
+            message (STATUS "-- Using mkspecs file")
+            message (STATUS "       " ${QT4_MKSPECS}/features/mobility.prf)
+        
+            file (READ ${QT_MKSPECS_DIR}/features/mobility.prf MOBILITY_CONFIG_FILE)
+            
+            string( REGEX MATCH "MOBILITY_PREFIX=([^\n]+)" QTMOBILITY_PREFIX "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_PREFIX ${CMAKE_MATCH_1})
+            
+            string( REGEX MATCH "MOBILITY_INCLUDE=([^\n]+)" QTMOBILITY_INCLUDE "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_INCLUDE ${CMAKE_MATCH_1})
+            
+            string( REGEX MATCH "MOBILITY_LIB=([^\n]+)" QTMOBILITY_LIBRARY "${MOBILITY_CONFIG_FILE}")
+            set (QTMOBILITY_LIBRARY ${CMAKE_MATCH_1})
+            
+            message (STATUS "-- Include Directories:")
+            
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
+            include_directories(${QTMOBILITY_INCLUDE}/QtPublishSubscribe)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtLocation)
+            include_directories(${QTMOBILITY_INCLUDE}/QtLocation)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtServiceFramework)
+            include_directories(${QTMOBILITY_INCLUDE}/QtServiceFramework)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSystemInfo)
+            include_directories(${QTMOBILITY_INCLUDE}/QtSystemInfo)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMultimediaKit)
+            include_directories(${QTMOBILITY_INCLUDE}/QtMultimediaKit)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtContacts)
+            include_directories(${QTMOBILITY_INCLUDE}/QtContacts)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtVersit)
+            include_directories(${QTMOBILITY_INCLUDE}/QtVersit)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtSensors)
+            include_directories(${QTMOBILITY_INCLUDE}/QtSensors)
+            message (STATUS "       " ${QTMOBILITY_INCLUDE}/QtMobility)
+            include_directories(${QTMOBILITY_INCLUDE}/QtMobility)
+            
+            message (STATUS "-- Library Directories:")
+            
+            message (STATUS "       " ${QTMOBILITY_LIBRARY})
+            link_directories(${QTMOBILITY_LIBRARY})
+            
+            message (STATUS "")
+            
+        else ()
+            
+            # mkspecs file for QtMobility not found, halt.
+            message (FATAL_ERROR "!! Unable to locate QtMobility mkspecs file")
+            
+        endif ()
+endmacro()
+
+macro(link_package_qtmobility)
+    target_link_libraries(${TARGET_NAME} optimized QtPublishSubscribe optimized QtLocation
+                          optimized QtServiceFramework optimized QtSystemInfo optimized QtMultimediaKit
+                          optimized QtContacts optimized QtVersit optimized QtSensors)
+endmacro()
+
+macro(use_package_qtdeclarative)
+    message (STATUS "** Configuring QtDeclarative")
+    if (${QT_QTDECLARATIVE_FOUND})
+        message (STATUS "-- Include Directories:")
+        message (STATUS "       " ${QT_QTDECLARATIVE_INCLUDE_DIR})
+        include_directories(${QT_QTDECLARATIVE_INCLUDE_DIR})
+        message (STATUS "-- Libries:")
+        message (STATUS "       " ${QT_QTDECLARATIVE_LIBRARY})
+        message (STATUS "")
+    else ()
+        message (FATAL_ERROR "-- QtDeclarative not found when configuting Qt!")
+    endif ()
+endmacro()
+
+macro(link_package_qtdeclarative)
+    if (${QT_QTDECLARATIVE_FOUND})
+        target_link_libraries(${TARGET_NAME} ${QT_QTDECLARATIVE_LIBRARY})
+    endif ()
+endmacro()

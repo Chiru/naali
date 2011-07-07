@@ -3,7 +3,7 @@
 // !ref: local://TransmissionMode.ui
 
 if (!server.IsRunning())
-{
+{   
     engine.ImportExtension("qt.core");
     engine.ImportExtension("qt.gui");
     engine.ImportExtension("qt.uitools");
@@ -13,15 +13,27 @@ if (!server.IsRunning())
     var plTableWidget = findChild(pw, "plTableWidget");
     plTableWidget.setColumnWidth(0, 198);
     plTableWidget.setColumnWidth(1, 51);
-    ui.AddWidgetToScene(pw);
-    pw.hide();
+    //ui.AddWidgetToScene(pw);
+    //pw.hide();
+    var participantsProxy = new UiProxyWidget(pw);
+    participantsProxy.windowFlags = 0;
+    participantsProxy.effect = 0;
+    participantsProxy.x = 10;
+    participantsProxy.y = renderer.GetWindowHeight()-pw.height;
+    ui.AddProxyWidgetToScene(participantsProxy);
 
     // Load TransmissionMode widget and hide
     var tm = ui.LoadFromFile("local://TransmissionMode.ui", false);
     var rbOff = findChild(tm, "rbOff");
     var rbCt = findChild(tm, "rbCt");
-    ui.AddWidgetToScene(tm);
-    tm.hide();
+    //ui.AddWidgetToScene(tm);
+    //tm.hide();
+    var transmissionProxy = new UiProxyWidget(tm);
+    transmissionProxy.windowFlags = 0;
+    transmissionProxy.effect = 0;
+    transmissionProxy.x = 10 + pw.width;
+    transmissionProxy.y = renderer.GetWindowHeight()-tm.height;
+    ui.AddProxyWidgetToScene(transmissionProxy);
 
     // Load SettingWidget
     var widget = ui.LoadFromFile("local://SettingsWidget.ui", false);	
@@ -61,7 +73,7 @@ if (!server.IsRunning())
             inWorldVoiceSession.SetActiveChannel(channel);
             widget.resize(310, 50);
 
-            participantsList.styleSheet = "border-image: url(./data/assets/user_green.png) 3 3 3 3; border-top: 3px transparent;border-bottom: 3px transparent;border-right: 3px transparent;border-left: 3px transparent;";
+            participantsList.styleSheet = "border-top: 3px transparent;border-bottom: 3px transparent;border-right: 3px transparent;border-left: 3px transparent;";
         }
     }
 
@@ -71,13 +83,13 @@ if (!server.IsRunning())
         {
             inWorldVoiceSession.DisableAudioReceiving();
             inWorldVoiceSession.DisableAudioSending();
-            transmissionType.styleSheet = "border-image: url(./data/assets/status_offline.png) 3 3 3 3; border-top: 3px transparent; border-bottom: 3px transparent; border-right: 3px transparent; border-left: 3px transparent;";
+            transmissionType.styleSheet = "border-top: 3px transparent; border-bottom: 3px transparent; border-right: 3px transparent; border-left: 3px transparent;";
         }
         if (rbCt.checked)
         {
             inWorldVoiceSession.EnableAudioReceiving();
             inWorldVoiceSession.EnableAudioSending();
-            transmissionType.styleSheet = "border-image: url(./data/assets/status_online.png) 3 3 3 3; border-top: 3px transparent; border-bottom: 3px transparent; border-right: 3px transparent; border-left: 3px transparent;";
+            transmissionType.styleSheet = "border-top: 3px transparent; border-bottom: 3px transparent; border-right: 3px transparent; border-left: 3px transparent;";
         }
     }
 

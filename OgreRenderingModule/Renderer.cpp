@@ -38,8 +38,8 @@
 #undef SAFE_DELETE_ARRAY
 
 #include <d3d9.h>
-#include <OgreD3D9HardwarePixelBuffer.h>
-#include <OgreD3D9RenderWindow.h>
+#include <RenderSystems/Direct3D9/OgreD3D9HardwarePixelBuffer.h>
+#include <RenderSystems/Direct3D9/OgreD3D9RenderWindow.h>
 #endif
 
 #include <QDesktopWidget>
@@ -191,12 +191,14 @@ namespace OgreRenderer
 
         // Load plugins
         app->SetSplashMessage(baseSplashMsg + " [LOADING PLUGINS]");
-        LoadPlugins(plugins_filename_);
+        QStringList loadedPlugins = LoadPlugins(plugins_filename_);
 
 #ifdef _WINDOWS
         // WIN default to DirectX
         rendersystem_name = framework_->GetDefaultConfig().DeclareSetting<std::string>(
             "OgreRenderer", "rendersystem", "Direct3D9 Rendering Subsystem");
+        if (framework_->IsHeadless() && (loadedPlugins.contains("RenderSystem_NULL", Qt::CaseInsensitive) || loadedPlugins.contains("RenderSystem_NULL_d", Qt::CaseInsensitive)))
+            rendersystem_name = "NULL Rendering Subsystem";
 #else
         // X11/MAC default to OpenGL
         rendersystem_name = "OpenGL Rendering Subsystem";
@@ -223,6 +225,9 @@ namespace OgreRenderer
 #endif
         if (!rendersystem)
             throw Exception("Could not find Ogre rendersystem.");
+
+        // Report rendering plugin to log so user can check what actually got loaded
+        OgreRenderingModule::LogInfo("- Selecting " + rendersystem->getName());
 
         // This is needed for QWebView to not lock up!!!
         Ogre::ConfigOptionMap& map = rendersystem->getConfigOptions();
@@ -268,8 +273,10 @@ namespace OgreRenderer
     {
     }
 
-    void Renderer::LoadPlugins(const std::string& plugin_filename)
+    QStringList Renderer::LoadPlugins(const std::string& plugin_filename)
     {
+        QStringList loadedPlugins;
+
         Ogre::ConfigFile file;
         try
         {
@@ -278,7 +285,7 @@ namespace OgreRenderer
         catch (Ogre::Exception&)
         {
             OgreRenderingModule::LogError("Could not load Ogre plugins configuration file");
-            return;
+            return loadedPlugins;
         }
 
         Ogre::String plugin_dir = file.getSetting("PluginFolder");
@@ -301,12 +308,16 @@ namespace OgreRenderer
             try
             {
                 root_->loadPlugin(plugin_dir + plugins[i]);
+                OgreRenderingModule::LogInfo("- " + plugins[i] + " loaded");
+                loadedPlugins.append(QString::fromStdString(plugins[i]));
             }
             catch (Ogre::Exception&)
             {
                 OgreRenderingModule::LogError("Plugin " + plugins[i] + " failed to load");
             }
         }
+
+        return loadedPlugins;
     }
 
     void Renderer::SetupResources()
@@ -376,6 +387,88 @@ namespace OgreRenderer
         c_handler_->Initialize(framework_ ,viewport_);
     }
 
+    void Renderer::CreateSceneManager(const QString &sceneName)
+    {
+        Ogre::String name= Ogre::String(sceneName.toStdString());
+
+        // Check if scenemanager already exist.
+        if (root_->hasSceneManager(name))
+            return;
+
+        Ogre::SceneManager *scenemanagerTmp = root_->createSceneManager(Ogre::ST_GENERIC, name);
+        if (framework_->IsHeadless())
+            return;
+
+        //sceneManagerMap[sceneName]=scenemanagerTmp;
+        default_camera_ = scenemanagerTmp->createCamera("DefaultCamera");
+
+        default_camera_->setNearClipDistance(0.1f);
+        default_camera_->setFarClipDistance(2000.f);
+        default_camera_->setFixedYawAxis(true, Ogre::Vector3::UNIT_Z);
+        default_camera_->roll(Ogre::Radian(Ogre::Math::HALF_PI));
+        default_camera_->setAspectRatio(Ogre::Real(viewport_->getActualWidth()) / Ogre::Real(viewport_->getActualHeight()));
+        default_camera_->setAutoAspectRatio(true);
+
+    }
+
+    // Sets viewport again when scenemanager_ pointer is changed
+    void Renderer::SetupViewPort()
+    {
+        Ogre::Camera* camera = NULL;
+        try {
+            camera=scenemanager_->getCamera("DefaultCamera");
+        } catch (Ogre::ItemIdentityException &e) {
+            return;
+        }
+
+        viewport_->setCamera(camera);
+        camera_=camera;
+    }
+
+    // Changes scenemanager_ pointer to different scene.
+    // Destroys rayqueries from previous scene and initializes them to new scene
+    void Renderer::SetSceneManager(const QString &sceneName)
+    {
+        if (framework_->IsHeadless())
+            return;
+
+        Ogre::String name= Ogre::String(sceneName.toStdString());
+
+        // Remove ray queries from present sceneManager
+        if (scenemanager_)
+            scenemanager_->destroyQuery(ray_query_);
+        // Get new scenemanager from root_
+        scenemanager_ = root_->getSceneManager(name);
+        // Set rayqueries
+        ray_query_ = scenemanager_->createRayQuery(Ogre::Ray());
+        ray_query_->setSortByDistance(true);
+        // Set shadows
+        InitShadows();
+        // Setup viewport for new sceneManager
+        SetupViewPort();
+    }
+
+    // Overloads GetSceneManager-method to return scenemanager_ pointer with name-parameter.
+    Ogre::SceneManager* Renderer::GetSceneManager(const QString &sceneName)
+    {
+        Ogre::String name= Ogre::String(sceneName.toStdString());
+
+        if(sceneName=="" || !(root_->hasSceneManager(name)))
+            return scenemanager_;
+        else
+            return root_->getSceneManager(name);
+
+    }
+
+    // Removes Ogre scenemanager from root.
+    void Renderer::RemoveSceneManager(const QString &name)
+    {
+        Ogre::String managerName = Ogre::String(name.toStdString());
+        Ogre::SceneManager* sm = root_->getSceneManager(managerName);
+        root_->destroySceneManager(sm);
+    }
+
+
     bool Renderer::IsFullScreen() const
     {
         if (!framework_->IsHeadless())
@@ -391,36 +484,6 @@ namespace OgreRenderer
             Ogre::LogManager::getSingleton().getDefaultLog()->removeListener(log_listener_.get());
             log_listener_.reset();
         }
-    }
-
-    void Renderer::DoFrameTimeLimiting()
-    {
-        /*
-        if (targetFpsLimit > 1.f)
-        {
-            tick_t timeNow = GetCurrentClockTime();
-
-            double msecsSpentInFrame = (double)(timeNow - lastPresentTime) * 1000.0 / timerFrequency;
-            const double msecsPerFrame = 1000.0 / targetFpsLimit;
-            if (msecsSpentInFrame < msecsPerFrame)
-            {
-                PROFILE(Renderer_DoFrameTimeLimiting);
-                while(msecsSpentInFrame >= 0.0 && msecsSpentInFrame < msecsPerFrame)
-                {
-                    if (msecsSpentInFrame + 1.0 < msecsPerFrame)
-                        boost::this_thread::sleep(boost::posix_time::milliseconds(1)); // Sleep in 1msec slices (which on most systems is far from guaranteed to be 1msec, but suits the purpose here)
-
-                    msecsSpentInFrame = (double)(GetCurrentClockTime() - lastPresentTime) / timerFrequency * 1000.0;
-                }
-
-                // Busy-wait the rest of the time slice to avoid jittering and to produce smoother updates.
-                while(msecsSpentInFrame >= 0 && msecsSpentInFrame < msecsPerFrame)
-                    msecsSpentInFrame = (double)(GetCurrentClockTime() - lastPresentTime) / timerFrequency * 1000.0;
-            }
-
-            lastPresentTime = GetCurrentClockTime();
-        }
-        */
     }
 
     void Renderer::SetFullScreen(bool value)
@@ -478,7 +541,17 @@ namespace OgreRenderer
     void Renderer::SetCurrentCamera(Ogre::Camera* camera)
     {
         if (!camera)
-            camera = default_camera_;
+        {
+            // Had to make this try catch because multiconnection disconnects might cause default_camera to be something remarkable (read: trash)
+            // and it would crash viewer on multiple scene disconnect situations.
+            try
+            {
+                camera=GetSceneManager()->getCamera("DefaultCamera");
+            }
+            catch (Ogre::ItemIdentityException &e) {
+                camera = NULL;
+            }
+        }
 
         if (viewport_)
         {
@@ -524,13 +597,8 @@ namespace OgreRenderer
         if (!initialized_) 
             return;
 
-        if (framework_->IsHeadless() || !render_enabled_)
-        {
-            // In headless mode, do frame time limiting here to avoid busy-spinning in the main loop and taking up 100% CPU. In headless mode this could
-            // also be safely done using Qt timers, which might be a slightly better approach.
-            DoFrameTimeLimiting(); 
+        if (framework_->IsHeadless())
             return;
-        }
 
         PROFILE(Renderer_Render);
 
@@ -711,10 +779,9 @@ namespace OgreRenderer
 
         try
         {
-            DoFrameTimeLimiting(); // Note: Performing limiting here is very prone to FPS jitter depending how much time renderOneFrame takes. The proper method
-                                   // would be to perform the limiting inside renderOneFrame, but Ogre does not support it.
             root_->renderOneFrame();
-        } catch(const std::exception &e)
+        } 
+        catch(const std::exception &e)
         {
             std::cout << "Ogre::Root::renderOneFrame threw an exception: " << (e.what() ? e.what() : "(null)") << std::endl;
             RootLogCritical(std::string("Ogre::Root::renderOneFrame threw an exception: ") + (e.what() ? e.what() : "(null)"));
@@ -909,7 +976,7 @@ namespace OgreRenderer
         return t;
     }
 
-    RaycastResult* Renderer::Raycast3df(Vector3df pos, Vector3df dir)
+    RaycastResult* Renderer::RaycastFromTo(Vector3df pos, Vector3df dir)
     {
         static RaycastResult result;
 
@@ -917,7 +984,7 @@ namespace OgreRenderer
         if (!initialized_)
             return &result;
         if (!renderWindow)
-            return &result; /// \todo Ray from co-ordinate to another can be done in headless?
+            return &result;
 
         Ogre::Vector3 normalisedDir = ToOgreVector3(dir -pos);
         normalisedDir.normalise();
@@ -949,7 +1016,7 @@ namespace OgreRenderer
         return &result;
     }
 
-    bool Renderer::PerformRaycast(Ogre::Ray &ray, RaycastResult &result)
+    void Renderer::PerformRaycast(Ogre::Ray &ray, RaycastResult &result)
     {
         ray_query_->setRay(ray);
 
@@ -1110,7 +1177,6 @@ namespace OgreRenderer
                 }
             }
         }
-        return true;
     }
     
     //qt wrapper / upcoming replacement for the one above
@@ -1382,6 +1448,12 @@ namespace OgreRenderer
             sceneManager->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
             return;
 #else
+
+        if (framework_->IsHeadless())
+        {
+            sceneManager->setShadowTechnique(Ogre::SHADOWTYPE_NONE);
+            return;
+        }
         bool using_pssm = (shadowquality_ == Shadows_High);
         bool soft_shadow = framework_->GetDefaultConfig().DeclareSetting("OgreRenderer", "soft_shadow", false);
         

@@ -85,13 +85,15 @@ namespace OgreRenderer
             \return Raycast result structure
         */
         virtual RaycastResult* Raycast(int x, int y);
-        
-        //! Do raycast in to the world from a scene co-ordinate to another.
-        /*! \param pos The initial point for the ray
-            \param dir The direction of the ray, automatically normalized
+
+        //! Do a raycast from a world coordinate to another.
+        /*! Takes two tundra scene coordinates as parameters.
+
+            \param pos The origin of the generated ray
+            \param dir Direction of the ray, automatically normalised
             \return Raycast result structure
         */
-        virtual RaycastResult* Raycast3df(Vector3df pos, Vector3df dir);
+        virtual RaycastResult* RaycastFromTo(Vector3df pos, Vector3df dir);
 
         //! Returns window width, or 0 if no render window
         virtual int GetWindowWidth() const;
@@ -133,6 +135,15 @@ namespace OgreRenderer
 
         /// Specifies a new fps limit to use for the main loop. Pass in a value of 0 to remove fps limiting altogether.
         void SetTargetFPSLimit(float fpsLimit) { targetFpsLimit = fpsLimit; if (targetFpsLimit <= 1.f) targetFpsLimit = 0.f; }
+
+        // Creates new scenemanager in Ogre root
+        void CreateSceneManager(const QString&);
+
+        // Sets named scenemanager active
+        void SetSceneManager(const QString&);
+
+        // Removes scenemanager from ogre root
+        void RemoveSceneManager(const QString&);
         
     public:
         //! Constructor
@@ -187,6 +198,9 @@ namespace OgreRenderer
 
         //! Returns Ogre scenemanager
         Ogre::SceneManager* GetSceneManager() const { return scenemanager_; }
+
+        // Returns Ogre scenemanager by name
+        Ogre::SceneManager* GetSceneManager(const QString&);
 
         //! Returns Ogre viewport
         Ogre::Viewport* GetViewport() const { return viewport_; }
@@ -246,23 +260,21 @@ namespace OgreRenderer
 
         RenderWindow *GetRenderWindow() const { return renderWindow; }
 
-
-
         /// Returns the current fps limit.
         float TargetFPSLimit() const { return targetFpsLimit; }
 
     private:
-        
-        //! Sleeps the main thread to throttle the main loop execution speed.
-        void DoFrameTimeLimiting();
+        // When scenemanager change happens this sets up the viewport properly
+        void SetupViewPort();
 
         //! Initialises the events related info for this module
         void InitializeEvents();
 
         //! Loads Ogre plugins in a manner which allows individual plugin loading to fail
         /*! \param plugin_filename path & filename of the Ogre plugins file
+            \return QStringList Succesfully loaded plugins.
          */
-        void LoadPlugins(const std::string& plugin_filename);
+        QStringList LoadPlugins(const std::string& plugin_filename);
 
         //! Sets up Ogre resources based on resources.cfg
         void SetupResources();
@@ -272,6 +284,9 @@ namespace OgreRenderer
 
         //! Initializes shadows. Called by SetupScene().
         void InitShadows();
+
+        /// Do the actual raycast
+        void PerformRaycast(Ogre::Ray &ray, RaycastResult &result);
 
         //! Successfully initialized flag
         bool initialized_;
@@ -374,9 +389,6 @@ namespace OgreRenderer
         /// Specifies the target fps to run the system at. By default 60. Setting this to zero means no limit.
         float targetFpsLimit;
         
-        /// Do the actual raycast
-        virtual bool PerformRaycast(Ogre::Ray &ray, RaycastResult &result);
-
         bool render_enabled_;
     };
 }

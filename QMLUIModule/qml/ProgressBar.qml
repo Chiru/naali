@@ -16,21 +16,9 @@ import Qt 4.7
          id: batteryRect
          width:  150
          height: 25
-         anchors { top: owner.top; topMargin: 30; right: owner.right; rightMargin: 10; }
+         anchors { bottom: owner.bottom; bottomMargin: 5; right: owner.right; rightMargin: 5; }
          opacity: 0.5
          color: "black"
-
-         MouseArea {
-             id: testarea2
-             anchors.fill: parent
-             onClicked:  {
-                 if (loader1.source == "")
-                    loader1.source = "http://www.students.oamk.fi/~t8kool00/test.qml";
-                 else
-                     loader1.source = ""
-
-             }
-         }
 
      Rectangle {
          id: highlight

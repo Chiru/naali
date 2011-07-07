@@ -1,6 +1,9 @@
 // A freelook camera script. Upon run, creates necessary components if they don't exist yet, and hooks to the InputMapper's
 // input context to process camera movement (WASD + mouse)
 
+engine.ImportExtension("qt.core");
+engine.ImportExtension("qt.gui");
+
 var rotate_sensitivity = 0.3;
 var move_sensitivity = 30.0;
 var motion_z = 0;

@@ -5,7 +5,8 @@ if (!framework.IsHeadless())
 
     var sceneAction = null;
     var assetAction = null;
-    
+    var createIcons = true;
+
     var mainwin = ui.MainWindow();
 
     // File
@@ -59,7 +60,25 @@ if (!framework.IsHeadless())
         signalMenu.addAction("usingBattery(bool)").triggered.connect(signalUsingBattery);
         signalMenu.addAction("batteryLevelChanged(int)").triggered.connect(signalBatteryLevelChanged);
     }
-    function mobilitySignalHandler(value)
+
+	// Chiru Multiconnection Menu
+	if (!server.IsAboutToStart())
+	{	
+		var multiMenu = mainwin.AddMenu("&MultiCon");
+		var THEREbeDRAGONS = multiMenu.addAction("*Dragons ahead*");
+		var multiconnect = multiMenu.addMenu("&connect");
+		multiconnect.addAction("Chiru world - UDP").triggered.connect(ConnectChiruUDP);
+		multiconnect.addAction("Chiru world - TCP").triggered.connect(ConnectChiruTCP);
+		multiconnect.addAction("Local world - UDP").triggered.connect(ConnectLocalUDP);
+		multiconnect.addAction("Local world - TCP").triggered.connect(ConnectLocalTCP);
+		multiconnect.addAction("Local world - 2346").triggered.connect(ConnectLocal2346);
+		var changeMenu = multiMenu.addMenu("Change scene");
+		changeMenu.addAction("TundraClient_0").triggered.connect(change0);
+		changeMenu.addAction("TundraClient_1").triggered.connect(change1);
+		changeMenu.addAction("TundraClient_2").triggered.connect(change2);
+		changeMenu.addAction("TundraClient_3").triggered.connect(change3);
+	}    
+	function mobilitySignalHandler(value)
     {
         //print("Emitted and catched MobilityModule signal with value: " + value);
     }
@@ -111,21 +130,26 @@ if (!framework.IsHeadless())
     }
 
     function Disconnect() {
-        client.Logout();
+        client.Logout(0, client.getActiveConnection());
     }
 
     function Connected() {
         disconnectAction.setEnabled(true);
         importWebAction.setEnabled(true);
         exportAction.setEnabled(true);
-        ui.EmitAddAction(sceneAction);
-        ui.EmitAddAction(assetAction);
+        if (createIcons)
+		{
+			ui.EmitAddAction(sceneAction);
+        	ui.EmitAddAction(assetAction);
+			createIcons = false;
+		}
     }
 
     function Disconnected() {
         disconnectAction.setEnabled(false);
         importWebAction.setEnabled(false);
         exportAction.setEnabled(false);
+		createIcons = true;
     }
 
     function Quit() {
@@ -274,7 +298,54 @@ if (!framework.IsHeadless())
         console.ExecuteCommand("disconnect");
         console.ExecuteCommand("connect(localhost, 2345, 'erkki', '', udp)");
     }
-    
+
+	// Chiru multiconnection changes:
+
+	function ConnectChiruUDP()
+	{
+        console.ExecuteCommand("connect(chiru.cie.fi, 2345, 'multitapsa', '', udp)");
+	}
+
+	function ConnectChiruTCP()
+	{
+        console.ExecuteCommand("connect(chiru.cie.fi, 2345, 'multitapsa', '', tcp)");
+	}
+
+	function ConnectLocalUDP()
+	{
+        console.ExecuteCommand("connect(localhost, 2345, 'multitapsa', '', udp)");
+	}
+
+	function ConnectLocalTCP()
+	{
+        console.ExecuteCommand("connect(localhost, 2345, 'multitapsa', '', tcp)");
+	}
+
+	function ConnectLocal2346()
+	{
+        console.ExecuteCommand("connect(localhost, 2346, 'multitapsa', '', tcp)");
+	}
+
+	function change0()
+	{
+		client.emitChangeSceneSignal("TundraClient_0");
+	}
+
+    function change1()
+	{
+		client.emitChangeSceneSignal("TundraClient_1");
+	}
+
+    function change2()
+	{
+		client.emitChangeSceneSignal("TundraClient_2");
+	}
+
+    function change3()
+	{
+		client.emitChangeSceneSignal("TundraClient_3");
+	}
+
     function signalNetworkStateChanged() {      
         var options = new Array();
         

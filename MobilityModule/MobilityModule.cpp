@@ -12,9 +12,7 @@
 
 #include "MobilityModule.h"
 
-//#include "ConsoleCommandServiceInterface.h"
 #include "EventManager.h"
-
 #include "MemoryLeakCheck.h"
 
 #include <QMapIterator>
@@ -62,7 +60,7 @@ void MobilityModule::Initialize()
 {
     LogInfo(Name() + " initializing...");
 
-    /// \todo move these to a separate file?
+    /// \todo move these to a separate source?
     // Map corresponding values from QSystemInfo::Feature to MobilityModule::DeviceFeature
     deviceFeatureMap_[QSystemInfo::BluetoothFeature] = MobilityModule::BluetoothFeature;
     deviceFeatureMap_[QSystemInfo::CameraFeature] = MobilityModule::CameraFeature;

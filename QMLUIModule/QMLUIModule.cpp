@@ -1,25 +1,23 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file
- *  @brief
+ *  @file QMLUIModule.cpp
+ *  @brief QMLUIModule is used for showing a 2D overlay QML UI
  */
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 
 #include "QMLUIModule.h"
-#include "QMLWidget.h"
-
 #include "UiServiceInterface.h"
 #include "EventManager.h"
 #include "ModuleManager.h"
 #include "SceneAPI.h"
 #include "UiAPI.h"
 #include "AssetAPI.h"
-
-
-
+#include "EC_Script.h"
+#include "AssetCache.h"
 
 std::string QMLUIModule::type_name_static_ = "QMLUIModule";
 
@@ -27,6 +25,7 @@ QMLUIModule::QMLUIModule() :
     IModule(type_name_static_)
 
 {
+    view_created_ = false;
     //For QML-debugging
     //QByteArray data = "1";
     //qputenv("QML_IMPORT_TRACE", data);
@@ -42,22 +41,18 @@ void QMLUIModule::PreInitialize()
 
 void QMLUIModule::Initialize()
 {
+    connect(GetFramework()->Scene(), SIGNAL(SceneAdded(const QString&)), this, SLOT(SceneAdded(const QString&)));
 }
 
 void QMLUIModule::PostInitialize()
 {
-    window_ = new QMLWidget();
-    QObject::connect(window_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
-    QMLStatus(window_->status());
-
-
-
-
+    if (framework_->IsHeadless())
+        return;
 }
 
 void QMLUIModule::Uninitialize()
 {
-    SAFE_DELETE(window_);
+    SAFE_DELETE(declarativeview_);
 }
 
 void QMLUIModule::Update(f64 frametime)
@@ -71,6 +66,29 @@ bool QMLUIModule::HandleEvent(event_category_id_t category_id, event_id_t event_
     return false;
 }
 
+void QMLUIModule::CreateQDeclarativeView()
+{
+    //Prepare QDeclarativeView
+    if (framework_->IsHeadless() || view_created_)
+        return;
+
+    view_created_ = true;
+
+    declarativeview_ = new QDeclarativeView();
+    QObject::connect(declarativeview_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
+
+    declarativeview_->move(0,0);
+    declarativeview_->setStyleSheet("QDeclarativeView {background-color: transparent;}");
+    declarativeview_->setWindowState(Qt::WindowFullScreen);
+    declarativeview_->setResizeMode(QDeclarativeView::SizeRootObjectToView);
+    declarativeview_->setFocusPolicy(Qt::NoFocus);
+
+    qmluiproxy_ = new UiProxyWidget(declarativeview_, Qt::Widget);
+    framework_->Ui()->AddProxyWidgetToScene(qmluiproxy_);
+
+    QMLStatus(declarativeview_->status());
+}
+
 void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 {
     if (framework_->IsHeadless())
@@ -78,29 +96,20 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
     if (qmlstatus == QDeclarativeView::Ready)
     {
         LogInfo("QDeclarativeView has loaded and created the QML component.");
-        qmluiproxy_ = new UiProxyWidget(window_, Qt::Widget);
-        framework_->Ui()->AddProxyWidgetToScene(qmluiproxy_);
+
         qmluiproxy_->setVisible(true);
         qmluiproxy_->setFocusPolicy(Qt::NoFocus);
 
-        QMLUI = dynamic_cast<QObject*>(window_->rootObject());
-        QObject::connect(QMLUI, SIGNAL(exit()), this, SLOT(Exit()));
+        qmlui_ = dynamic_cast<QObject*>(declarativeview_->rootObject());
+        QObject::connect(qmlui_, SIGNAL(exit()), this, SLOT(Exit()));
 
-        QObject::connect(this, SIGNAL(giveQMLNetworkState(QVariant)), QMLUI, SLOT(networkstatechanged(QVariant)));
+        QObject::connect(this, SIGNAL(giveQMLNetworkState(QVariant)), qmlui_, SLOT(networkstatechanged(QVariant)));
 
-        QObject::connect(this, SIGNAL(giveQMLBatteryLevel(QVariant)), QMLUI, SLOT(batterylevelchanged(QVariant)));
+        QObject::connect(this, SIGNAL(giveQMLBatteryLevel(QVariant)), qmlui_, SLOT(batterylevelchanged(QVariant)));
 
-        QObject::connect(this, SIGNAL(giveQMLUsingBattery(QVariant)), QMLUI,SLOT(usingbattery(QVariant)));
+        QObject::connect(this, SIGNAL(giveQMLUsingBattery(QVariant)), qmlui_,SLOT(usingbattery(QVariant)));
 
-        QObject::connect(QMLUI, SIGNAL(setFocus(bool)), this, SLOT(SetQMLUIFocus(bool)));
-
-        QObject::connect(QMLUI, SIGNAL(loadxml()), this, SLOT(LoadXML()));
-        QObject::connect(this, SIGNAL(helloQML(QVariant)), QMLUI, SLOT(xmlfunction(QVariant)));
-
-        QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), QMLUI, SLOT(networkmodechanged(QVariant)));
-
-        giveQMLUsingBattery(true);
-        giveQMLBatteryLevel("75");
+        QObject::connect(this, SIGNAL(giveQMLNetworkMode(QVariant)), qmlui_, SLOT(networkmodechanged(QVariant)));
     }
     else if (qmlstatus == QDeclarativeView::Null)
     {
@@ -112,26 +121,67 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
     }
     else if (qmlstatus == QDeclarativeView::Error)
     {
-        LogInfo("One or more errors has occurred.");
-        //window_->errors();
+        LogError("One or more errors has occurred.");
     }
     else
     {
-
+        LogError("Unknown QDeclarativeView status!");
     }
-
-
 }
 
-void QMLUIModule::SetQMLUIFocus(bool focus)
+void QMLUIModule::SceneAdded(const QString &name)
 {
-    if (focus)
+    Scene::ScenePtr scene = GetFramework()->Scene()->GetScene(name);
+    connect(scene.get(), SIGNAL(ComponentAdded(Scene::Entity*, IComponent*, AttributeChange::Type)),
+            SLOT(ComponentAdded(Scene::Entity*, IComponent*, AttributeChange::Type)));
+    connect(scene.get(), SIGNAL(ComponentRemoved(Scene::Entity*, IComponent*, AttributeChange::Type)),
+            SLOT(ComponentRemoved(Scene::Entity*, IComponent*, AttributeChange::Type)));
+}
+
+void QMLUIModule::ComponentAdded(Scene::Entity* entity, IComponent* comp, AttributeChange::Type change)
+{
+    if (comp->TypeName() == EC_Script::TypeNameStatic())
+        connect(comp, SIGNAL(ScriptAssetChanged(ScriptAssetPtr)), this, SLOT(ScriptAssetChanged(ScriptAssetPtr)), Qt::UniqueConnection);
+}
+
+void QMLUIModule::ComponentRemoved(Scene::Entity *entity, IComponent *comp, AttributeChange::Type change)
+{
+    if (comp->TypeName() == EC_Script::TypeNameStatic())
+        disconnect(comp, SIGNAL(ScriptAssetChanged(ScriptAssetPtr)), this, SLOT(ScriptAssetChanged(ScriptAssetPtr)));
+}
+
+void QMLUIModule::ScriptAssetChanged(ScriptAssetPtr newScript)
+{
+    EC_Script *sender = dynamic_cast<EC_Script*>(this->sender());
+    assert(sender && "QMLUIModule::ScriptAssetChanged needs to be invoked from EC_Script!");
+    if (!sender)
+        return;
+    QString scriptType = sender->type.Get().trimmed().toLower();
+    if (scriptType != "qml" && scriptType.length() > 0)
+        return; // The user enforced a foreign script type using the EC_Script type field.
+
+    if (newScript->Name().endsWith(".qml") || scriptType == "qml") // We're positively using QML.
     {
-        qmluiproxy_->setFocusPolicy(Qt::ClickFocus);
-    }
-    else
-    {
-        qmluiproxy_->setFocusPolicy(Qt::NoFocus);
+        //Create just one declarativeview
+        if (!view_created_)
+            CreateQDeclarativeView();
+
+        QString source;
+
+        if (sender->getscriptRef().ref.startsWith("http", Qt::CaseInsensitive))
+        {
+            //Load ref from asset cache
+            source = framework_->Asset()->GetAssetCache()->GetAbsoluteDataFilePath(sender->getscriptRef().ref);
+            declarativeview_->setSource(QUrl(source));
+        }
+        else
+        {
+            //Load ref from under the bin file
+            //TODO: Make finding file more spesific
+            source = framework_->Asset()->RecursiveFindFile(".", sender->getscriptRef().ref);
+            declarativeview_->setSource(QUrl(source));
+        }
+        LogInfo("QML source: "  + source.toStdString());
     }
 }
 
@@ -140,14 +190,6 @@ void QMLUIModule::NetworkModeChanged(int mode)
     QVariant modee = (QVariant)mode;
     emit giveQMLNetworkMode(modee);
 }
-
-void QMLUIModule::LoadXML()
-{
-    sceneMngr = framework_->Scene()->GetDefaultScene().get();
-    sceneMngr->SaveSceneXML(("testingxmlscene.xml"));
-    emit helloQML("../../bin/testingxmlscene.xml");
-}
-
 
 void QMLUIModule::Exit()
 {

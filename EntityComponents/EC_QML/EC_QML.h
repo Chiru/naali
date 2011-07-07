@@ -1,9 +1,9 @@
 /**
+ *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   EC_Template.h
- *  @brief  EC_Template is empty template for EC components.
- *          This componen can be used as a template when creating new EC components.
+ *  @file   EC_QML.h
+ *  @brief  EC_QML is a component for showing QML-elements in a texture.
  *  @note   no notes
  *
  */
@@ -14,24 +14,16 @@
 #include "IComponent.h"
 #include "IAttribute.h"
 #include "Declare_EC.h"
-
-
-#include "SceneFwd.h"
 #include "InputFwd.h"
 
+#include <QDeclarativeView>
 #include <QString>
-#include <QSize>
-#include <QPointer>
 #include <QPoint>
 #include <QTimer>
-#include <QMenu>
-#include <QList>
-#include <QPointer>
 
 #include "EC_3DCanvas.h"
 #include "EC_Mesh.h"
 #include "EC_Placeable.h"
-#include <QtDeclarative/QtDeclarative>
 
 /**
 <table class="header">
@@ -62,8 +54,6 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-class EC_OgreCamera;
-class QListView;
 class QMouseEvent;
 class RaycastResult;
 
@@ -76,30 +66,19 @@ private:
     /// Constuctor.
     /// @param module Owner module.
     explicit EC_QML(IModule *module);
-    EC_Placeable *cameraPlaceable;
-    Vector3df ownEntityPos;
-    Vector3df distance;
-    QPointer<QListView> listview_;
 
     Foundation::RenderServiceInterface *renderer_;
 
     EC_3DCanvas* canvas_;
     EC_Mesh *mesh_;
-    bool ent_clicked_;
-    bool c1, c2, c3, qml_ready, camera_ready_;
-    Transform target_transform_;
-
+    bool qml_ready;
 
     InputContextPtr input_;
 
     QDeclarativeView *qmlview_;
-    void SetEntityPosition();
 
     //! Internal timer for updating inworld EC_3DCanvas.
     QTimer *renderTimer_;
-
-    //! Internal timer for smooth camera movement.
-    QTimer *cameraMovementTimer_;
 
 public:
     /// Destructor.
@@ -113,13 +92,15 @@ public:
     Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
+    //! QString to qml-file
     Q_PROPERTY(QString qmlsource READ getqmlsource WRITE setqmlsource);
     DEFINE_QPROPERTY_ATTRIBUTE(QString, qmlsource);
 
-    //! Integer for menuelements.
-    //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
-    //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
+    Q_PROPERTY(int renderinterval READ getrenderinterval WRITE setrenderinterval);
+    DEFINE_QPROPERTY_ATTRIBUTE(int, renderinterval);
 
+    /// IComponent Override
+    bool IsSerializable() const { return true; }
 
 public slots:
     void Render();
@@ -148,15 +129,11 @@ private slots:
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
     EC_3DCanvas* GetOrCreateSceneCanvasComponent();
 
-    EC_Placeable *GetOrCreatePlaceableComponent();
+    //! Get parent entitys EC_Placeable. Return 0 if not present.
+    EC_Placeable* GetOrCreatePlaceableComponent();
 
-    //! Handles entity action WebViewControllerChanged
-    /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
-    void ActionControllerChanged(QString id, QString newController);
-
-    void QMLStatus(QDeclarativeView::Status);
-
-    void SmoothCameraMove();
+    /// Handles changes in QML-status
+    void QMLStatus(QDeclarativeView::Status qmlstatus);
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

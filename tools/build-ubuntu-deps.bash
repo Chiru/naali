@@ -38,15 +38,23 @@ export CC="ccache gcc"
 export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
+private_ogre=false
+
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
+        if lsb_release -c | egrep -q "maverick|natty"; then
+            more="$more libqt4-webkit-dev"
+        fi
+        if [ x$private_ogre != xtrue ]; then
+            more="$more libogre-dev"
+        fi
 	sudo aptitude -y install scons python-dev libogg-dev libvorbis-dev \
 	 libopenjpeg-dev libcurl4-gnutls-dev libexpat1-dev libphonon-dev \
-	 build-essential g++ libogre-dev libboost-all-dev libpoco-dev \
-	 ccache libqt4-dev python-dev \
-	 freeglut3-dev \
+	 build-essential g++ libboost-all-dev libpoco-dev \
+	 ccache libqt4-dev python-dev zlib1g-dev libois-dev libcppunit-dev \
+	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
 	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings
+	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \
@@ -121,6 +129,7 @@ cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 
 what=knet
+# todo: check tag against version hash in hg repo
 if false && test -f $tags/$what-done; then 
    echo $what is done
 else
@@ -135,6 +144,24 @@ else
     cp lib/libkNet.so $prefix/lib/
     rsync -r include/* $prefix/include/
     touch $tags/$what-done
+fi
+
+if [ x$private_ogre = xtrue ]; then
+    what=ogre
+    if test -f $tags/$what-done; then
+        echo $what is done
+    else
+        cd $build
+        rm -rf $what
+        hg clone http://bitbucket.org/sinbad/$what/ -u v1-8
+        cd $what
+        mkdir -p $what-build
+        cd $what-build
+        cmake .. -DCMAKE_INSTALL_PREFIX=$prefix
+        make -j $nprocs VERBOSE=1
+        make install
+        touch $tags/$what-done
+    fi
 fi
 
 what=Caelum
@@ -200,6 +227,39 @@ else
     cp lib/lib* $prefix/lib/
     # luckily only extensionless headers under src match Qt*:
     cp src/qt*.h src/Qt* $prefix/include/
+    touch $tags/$what-done
+fi
+
+cd $build
+what=celt
+ver=v0.11.3
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    git clone git://git.xiph.org/$what.git
+    cd $what
+    git checkout $ver
+    ./autogen.sh
+    ./configure --prefix=$prefix
+    make -j $nprocs
+    make install
+    touch $tags/$what-done
+fi
+
+cd $build
+what=libmumbleclient
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    git clone git://github.com/msantala/libmumbleclient.git
+    cd $what
+    cmake .
+    make -j $nprocs
+    mkdir $prefix/include/mumbleclient
+    cp *.h $prefix/include/mumbleclient
+    cp libmumbleclient.so $prefix/lib/
     touch $tags/$what-done
 fi
 

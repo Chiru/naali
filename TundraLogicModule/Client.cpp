@@ -104,7 +104,7 @@ void Client::Login(const QUrl& loginUrl)
 void Client::Login(const QString& address, unsigned short port, const QString& username, const QString& password, const QString &protocol)
 {
     // Check if we already have a connection to this specific IP:port and if so, then switch to it
-    if (checkIfConnected(address, QString::number(port)))
+    if (checkIfConnected(address, QString::number(port), protocol))
         return;
 
     SetLoginProperty("address", address);
@@ -184,10 +184,12 @@ void Client::Logout(bool fail, unsigned short removedConnection_)
 
         // Check if we have connections up and running and switch to it.
         if (!scenenames_.isEmpty())
+        {
             owner_->changeScene(scenenames_.constBegin().value());
-
+            emit Disconnected(removedConnection_);
+        }
         else
-            emit Disconnected();
+            emit Disconnected(removedConnection_);
     }
     
     if (fail)
@@ -211,7 +213,7 @@ bool Client::IsConnected() const
     return loginstate_ == LoggedIn;
 }
 
-bool Client::checkIfConnected(QString address, QString port)
+bool Client::checkIfConnected(QString address, QString port, QString protocol)
 {
     unsigned short counter = 0;
     QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
@@ -222,10 +224,15 @@ bool Client::checkIfConnected(QString address, QString port)
         std::map<QString, QString> temp = propertiesIterator.value();
         QString tempAddress = temp["address"];
         QString tempPort = temp["port"];
+        QString tempProtocol = temp["protocol"];
 
-        if (address == tempAddress && port == tempPort)
+        if (address == tempAddress && port == tempPort && protocol == tempProtocol)
         {
-            emitChangeSceneSignal("TundraClient_" + QString::number(counter));
+            QList<int> key = scenenames_.keys();
+            unsigned short keyInt = key[counter];
+            TundraLogicModule::LogInfo("Already connected to " + tempAddress.toStdString() + ":" + tempPort.toStdString() + ". Emitting " + ToString(keyInt));
+            emit changeTab(keyInt);
+            //emitChangeSceneSignal("TundraClient_" + QString::number(counter));
             return true;
         }
         counter++;
@@ -446,7 +453,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
             event_data.user_id_ = msg.userID;
             framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_CONNECTED, &event_data);
             
-            emit Connected();
+            emit Connected(conNumber);
         }
         else
         {

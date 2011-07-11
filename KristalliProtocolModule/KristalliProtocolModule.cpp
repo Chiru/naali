@@ -300,7 +300,7 @@ void KristalliProtocolModule::PerformConnection()
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
-	serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
+        serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(true);
 }
 
 void KristalliProtocolModule::Disconnect()
@@ -365,9 +365,10 @@ void KristalliProtocolModule::NewConnectionEstablished(kNet::MessageConnection *
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(false);
-    // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
+
+    // For SCTP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
-	source->GetSocket()->SetNaglesAlgorithmEnabled(false);
+        source->GetSocket()->SetNaglesAlgorithmEnabled(true);
 
     LogInfo("User connected from " + source->RemoteEndPoint().ToString() + ", connection ID " + ToString((int)connection->userID));
     
@@ -567,6 +568,10 @@ void KristalliProtocolModule::PerformReconnection(QMutableMapIterator<unsigned s
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (iterator.value()->GetSocket() && iterator.value()->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         iterator.value()->GetSocket()->SetNaglesAlgorithmEnabled(false);
+
+    // For SCTP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
+    if (iterator.value()->GetSocket() && iterator.value()->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
+        iterator.value()->GetSocket()->SetNaglesAlgorithmEnabled(true);
 }
 
 void KristalliProtocolModule::Disconnect(bool fail, unsigned short con)

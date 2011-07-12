@@ -133,6 +133,9 @@ public slots:
     void ForwardPressed();
     //! Buttons handler for home (initial component url)
     void HomePressed();
+
+    //! Testhack for 3DMenu development
+    void OpenWebview();
     
 private slots:
     void UpdateWidgetAndCanvas(IAttribute *attribute, AttributeChange::Type type);

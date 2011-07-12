@@ -46,7 +46,8 @@ EC_3DCanvasSource::EC_3DCanvasSource(IModule *module) :
     progress_bar_(0),
     proxy_(0),
     source_edit_(0),
-    canvas_started_(false)
+    canvas_started_(false),
+    MenuOpen_(false)
 {
     static AttributeMetadata size_metadata("", "100", "2000", "50");
     pageWidth.SetMetadata(&size_metadata);
@@ -544,3 +545,18 @@ void EC_3DCanvasSource::RegisterActions()
         entity->ConnectAction("MousePress", this, SLOT(OnClick()));
 }
 
+void EC_3DCanvasSource::OpenWebview()
+{
+    if ((getshow2d() == true) && (widget_) && (proxy_))
+    {
+        if (!proxy_->scene())
+            return;
+        if (!proxy_->scene()->isActive())
+            return;
+        if (proxy_->isVisible())
+            proxy_->AnimatedHide();
+        else
+            proxy_->show();
+    }
+    MenuOpen_=false;
+}

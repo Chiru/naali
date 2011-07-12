@@ -107,6 +107,10 @@ public:
     Q_PROPERTY(int pageHeight READ getpageHeight WRITE setpageHeight);
     DEFINE_QPROPERTY_ATTRIBUTE(int, pageHeight);
 
+    //! Activate 3D Menu when clicked if true
+    Q_PROPERTY(bool menuactive READ getmenuactive WRITE setmenuactive);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, menuactive);
+
 public slots:
     void OnClick();
     //! Source text editor modified
@@ -143,6 +147,10 @@ private slots:
 
     EC_3DCanvas *Get3DCanvas();
     QWebView *GetWebView();
+
+signals:
+    void createMenu();
+    void closeMenu();
 
 private:
     //! Constructor.
@@ -181,6 +189,7 @@ private:
     QString last_source_;
 
     bool canvas_started_;
+    bool MenuOpen_;
 };
 
 #endif

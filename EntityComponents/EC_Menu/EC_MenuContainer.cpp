@@ -9,14 +9,20 @@
 
 
 #include "StableHeaders.h"
+#include "MenuDataModel.h"
+#include "MenuDataItem.h"
+
 #include "EC_MenuContainer.h"
 #include "EC_MenuItem.h"
 #include "Entity.h"
 
-#include <Ogre.h>
+#include <OgreCamera.h>
+#include <OgreMath.h>
 #include "RenderServiceInterface.h"
 
 #include <QtGui>
+#include <QStandardItemModel>
+
 #include "InputAPI.h"
 #include "AssetAPI.h"
 #include "SceneManager.h"
@@ -27,16 +33,17 @@
 #define SUBMENUCLOSE 0
 #define SUBMENUCHANGE 1
 
+
 DEFINE_POCO_LOGGING_FUNCTIONS("EC_MenuContainer")
 
 EC_MenuContainer::EC_MenuContainer(IModule *module) :
     IComponent(module->GetFramework()),
-    ent_clicked_(false),
+    menuClicked_(false),
     subMenu_clicked_(false),
     subMenu_(false),
     subMenuIsScrolling(false),
+    startingPositionSaved_(false),
     follow(this, "Follow camera", false),
-    numberOfMenuelements_(0),
     selected_(0),
     previousSelected_(0),
     subMenuItemSelected_(0),
@@ -45,16 +52,12 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     radius_(0.0)
 {
     scrollerTimer_ = new QTimer();
-    renderTimer_ = new QTimer();
 
     // Connect signals from IComponent
     //connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuContainer()), Qt::UniqueConnection);
     //connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
     connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
-    QObject::connect(renderTimer_, SIGNAL(timeout()), this, SLOT(Render()));
-    renderTimer_->setInterval(40);
-    renderTimer_->start();
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
 
@@ -75,7 +78,6 @@ EC_MenuContainer::~EC_MenuContainer()
     if(!sceneManager_)
     {
         MenuItemList_.clear();
-        subMenuItemList_.clear();
     }
 
     //loop MenuItemList and subMenuItemList to clear all data from there.
@@ -89,36 +91,52 @@ EC_MenuContainer::~EC_MenuContainer()
         }
         MenuItemList_.clear();
     }
-    if(subMenuItemList_.count()>0)
-    {
-        for(int i=0; i<subMenuItemList_.count(); i++)
-        {
-            entity_id_t id = subMenuItemList_.value(i)->GetParentEntity()->GetId();
-            if(id)
-                sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
-        }
-        subMenuItemList_.clear();
-    }
 
     SAFE_DELETE(scrollerTimer_);
-    SAFE_DELETE(renderTimer_);
+    SAFE_DELETE(menudatamodel_);
 }
 
-void EC_MenuContainer::PrepareMenuContainer(int menulevels, float radius)
+void EC_MenuContainer::PrepareMenuContainer(float radius, MenuDataModel *parent)
 {
-    menulevels_ = menulevels;
+    menudatamodel_ = new MenuDataModel(parent);
+
     radius_ = radius;
+    //LogInfo("Menu radius_: "+ToString(radius_));
     SetMenuContainerPosition();
 }
 
-void EC_MenuContainer::AddComponentToMenu(QString meshref, QStringList materials)
+void EC_MenuContainer::AddComponentToMenu(QString meshref, QStringList materials, int itemnumber)
 {
-    // x , z , -y
+    if(itemnumber)
+    {
+        if(!menudatamodel_->AddItemToIndex(meshref, materials, itemnumber))
+            LogError("Error while adding menuitemdata to container! (error 1)");
+    }
+    else
+    {
+        if(!menudatamodel_->AddItem(meshref, materials))
+            LogError("Error while adding menuitemdata to container! (error 2)");
+    }
 
-    //LogInfo(meshref);
-    EC_MenuItem *menuItem = CreateMenuItem();
-    menuItem->SetMenuItemMesh(meshref, materials);
-    MenuItemList_.append(menuItem);
+//    EC_MenuItem *menuItem = CreateMenuItem();
+//    menuItem->SetMenuItemMesh(meshref, materials);
+//    assert(menuItem);
+//    if(itemnumber==0)
+//        MenuItemList_.append(menuItem);
+//    else
+//        MenuItemList_.at(itemnumber)->AddComponentToSubMenu(menuItem);
+
+}
+
+void EC_MenuContainer::ActivateMenu()
+{
+    LogInfo("ActivateMenu()");
+    for(int i=0; i<menudatamodel_->GetNumberOfDataItems();i++)
+    {
+        EC_MenuItem *menuItem = CreateMenuItem();
+        menuItem->SetDataItem(menudatamodel_->GetMenuDataItem(i));
+        MenuItemList_.append(menuItem);
+    }
 
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
     float phi;
@@ -128,14 +146,14 @@ void EC_MenuContainer::AddComponentToMenu(QString meshref, QStringList materials
         position.x = radius_ * cos(phi);
         position.z = radius_ * sin(phi);
 
+        EC_MenuItem *menuitem = MenuItemList_.at(i);
         //LogInfo(ToString(position));
-        //LogInfo(ToString(phi));
-        MenuItemList_.at(i)->setphi(phi);
-        MenuItemList_.at(i)->SetMenuItemPosition(position);
-    }
+        //LogInfo("Phi: " + ToString(phi));
+        menuitem->setphi(phi);
+        menuitem->SetMenuItemPosition(position);
+        menuitem->SetMenuItemVisible();
 
-    /// \todo refactor numberOfMenuelements_ usage
-    numberOfMenuelements_ = MenuItemList_.count();
+    }
 }
 
 void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
@@ -144,8 +162,8 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
     int submeshIndex = 0;
     //radius_= 2.0;
 
-    MenuData_ = menuData;
-    numberOfMenuelements_ = menuData.count();
+    //MenuData_ = menuData;
+    //numberOfMenuelements_ = menuData.count();
     //LogInfo("Components in menuData: " +ToString(numberOfMenuelements_));
 
     // Don't do anything if rendering is not enabled
@@ -159,12 +177,12 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
     float phi;
 
     //Set menuItem positions in circle.
-    for(int i = 0; i < numberOfMenuelements_; i++)
+    for(int i = 0; i < menuData.count(); i++)
     {
         EC_MenuItem *menuItem = CreateMenuItem();
         if(menuItem)
         {
-            phi = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
+            phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) + ( 0.5*Ogre::Math::PI);
             position.x = radius_ * cos(phi);
             position.z = radius_ * sin(phi);
 
@@ -173,17 +191,18 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
             menuItem->setphi(phi);
             menuItem->SetMenuItemPosition(position);
 
+
             //hardcoded for now.. first item in every layout is "title" and rest of them are submenu items.
             /// \todo redesign this to support third data layer.
-            QLayoutItem * item = MenuData_.at(i)->layout()->itemAt(0);
-            assert(item);
+            //QLayoutItem * item = MenuData_.at(i)->layout()->itemAt(0);
+            //assert(item);
 
             //isWidgetType() returns true if widget and it is much faster than dynamic_cast
-            if(item->widget()->isWidgetType())
+            /*if(item->widget()->isWidgetType())
                 menuItem->SetMenuItemWidget(submeshIndex, item->widget());
             else
                 LogError("Failed to set data for menu item!");
-
+            */
             //LogInfo("Items in submenu " + ToString(i) + ": " + ToString(MenuData_.at(i)->layout()->count()));
             MenuItemList_.append(menuItem);
 
@@ -191,56 +210,8 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
         else
             LogError("Error while creating menu items");
     }
-    //Render();
 }
 
-void EC_MenuContainer::CreateSubMenu(int menuIndex)
-{
-    //Create submenu here.
-    //menuIndex indicates which MenuItem was selected when this function were called.
-    if(MenuItemList_.empty())
-        return;
-
-    //check if MenuData isn't null
-    if(!MenuData_.count()>0)
-        return;
-
-    int subItems = MenuData_.at(menuIndex)->layout()->count();
-    int submeshIndex = 0;
-    subMenuRadius_=radius_/2.0f;
-
-    for(int i=1; i<subItems; i++)
-    {
-        EC_MenuItem *menuItem = CreateMenuItem();
-
-        QLayoutItem * item = MenuData_.at(menuIndex)->layout()->itemAt(i);
-        assert(item);
-
-        if(item->widget()->isWidgetType())
-            menuItem->SetMenuItemWidget(submeshIndex, item->widget());
-
-        subMenuItemList_.append(menuItem);
-    }
-
-    Vector3df position = Vector3df(0.0, 0.0, 0.0);
-    float phi;
-
-    if(subMenuItemList_.count()>0)
-    {
-        //Set menuItem positions in circle.
-        for(int i = 0; i < subMenuItemList_.count(); i++)
-        {
-            phi = 2 * float(i) * Ogre::Math::PI / float(subMenuItemList_.count()) + ( Ogre::Math::PI);
-            position.y = subMenuRadius_ * cos(phi);
-            position.z = subMenuRadius_ * sin(phi) + radius_;
-
-            subMenuItemList_.at(i)->setphi(phi);
-            subMenuItemList_.at(i)->SetMenuItemPosition(position);
-        }
-    }
-    subMenuItemSelected_ = 1;
-    subMenu_ = true;
-}
 
 void EC_MenuContainer::SetMenuContainerPosition()
 {
@@ -291,35 +262,19 @@ void EC_MenuContainer::SetMenuContainerPosition()
 
 }
 
-void EC_MenuContainer::Render()
-{
-    //LogInfo("Trying to render");
-
-    // Don't do anything if rendering is not enabled
-    if (!ViewEnabled() || GetFramework()->IsHeadless())
-        return;
-
-    for(int i=0; i<subMenuItemList_.count(); i++)
-    {
-        subMenuItemList_.at(i)->Update();
-    }
-
-    for(int i=0; i<MenuItemList_.count(); i++)
-    {
-        MenuItemList_.at(i)->Update();
-    }
-
-}
-
 void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 {
     /// \todo refactor mouseinput to handle different menulevels. ATM supports only 2 menu layers.
     //mouseinput
-    QPoint mousePosition;
-    mousePosition.setX(mouse->X());
-    mousePosition.setY(mouse->Y());  
 
-    if (mouse->IsLeftButtonDown() && !ent_clicked_)
+    if(mouse->IsLeftButtonDown() && !startingPositionSaved_)
+    {
+        mousePosition.setX(mouse->X());
+        mousePosition.setY(mouse->Y());
+        startingPositionSaved_=true;
+    }
+
+    if (mouse->IsLeftButtonDown() && !menuClicked_)
     {
         RaycastResult* result = 0;
         int i=0;
@@ -327,18 +282,18 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             result = renderer_->Raycast(mouse->X(), mouse->Y());
 
         assert(result);
-        while(!ent_clicked_ && !subMenu_clicked_ && i<MenuItemList_.count())
+        while(!menuClicked_ && !subMenu_clicked_ && i<MenuItemList_.count())
         {
             if(result->entity_ == MenuItemList_.at(i)->GetParentEntity())
             {
-                ent_clicked_ = true;
+                menuClicked_ = true;
                 //to stop scrolling when clicked
                 speed_ = 0;
             }
             i++;
         }
-        if(!ent_clicked_)
-        {
+        if(!menuClicked_)
+        {/*
             int i=0;
             while(!subMenu_clicked_ && i<subMenuItemList_.count())
             {
@@ -349,36 +304,16 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                     speed_ = 0;
                 }
                 i++;
-            }
+            }*/
         }
     }
 
     if(subMenu_clicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
-        Vector3df position = Vector3df(0.0,0.0,0.0);
-        for(int i = 0; i<subMenuItemList_.count(); i++)
-        {
-            //Sets new angle for components using polar coordinates.
-            float phi = subMenuItemList_.at(i)->getphi() + float((float)mouse->RelativeY()/250);
-
-            //Next position for menu components.
-            //In z-angle +radius_ is for moving submenu closer to camera. Otherwise it is inside main circle.
-            position.y = subMenuRadius_ * Ogre::Math::Cos(phi);
-            position.z = subMenuRadius_ * Ogre::Math::Sin(phi) + radius_;
-            subMenuItemList_.at(i)->setphi(phi);
-
-            //set submenuselected attribute.
-            if(Ogre::Math::Sin(phi) > 0.950)
-                subMenuItemSelected_=i;
-
-            subMenuItemList_.at(i)->SetMenuItemPosition(position);
-        }
-        //LogInfo("Selected planar: " + ToString(selected_));
         speed_= -(mouse->RelativeY());
-
     }
 
-    if(ent_clicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
+    if(menuClicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
 
         if(SUBMENUCLOSE)
@@ -387,17 +322,6 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             {
                 Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
                 assert(sceneManager_);
-                if(subMenuItemList_.count()>0)
-                {
-                    for(int i=0; i<subMenuItemList_.count(); i++)
-                    {
-                        entity_id_t id = subMenuItemList_.at(i)->GetParentEntity()->GetId();
-                        if(id)
-                            sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
-                    }
-                    subMenuItemList_.clear();
-                    subMenu_ = false;
-                }
             }
         }
 
@@ -425,18 +349,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                         Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
                         assert(sceneManager_);
 
-                        if(subMenuItemList_.count()>0)
-                        {
-                            for(int i=0; i<subMenuItemList_.count(); i++)
-                            {
-                                entity_id_t id = subMenuItemList_.at(i)->GetParentEntity()->GetId();
-                                if(id)
-                                    sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
-                            }
-                            subMenuItemList_.clear();
-                            subMenu_ = false;
-                        }
-                        CreateSubMenu(selected_);
+//                        MenuItemList_.at(selected_)->OpenSubMenu();
 
                     }
                 }
@@ -448,57 +361,67 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         speed_=mouse->RelativeX();
     }
 
-    if(mouse->eventType == MouseEvent::MouseReleased && (ent_clicked_ || subMenu_clicked_))
+    if(mouse->eventType == MouseEvent::MouseReleased && (menuClicked_ || subMenu_clicked_))
     {
         if(speed_ == 0)
         {
             RaycastResult* result = 0;
             if(renderer_)
-                result = renderer_->Raycast(mouse->X(), mouse->Y());
-
+            result = renderer_->Raycast(mouse->X(), mouse->Y());
             assert(result);
 
-
-
-            if(menulevels_>1)
+            if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity() && !subMenu_)
             {
-                renderTimer_->stop();
-                if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity() && !subMenu_)
+                if(MenuItemList_.at(selected_)->GetDataItem()->GetChildCount()>0)
                 {
-                    subMenu_ = true;
-                    CreateSubMenu(selected_);
-                    //LogInfo("Open submenu");
-                }
-                else if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity() && subMenu_)
-                {
+                    /// \todo Open submenu and something something...
+
                     Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
-                    assert(sceneManager_);
 
-                    subMenu_ = false;
+                    //ComponentPtr parentPlaceable = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
+                    entity_id_t id = sceneManager_->GetNextFreeIdLocal();
+                    Scene::EntityPtr entity_ = sceneManager_->CreateEntity(id, QStringList(), AttributeChange::LocalOnly, false);
 
-                    for(int i=0; i<subMenuItemList_.count(); i++)
+                    //LogInfo("Pointer " + ToString(entity_));
+                    if(!entity_)
+                        LogError("Couldn't create entity with given ID");
+                    else
                     {
-                        //delete submenu entities
-                        entity_id_t id = subMenuItemList_.at(i)->GetParentEntity()->GetId();
-                        sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
+                        Scene::Entity *MenuContainerEntity = entity_.get();
+                        IComponent *iComponent = MenuContainerEntity->GetOrCreateComponent("EC_MenuContainer", AttributeChange::LocalOnly, false).get();
+
+                        if(iComponent)
+                        {
+                            EC_MenuContainer *menucontainer = dynamic_cast<EC_MenuContainer*>(iComponent);
+                            //menuItem->SetParentMenuContainer(parentPlaceable);
+                            sceneManager_->EmitEntityCreated(MenuContainerEntity, AttributeChange::LocalOnly);
+                            //return menucontainer;
+                        }
+                        else
+                            LogError("Error while creating MenuContainer for submenu");
                     }
-                    subMenuItemList_.clear();
-                    //LogInfo("Close submenu");
-                }
-                else if(subMenu_)
-                {
-                    if(result->entity_ == subMenuItemList_.at(subMenuItemSelected_)->GetParentEntity() && subMenu_)
-                        emit OnMenuSelection(selected_, subMenuItemSelected_);
-                }
-                renderTimer_->start();
-            }
 
-            //menu have only 1 layer
-            else if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity())
-            {
-                emit OnMenuSelection(selected_, 0);
-            }
+                    for(int i=0; i<MenuItemList_.at(selected_)->GetDataItem()->GetChildCount();i++)
+                    {
 
+                    }
+
+                }
+
+//                if(MenuItemList_.at(selected_)->ItemHasSubMenu())
+//                {
+//                    QList<EC_MenuItem* > *submenu = MenuItemList_.at(selected_)->GetSubMenuList();
+//                    //create submenu....
+//                    for(int i=0; i<submenu->count(); i++)
+//                    {
+//                        //setvisible tjsp?
+//                        submenu.at(i)->SetMenuItemPosition();
+//                    }
+//                }
+//                else
+                    emit OnMenuSelection(selected_, 0);
+
+            }
         }
 
         if(speed_>3 || speed_<-3)
@@ -521,8 +444,9 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 scrollerTimer_->stop();
             speed_=0;
         }
-        ent_clicked_ = false;
+        menuClicked_ = false;
         subMenu_clicked_ = false;
+        startingPositionSaved_=false;
     }
 
 }
@@ -535,7 +459,7 @@ void EC_MenuContainer::KineticScroller()
 
         if(subMenuIsScrolling)
         {
-            for(int i=0; i<subMenuItemList_.count(); i++)
+            /*for(int i=0; i<subMenuItemList_.count(); i++)
             {
                 float phi = subMenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
 
@@ -546,7 +470,7 @@ void EC_MenuContainer::KineticScroller()
 
                 subMenuItemList_.at(i)->setphi(phi);
                 subMenuItemList_.at(i)->SetMenuItemPosition(position);
-            }
+            }*/
         }
         else
         {
@@ -568,7 +492,7 @@ void EC_MenuContainer::KineticScroller()
                     {
                         /// \todo This functionality need some optimization. Also some logic upgrade could be needed.
                         if(subMenu_ && previousSelected_ != selected_)
-                        {
+                        {/*
                             Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
                             assert(sceneManager_);
                             if(subMenuItemList_.count()>0)
@@ -581,8 +505,8 @@ void EC_MenuContainer::KineticScroller()
                                 }
                                 subMenuItemList_.clear();
                                 subMenu_ = false;
-                            }
-                            CreateSubMenu(selected_);
+                            }*/
+//                            MenuItemList_.at(selected_)->OpenSubMenu();
                         }
                     }
                 }
@@ -616,7 +540,6 @@ void EC_MenuContainer::CenterAfterRotation()
         position.z=2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
     */
 
-    /// \!TODO Make this work more smoothly
     Vector3df position = Vector3df(0.0,0.0,0.0);
 
     float phi;
@@ -626,8 +549,10 @@ void EC_MenuContainer::CenterAfterRotation()
         position.y = subMenuRadius_ * cos( phi );
         position.z = subMenuRadius_ * sin( phi ) + radius_;
 
-        if(subMenuItemList_.count()>0)
+        /*if(subMenuItemList_.count()>0)
         {
+            /// \todo Add functionality to change the selected submenuitem if mouse is moved more than 10 in y-axis after clicking.
+
             subMenuItemList_.at(subMenuItemSelected_)->SetMenuItemPosition(position);
             subMenuItemList_.at(subMenuItemSelected_)->setphi(phi);
 
@@ -647,12 +572,14 @@ void EC_MenuContainer::CenterAfterRotation()
                 subMenuItemList_.at(j)->setphi(phi);
                 subMenuItemList_.at(j)->SetMenuItemPosition(position);
             }
-        }
+        }*/
     }
     else
     {
         if(MenuItemList_.count()>0)
         {
+            /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
+
             position.x = radius_ * cos( phi );
             position.z = radius_ * sin( phi );
 
@@ -668,7 +595,7 @@ void EC_MenuContainer::CenterAfterRotation()
                 if(j==MenuItemList_.count())
                     j=0;
 
-                phi = 2 * float(i) * Ogre::Math::PI / float(numberOfMenuelements_) + ( 0.5*Ogre::Math::PI);
+                phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
                 position.x = radius_ * cos(phi);
                 position.z = radius_ * sin(phi);
 
@@ -681,9 +608,14 @@ void EC_MenuContainer::CenterAfterRotation()
 
 EC_MenuItem* EC_MenuContainer::CreateMenuItem()
 {
+    ComponentPtr parent = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
+    return CreateMenuItem(parent);
+}
+
+EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
+{
     Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
 
-    ComponentPtr parentPlaceable = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
     entity_id_t id = sceneManager_->GetNextFreeIdLocal();
     Scene::EntityPtr entity_ = sceneManager_->CreateEntity(id, QStringList(), AttributeChange::LocalOnly, false);
 
@@ -699,7 +631,7 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem()
         {
             EC_MenuItem *menuItem = dynamic_cast<EC_MenuItem*>(iComponent);
             //Sets parent entity for menuItem-entitys placeable component
-            menuItem->SetMenuContainerEntity(parentPlaceable);
+            menuItem->SetParentMenuContainer(parentPlaceable);
             sceneManager_->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
             return menuItem;
         }
@@ -786,7 +718,7 @@ void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::
                 GetOrCreatePlaceableComponent()->settransform(entityTransform);
                 for(int i=0; i<MenuItemList_.count();i++)
                 {
-                    MenuItemList_.at(i)->SetMenuContainerEntity(parentPlaceable);
+                    MenuItemList_.at(i)->SetParentMenuContainer(parentPlaceable);
                 }
             }
             else

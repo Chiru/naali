@@ -2,15 +2,15 @@
  *  Copyright (c) 2011 CIE / University of Oulu, All Rights Reserved
  *  For conditions of distribution and use, see copyright notice in license.txt
  *
- *  @file   EC_Template.h
- *  @brief  EC_Template is empty template for EC components.
- *          This componen can be used as a template when creating new EC components.
+ *  @file   EC_MenuContainer.h
+ *  @brief  EC_MenuContainer creates 3D Menu in to scene.
+ *          It uses MenuDataModel as a data storage and each visible item in menu is created by EC_MenuItem.
  *  @note   no notes
  *
  */
 
-#ifndef incl_EC_MenuContainer_EC_MenuContainer_h
-#define incl_EC_MenuContainer_EC_MenuContainer_h
+#ifndef incl_EC_Menu_EC_MenuContainer_h
+#define incl_EC_Menu_EC_MenuContainer_h
 
 #include "IComponent.h"
 #include "IAttribute.h"
@@ -62,6 +62,7 @@ Registered by RexLogic::RexLogicModule.
 */
 
 class EC_MenuItem;
+class MenuDataModel;
 class EC_Placeable;
 class EC_OgreCamera;
 class QListView;
@@ -83,17 +84,18 @@ private:
     QPointer<QListView> listview_;
 
     Foundation::RenderServiceInterface *renderer_;
-    /// Internal timer for updating inworld EC_3DCanvas.
-    QTimer *renderTimer_;
 
-    QList<EC_MenuItem*> MenuItemList_;    
-    QList<EC_MenuItem*> subMenuItemList_;
-    QList<QWidget*> MenuData_;
+    QList<EC_MenuItem*> MenuItemList_;
 
-    bool ent_clicked_;
+    MenuDataModel *menudatamodel_;
+
+    QPoint mousePosition;
+
+    bool menuClicked_;
     bool subMenu_clicked_;
     bool subMenu_;
     bool subMenuIsScrolling;
+    bool startingPositionSaved_;
 
     float speed_;
     float radius_;
@@ -102,11 +104,7 @@ private:
     int selected_;
     int previousSelected_;
     int subMenuItemSelected_;
-    int numberOfMenuelements_;
     int menulevels_;
-
-    //QDeclarativeView *view_;
-    //void SetEntityPosition();
 
     /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;
@@ -120,17 +118,7 @@ public:
     Q_PROPERTY(bool follow READ getfollow WRITE setfollow);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, follow);
 
-    ///! Boolean for interactive mode, if true it will show context menus on mouse click events.
-    //Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
-    //DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
-
-    ///! Integer for menuelements.
-    //Q_PROPERTY(int interactive READ getinteractive WRITE setinteractive);
-    //DEFINE_QPROPERTY_ATTRIBUTE(int, numberOfMenuelements);
-
-
 public slots:
-    void Render();
 
     /// Handles kinetic scrolling for both, menu and submenu items.
     void KineticScroller();
@@ -145,12 +133,15 @@ public slots:
     /// Add component to menu
     /// \param QString reference for mesh to use.
     /// \param QStringList materialreferences for that mesh.
-    void AddComponentToMenu(QString, QStringList);
+    void AddComponentToMenu(QString meshref, QStringList materialList, int itemnumber=0);
+
+    void ActivateMenu();
 
     /// Prepares MenuContainer component
-    /// \param int number of menulayers
     /// \param float menu radius
-    void PrepareMenuContainer(int, float);
+    void PrepareMenuContainer(float radius, MenuDataModel *parent=0);
+
+    void OpenMenu();
 
 
 private slots:
@@ -176,10 +167,9 @@ private slots:
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
 
-    /// \param menuIndex indicates which MenuItem was selected when this function were called.
-    void CreateSubMenu(int menuIndex);
-
     EC_MenuItem* CreateMenuItem();
+    EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);
+
 
 signals:
     void OnAttributeChanged(IAttribute*, AttributeChange::Type);

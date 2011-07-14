@@ -166,14 +166,7 @@
 #endif
 
 #ifdef EC_Menu_ENABLED
-#include "EC_Menu.h"
-#endif
-
-#ifdef EC_Menu_ENABLED
 #include "EC_MenuContainer.h"
-#endif
-
-#ifdef EC_Menu_ENABLED
 #include "EC_MenuItem.h"
 #endif
 
@@ -302,12 +295,7 @@ void RexLogicModule::Load()
     DECLARE_MODULE_EC(EC_ProximityTrigger);
 #endif
 #ifdef EC_Menu_ENABLED
-    DECLARE_MODULE_EC(EC_Menu);
-#endif
-#ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_MenuContainer);
-#endif
-#ifdef EC_Menu_ENABLED
     DECLARE_MODULE_EC(EC_MenuItem);
 #endif
 

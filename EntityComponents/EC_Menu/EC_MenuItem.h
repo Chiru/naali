@@ -8,18 +8,20 @@
  *
  */
 
-#ifndef incl_EC_MenuItem_EC_MenuItem_h
-#define incl_EC_MenuItem_EC_MenuItem_h
+#ifndef incl_EC_Menu_EC_MenuItem_h
+#define incl_EC_Menu_EC_MenuItem_h
+
+#include "MenuDataItem.h"
 
 #include "IComponent.h"
 #include "IAttribute.h"
 #include "Declare_EC.h"
+//#include "AssetAPI.h"
 
-//#include "SceneFwd.h"
-//#include "InputFwd.h"
-
+#include "AssetReference.h"
 #include <QString>
 #include <QList>
+#include <QtGui>
 
 #include "EC_Placeable.h"
 
@@ -55,6 +57,8 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
+class EC_MenuContainer;
+
 
 class EC_MenuItem : public IComponent
 {
@@ -66,34 +70,38 @@ private:
     /// @param module Owner module.
     explicit EC_MenuItem(IModule *module);
 
+    QWidget *widget_;
+    int widgetSubmesh_;
+
+    QString meshreference_;
+    AssetReferenceList materials_;
+
+    MenuDataItem *itemdata_;
+
 public:
     /// Destructor.
     ~EC_MenuItem();
-
-    //! Rendering target submesh index.
-    Q_PROPERTY(int renderSubmeshIndex READ getrenderSubmeshIndex WRITE setrenderSubmeshIndex);
-    DEFINE_QPROPERTY_ATTRIBUTE(int, renderSubmeshIndex);
-
-    //! Boolean for interactive mode, if true it will show context menus on mouse click events.
-    Q_PROPERTY(bool interactive READ getinteractive WRITE setinteractive);
-    DEFINE_QPROPERTY_ATTRIBUTE(bool, interactive);
 
     Q_PROPERTY(float phi READ getphi WRITE setphi);
     DEFINE_QPROPERTY_ATTRIBUTE(float, phi);
 
 public slots:
-    //! Setter for EC_Placeable parameters
-    void SetMenuContainerEntity(ComponentPtr);
+
+    void SetDataItem(MenuDataItem *dataitemptr);
+
+    MenuDataItem* GetDataItem();
 
     //! Setter for entity position
-    void SetMenuItemPosition(Vector3df);
+    void SetMenuItemPosition(Vector3df position);
 
-    void SetMenuItemWidget(int, QWidget*);
+    void SetMenuItemVisible();
+    void SetMenuItemHidden();
 
-    //! Setter for what mesh to use in this menuitem
-    void SetMenuItemMesh(QString, QStringList);
+    void SetMenuItemWidget(int subMeshIndex, QWidget *data);
 
-    void Update();
+    //! Setter for EC_Placeable parameters
+    void SetParentMenuContainer(ComponentPtr);
+
 
 
 private slots:
@@ -109,17 +117,16 @@ private slots:
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
-    //! Create as many EC_Mesh components to the parent entity as given in input.
-    EC_Mesh* GetOrCreateMeshComponent();
+    //! Setter for what mesh to use in this menuitem
+    void SetMenuItemMesh(QString, QStringList);
 
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
     EC_3DCanvas* GetOrCreateCanvasComponent();
 
-    EC_Placeable* GetOrCreatePlaceableComponent();
+    //! Create as many EC_Mesh components to the parent entity as given in input.
+    EC_Mesh* GetOrCreateMeshComponent();
 
-    //! Handles entity action WebViewControllerChanged
-    /// \note The action signature is (string)"WebViewControllerChanged", (int)"id", (string)"name"
-    void ActionControllerChanged(QString id, QString newController);
+    EC_Placeable* GetOrCreatePlaceableComponent();
 
 
 signals:

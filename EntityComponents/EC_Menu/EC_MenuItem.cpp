@@ -60,6 +60,24 @@ void EC_MenuItem::PrepareMenuItem()
 
 }
 
+bool EC_MenuItem::OpenSubMenu()
+{
+    if(itemdata_->GetChildCount()>0)
+    {
+        //send signal to someone to open submenu
+        //or create menucontainer by it self...
+
+        //use itemdata_ as parameter, so it will hide everything above this item from subitems.
+        return true;
+    }
+    else
+    {
+        //do whatever this item should do when it is selected.
+        //for example open browser or so..
+        return false;
+    }
+}
+
 void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
 {
     itemdata_ = dataitemptr;

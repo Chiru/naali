@@ -89,6 +89,8 @@ private:
 
     MenuDataModel *menudatamodel_;
 
+    EC_MenuItem *attachedMenuItem;
+
     QPoint mousePosition;
 
     bool menuClicked_;
@@ -134,6 +136,7 @@ public slots:
     /// \param QString reference for mesh to use.
     /// \param QStringList materialreferences for that mesh.
     void AddComponentToMenu(QString meshref, QStringList materialList, int itemnumber=0);
+    void AddComponentToMenu(EC_MenuItem *menuitem);
 
     void ActivateMenu();
 
@@ -144,6 +147,8 @@ public slots:
     void OpenMenu();
 
     QObject* GetMenuDataModel();
+
+    void SetAttachedMenuItem(EC_MenuItem* attacheditem);
 
 
 private slots:

@@ -87,6 +87,8 @@ public:
 
 public slots:
 
+    bool OpenSubMenu();
+
     void SetDataItem(MenuDataItem *dataitemptr);
 
     MenuDataItem* GetDataItem();
@@ -101,7 +103,6 @@ public slots:
 
     //! Setter for EC_Placeable parameters
     void SetParentMenuContainer(ComponentPtr);
-
 
 
 private slots:

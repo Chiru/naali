@@ -16,9 +16,11 @@ MenuDataItem::~MenuDataItem()
     qDeleteAll(childItems_);
 }
 
-bool MenuDataItem::AddChildren()
+bool MenuDataItem::AddChildren(QString meshref, QStringList materialref)
 {
     MenuDataItem *childitem = new MenuDataItem(this);
+    childitem->SetMeshRef(meshref);
+    childitem->SetMaterialRef(materialref);
     childItems_.append(childitem);
 
     return true;

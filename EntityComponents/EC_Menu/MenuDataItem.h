@@ -18,7 +18,7 @@ public:
     MenuDataItem(MenuDataItem *parent = 0);
     ~MenuDataItem();
 
-    bool AddChildren();
+    bool AddChildren(QString meshref, QStringList materialref);
     MenuDataItem* Parent();
 
     bool SetMeshRef(QString meshref);

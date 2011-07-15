@@ -1,0 +1,16 @@
+material pictures.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.18124137818813324 0.19142787158489227 1.0
+			diffuse 0.6400000190734865 0.14499310471107218 0.15314229954991188 1.0
+			specular 0.1388888955116272 0.1388888955116272 0.1388888955116272 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

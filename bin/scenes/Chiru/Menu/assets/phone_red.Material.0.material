@@ -1,0 +1,16 @@
+material phone_red.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.09850435703992844 0.09850435703992844 0.09850435703992844 1.0
+			diffuse 0.07880348680620619 0.07880348680620619 0.07880348680620619 1.0
+			specular 0.5 0.5 0.5 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

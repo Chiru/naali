@@ -1,0 +1,16 @@
+material shoppingcart.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.5277193188667297 0.5277193188667297 0.5277193188667297 1.0
+			diffuse 0.4221754613842883 0.4221754613842883 0.4221754613842883 1.0
+			specular 0.5 0.5 0.5 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

@@ -1,0 +1,23 @@
+material youtube.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.049549199640750885 0.049549199640750885 0.049549199640750885 1.0
+			diffuse 0.0396393603032732 0.0396393603032732 0.0396393603032732 1.0
+			specular 0.5 0.5 0.5 1.0 33.25
+			emissive 0.023783615295955185 0.023783615295955185 0.023783615295955185 1.0
+			scene_blend one zero
+			texture_unit
+			{
+				texture youtube-logo.png
+				tex_address_mode wrap
+				scale 1.0 1.0
+				colour_op_ex blend_manual src_current src_texture 0.0
+			}
+		}
+	}
+}

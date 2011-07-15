@@ -1,0 +1,24 @@
+material radio.Material.3 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.22025743126869202 0.22025743126869202 0.22025743126869202 1.0
+			diffuse 0.1762059476406268 0.1762059476406268 0.1762059476406268 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+			texture_unit
+			{
+				texture AudioEquipment0045_S_small.jpg
+				tex_address_mode wrap
+				scale 1.0 1.0
+				tex_coord_set 0
+				colour_op_ex blend_manual src_current src_texture 0.0
+			}
+		}
+	}
+}

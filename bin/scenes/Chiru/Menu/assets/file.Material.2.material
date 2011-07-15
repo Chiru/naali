@@ -1,0 +1,16 @@
+material file.Material.2 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.7901422381401062 0.7317000031471252 1.0
+			diffuse 0.6400000190734865 0.6321137999313144 0.585360011240244 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

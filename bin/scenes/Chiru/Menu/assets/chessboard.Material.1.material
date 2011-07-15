@@ -1,0 +1,16 @@
+material chessboard.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.042027704417705536 0.042027704417705536 0.042027704417705536 1.0
+			diffuse 0.03362216403517371 0.03362216403517371 0.03362216403517371 1.0
+			specular 0.1319444477558136 0.1319444477558136 0.1319444477558136 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

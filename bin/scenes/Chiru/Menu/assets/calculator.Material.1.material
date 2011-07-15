@@ -1,0 +1,16 @@
+material calculator.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.0668068453669548 0.0668068453669548 0.0668068453669548 1.0
+			diffuse 0.0534454770899635 0.0534454770899635 0.0534454770899635 1.0
+			specular 0.1249999925494194 0.1249999925494194 0.1249999925494194 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

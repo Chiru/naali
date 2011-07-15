@@ -77,6 +77,11 @@ MenuDataItem* MenuDataModel::GetMenuDataItem(int index)
         return 0;
 }
 
+QObject* MenuDataModel::GetMenuDataItemRaw(int index)
+{
+    return dynamic_cast<QObject*>(GetMenuDataItem(index));
+}
+
 int MenuDataModel::GetNumberOfDataItems()
 {
     return menudataitems_.count();

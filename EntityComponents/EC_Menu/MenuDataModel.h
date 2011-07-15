@@ -10,7 +10,6 @@
 #include <QString>
 #include <QList>
 #include <QStringList>
-#include <QObject>
 
 class MenuDataItem;
 
@@ -29,6 +28,8 @@ public slots:
     bool AddItemToIndex(QString mesh, QStringList materials, int index=0);
 
     MenuDataItem* GetMenuDataItem(int index);
+    QObject* GetMenuDataItemRaw(int index);
+
     int GetNumberOfDataItems();
 
     MenuDataItem* GetParent();

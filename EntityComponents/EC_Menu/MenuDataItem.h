@@ -12,12 +12,14 @@
 #include <QString>
 #include <QStringList>
 
-class MenuDataItem
+class MenuDataItem : public QObject
 {
+    Q_OBJECT
 public:
     MenuDataItem(MenuDataItem *parent = 0);
     ~MenuDataItem();
 
+public slots:
     bool AddChildren(QString meshref, QStringList materialref);
     MenuDataItem* Parent();
 

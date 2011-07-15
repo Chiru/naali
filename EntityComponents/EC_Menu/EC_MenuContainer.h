@@ -143,6 +143,8 @@ public slots:
 
     void OpenMenu();
 
+    QObject* GetMenuDataModel();
+
 
 private slots:
 

@@ -30,10 +30,27 @@ function Create3DMenu()
     MenuComponent.SetMenuWidgets(menuData);
     */
 
+    var menudatamodel = MenuComponent.GetMenuDataModel();
+
+    menudatamodel.AddItem("local://mailbox.mesh",["local://mailbox.Material.0.material","local://mailbox.Material.1.material","local://mailbox.Material.2.material","local://mailbox.Material.3.material"]);
+    menudatamodel.AddItem("local://chrome.mesh",["local://chrome.Material.0.material","local://chrome.Material.0.material"]);
+    menudatamodel.AddItem("local://chatbuble.mesh",["local://chatbuble.Material.0.material","local://chatbuble.Material.1.material"]);
+    menudatamodel.AddItem("local://facebook.mesh",["local://facebook.Material.0.material","local://facebook.Material.1.material"]);
+    menudatamodel.AddItem("local://notebook.mesh",["local://notebook.Material.0.material"]);
+    menudatamodel.AddItem("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    menudatamodel.AddItem("local://calculator.mesh",["local://calculator.Material.0.material","local://calculator.Material.1.material","local://calculator.Material.2.material"]);
+    menudatamodel.AddItem("local://chessboard.mesh",["local://chessboard.Material.0.material","local://chessboard.Material.1.material"]);
+    menudatamodel.AddItem("local://notes.mesh",["local://notes.Material.0.material","local://notes.Material.1.material","local://notes.Material.2.material"]);
+    menudatamodel.AddItem("local://skype.mesh",["local://skype.Material.0.material"]);
+    menudatamodel.AddItem("local://radio.mesh",["local://radio.Material.0.material","local://radio.Material.1.material","local://radio.Material.2.material"]);
+    menudatamodel.AddItem("local://file.mesh",["file.Material.0.material","file.Material.1.material","file.Material.2.material","file.Material.3.material","file.Material.4.material","file.Material.5.material","file.Material.6.material","file.Material.7.material"]);
+
+
     MenuComponent.OnMenuSelection.connect(MenuItemSelected);
-    MenuComponent.PrepareMenuContainer(4.0);
+    MenuComponent.PrepareMenuContainer(4.0, menudatamodel);
 
     //MenuComponent.AddComponentToMenu("local://battery.mesh", ["local://battery.Material.0.material", "local://battery.Material.1.material", "local://battery.Material.2.material"]);
+    /*
     MenuComponent.AddComponentToMenu("local://mailbox.mesh",["local://mailbox.Material.0.material","local://mailbox.Material.1.material","local://mailbox.Material.2.material","local://mailbox.Material.3.material"]);
     MenuComponent.AddComponentToMenu("local://chrome.mesh",["local://chrome.Material.0.material","local://chrome.Material.0.material"]);
     MenuComponent.AddComponentToMenu("local://chatbuble.mesh",["local://chatbuble.Material.0.material","local://chatbuble.Material.1.material"]);
@@ -46,7 +63,7 @@ function Create3DMenu()
     MenuComponent.AddComponentToMenu("local://skype.mesh",["local://skype.Material.0.material"]);
     MenuComponent.AddComponentToMenu("local://radio.mesh",["local://radio.Material.0.material","local://radio.Material.1.material","local://radio.Material.2.material"]);
     MenuComponent.AddComponentToMenu("local://file.mesh",["file.Material.0.material","file.Material.1.material","file.Material.2.material","file.Material.3.material","file.Material.4.material","file.Material.5.material","file.Material.6.material","file.Material.7.material"]);
-
+    */
     MenuComponent.ActivateMenu();
 }
 

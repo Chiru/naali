@@ -38,6 +38,7 @@ DEFINE_POCO_LOGGING_FUNCTIONS("EC_MenuContainer")
 
 EC_MenuContainer::EC_MenuContainer(IModule *module) :
     IComponent(module->GetFramework()),
+    menudatamodel_(0),
     menuClicked_(false),
     subMenu_clicked_(false),
     subMenu_(false),
@@ -98,7 +99,16 @@ EC_MenuContainer::~EC_MenuContainer()
 
 void EC_MenuContainer::PrepareMenuContainer(float radius, MenuDataModel *parent)
 {
-    menudatamodel_ = new MenuDataModel(parent);
+    if(!parent)
+    {
+        //LogInfo("PrepareMenuContainer() - if");
+        menudatamodel_ = new MenuDataModel();
+    }
+    else
+    {
+        //LogInfo("PrepareMenuContainer() - else");
+        menudatamodel_ = parent;
+    }
 
     radius_ = radius;
     //LogInfo("Menu radius_: "+ToString(radius_));
@@ -641,13 +651,28 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
     return 0;
 }
 
+QObject* EC_MenuContainer::GetMenuDataModel()
+{
+    //LogInfo("GetMenuDataModel - before");
+    if(menudatamodel_)
+    {
+        //LogInfo("GetMenuDataModel - if" +ToString(menudatamodel_));
+        return menudatamodel_;
+    }
+    else
+    {
+        //LogInfo("GetMenuDataModel - else" +ToString(menudatamodel_));
+        menudatamodel_ = new MenuDataModel();
+        return menudatamodel_;
+    }
+}
+
 EC_Placeable *EC_MenuContainer::GetOrCreatePlaceableComponent()
 {
     if (!GetParentEntity())
         return 0;
     //IComponent *iComponent = parent->GetOrCreateComponentRaw(EC_3DCanvas::TypeNameStatic(), AttributeChange::LocalOnly, false);
     IComponent *iComponent = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
-    //IComponent *iComponent = GetParentEntity()->CreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
     EC_Placeable *placeable = dynamic_cast<EC_Placeable*>(iComponent);
     return placeable;
 }

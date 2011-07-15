@@ -9,6 +9,7 @@
 
 #include <QString>
 #include <QList>
+#include <QStringList>
 #include <QObject>
 
 class MenuDataItem;
@@ -18,8 +19,9 @@ class MenuDataModel : public QObject
     Q_OBJECT
 public:
     MenuDataModel(QObject *parent = 0);
-    virtual ~MenuDataModel();
+    ~MenuDataModel();
 
+public slots:
     bool AddItem(MenuDataItem*);
     bool AddItem(QString mesh, QStringList materials);
 

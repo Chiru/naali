@@ -106,7 +106,7 @@ private:
     int selected_;
     int previousSelected_;
     int subMenuItemSelected_;
-    int menulevels_;
+    int menulayer_;
 
     /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;

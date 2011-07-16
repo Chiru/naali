@@ -49,7 +49,7 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     selected_(0),
     previousSelected_(0),
     subMenuItemSelected_(0),
-    menulevels_(1),
+    menulayer_(1),
     subMenuRadius_(0.0),
     radius_(0.0)
 {
@@ -348,7 +348,11 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             float phi = MenuItemList_.at(i)->getphi() - float((float)mouse->RelativeX()/250);
 
             //Next position for menu components.
-            position.x = radius_ * Ogre::Math::Cos(phi);
+
+            if(menulayer_%2!=0)
+                position.x = radius_ * cos(phi);
+            else
+                position.y = radius_ * cos(phi);
             position.z = radius_ * Ogre::Math::Sin(phi);
             MenuItemList_.at(i)->setphi(phi);
 
@@ -456,13 +460,13 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         MenuItemList_.append(menuitem);
     }
 
-    int j=0;
     //Counts which layer this is and based on that choose if menu is going to be horizontal or vertical.
     MenuDataItem* tempitem = attachedMenuItem->GetDataItem()->GetParentDataItem();
+    menulayer_ = 0;
     while(tempitem)
     {
         tempitem = tempitem->GetParentDataItem();
-        j++;
+        menulayer_++;
     }
 
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
@@ -472,7 +476,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         //Set newly created menuitems in some position..
 
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-        if(j%2!=0)
+        if(menulayer_%2!=0)
             position.x = radius_ * cos(phi);
         else
             position.y = radius_ * cos(phi);
@@ -494,62 +498,34 @@ void EC_MenuContainer::KineticScroller()
     {
         Vector3df position = Vector3df(0.0,0.0,0.0);
 
-        if(subMenuIsScrolling)
+        for(int i=0; i<MenuItemList_.count(); i++)
         {
-            /*for(int i=0; i<subMenuItemList_.count(); i++)
-            {
-                float phi = subMenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
-
-                position.y = subMenuRadius_ * cos(phi);
-                position.z = subMenuRadius_ * sin(phi) + radius_;
-                if(Ogre::Math::Sin(phi)>0.950)
-                    subMenuItemSelected_ = i;
-
-                subMenuItemList_.at(i)->setphi(phi);
-                subMenuItemList_.at(i)->SetMenuItemPosition(position);
-            }*/
-        }
-        else
-        {
-            for(int i=0; i<MenuItemList_.count(); i++)
-            {
-                float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
-
+            float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
+            if(menulayer_%2!=0)
                 position.x = radius_ * cos(phi);
-                position.z = radius_ * sin(phi);
+            else
+                position.y = radius_ * cos(phi);
+            position.z = radius_ * sin(phi);
 
-                MenuItemList_.at(i)->setphi(phi);
-                MenuItemList_.at(i)->SetMenuItemPosition(position);
+            MenuItemList_.at(i)->setphi(phi);
+            MenuItemList_.at(i)->SetMenuItemPosition(position);
 
-                if(Ogre::Math::Sin(phi) > 0.950)
+            if(Ogre::Math::Sin(phi) > 0.950)
+            {
+                previousSelected_ = selected_;
+                selected_=i;
+                if(SUBMENUCHANGE)
                 {
-                    previousSelected_ = selected_;
-                    selected_=i;
-                    if(SUBMENUCHANGE)
+                    /// \todo This functionality need some optimization. Also some logic upgrade could be needed.
+                    if(subMenu_ && previousSelected_ != selected_)
                     {
-                        /// \todo This functionality need some optimization. Also some logic upgrade could be needed.
-                        if(subMenu_ && previousSelected_ != selected_)
-                        {/*
-                            Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
-                            assert(sceneManager_);
-                            if(subMenuItemList_.count()>0)
-                            {
-                                for(int i=0; i<subMenuItemList_.count(); i++)
-                                {
-                                    entity_id_t id = subMenuItemList_.at(i)->GetParentEntity()->GetId();
-                                    if(id)
-                                        sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
-                                }
-                                subMenuItemList_.clear();
-                                subMenu_ = false;
-                            }*/
-//                            MenuItemList_.at(selected_)->OpenSubMenu();
-                        }
+                        //Call for selectec menuitem to close it's submenu or emit signal to do that?
                     }
                 }
             }
-            //LogInfo("Selected planar: " + ToString(selected_));
         }
+            //LogInfo("Selected planar: " + ToString(selected_));
+
         if(speed_<0)
             speed_ += 1.0;
         else
@@ -581,64 +557,38 @@ void EC_MenuContainer::CenterAfterRotation()
 
     float phi;
     phi = 0.5*(float)Ogre::Math::PI;
-    if(subMenu_)
+
+    if(MenuItemList_.count()>0)
     {
-        position.y = subMenuRadius_ * cos( phi );
-        position.z = subMenuRadius_ * sin( phi ) + radius_;
+        /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
 
-        /*if(subMenuItemList_.count()>0)
+        if(menulayer_%2!=0)
+            position.x = radius_ * cos(phi);
+        else
+            position.y = radius_ * cos(phi);
+        position.z = radius_ * sin( phi );
+
+        MenuItemList_.at(selected_)->SetMenuItemPosition(position);
+        MenuItemList_.at(selected_)->setphi(phi);
+
+        //LogInfo("Selected planar: " + ToString(selected_));
+        int j = selected_;
+        for (int i=1; i<MenuItemList_.count(); i++)
         {
-            /// \todo Add functionality to change the selected submenuitem if mouse is moved more than 10 in y-axis after clicking.
+            j++;
 
-            subMenuItemList_.at(subMenuItemSelected_)->SetMenuItemPosition(position);
-            subMenuItemList_.at(subMenuItemSelected_)->setphi(phi);
+            if(j==MenuItemList_.count())
+                j=0;
 
-            //LogInfo("Selected planar: " + ToString(selected_));
-            int j = subMenuItemSelected_;
-            for (int i=1; i<subMenuItemList_.count(); i++)
-            {
-                j++;
-
-                if(j==subMenuItemList_.count())
-                    j=0;
-
-                phi = 2 * float(i) * Ogre::Math::PI / float(subMenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-                position.y = subMenuRadius_ * cos(phi);
-                position.z = subMenuRadius_ * sin(phi) + radius_;
-
-                subMenuItemList_.at(j)->setphi(phi);
-                subMenuItemList_.at(j)->SetMenuItemPosition(position);
-            }
-        }*/
-    }
-    else
-    {
-        if(MenuItemList_.count()>0)
-        {
-            /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
-
-            position.x = radius_ * cos( phi );
-            position.z = radius_ * sin( phi );
-
-            MenuItemList_.at(selected_)->SetMenuItemPosition(position);
-            MenuItemList_.at(selected_)->setphi(phi);
-
-            //LogInfo("Selected planar: " + ToString(selected_));
-            int j = selected_;
-            for (int i=1; i<MenuItemList_.count(); i++)
-            {
-                j++;
-
-                if(j==MenuItemList_.count())
-                    j=0;
-
-                phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+            phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+            if(menulayer_%2!=0)
                 position.x = radius_ * cos(phi);
-                position.z = radius_ * sin(phi);
+            else
+                position.y = radius_ * cos(phi);
+            position.z = radius_ * sin(phi);
 
-                MenuItemList_.at(j)->setphi(phi);
-                MenuItemList_.at(j)->SetMenuItemPosition(position);
-            }
+            MenuItemList_.at(j)->setphi(phi);
+            MenuItemList_.at(j)->SetMenuItemPosition(position);
         }
     }
 }

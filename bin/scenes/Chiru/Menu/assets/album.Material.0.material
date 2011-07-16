@@ -1,0 +1,16 @@
+material album.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.34316855669021606 0.5488523840904236 0.10952658951282501 1.0
+			diffuse 0.27453484944306084 0.43908191381516914 0.0876212729159187 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

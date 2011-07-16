@@ -53,8 +53,9 @@ if lsb_release -c | egrep -q "lucid|maverick|natty"; then
 	 build-essential g++ libboost-all-dev libpoco-dev \
 	 ccache libqt4-dev python-dev zlib1g-dev libois-dev libcppunit-dev \
 	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
-	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev $more
+	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev libsctp-dev \
+	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev \
+	 autoconf automake $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \
@@ -135,7 +136,7 @@ if false && test -f $tags/$what-done; then
 else
     cd $build
     rm -rf knet
-    hg clone -r stable http://bitbucket.org/clb/knet
+    hg clone https://bitbucket.org/karivatj/knet-sctp knet
     cd knet
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt

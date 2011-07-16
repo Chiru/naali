@@ -1,0 +1,16 @@
+material phone_gre.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.2749115526676178 0.800000011920929 0.12159662693738937 1.0
+			diffuse 0.21992924541129533 0.6400000190734865 0.09727730299945625 1.0
+			specular 0.125 0.125 0.125 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

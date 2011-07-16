@@ -1,0 +1,16 @@
+material mic.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.5925783514976501 0.5925783514976501 0.5925783514976501 1.0
+			diffuse 0.47406268826220455 0.47406268826220455 0.47406268826220455 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

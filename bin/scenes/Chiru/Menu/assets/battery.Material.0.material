@@ -1,0 +1,16 @@
+material battery.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.6353815793991089 0.6770782470703125 0.7742717266082764 1.0
+			diffuse 0.5083052710936258 0.5416626057276517 0.6194173905166593 1.0
+			specular 0.5 0.5 0.5 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

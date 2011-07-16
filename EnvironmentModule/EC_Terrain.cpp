@@ -360,10 +360,8 @@ void EC_Terrain::TerrainAssetLoaded(AssetPtr asset_)
     if (!assetData.get() || assetData->data.size() == 0)
         return;
 
-    // Check if content hash changed before flooding everything out of the memory and loading again
-    // Multiconnection specific change.
-    if (assetData->ContentHashChanged())
-        LoadFromDataInMemory((const char*)&assetData->data[0], assetData->data.size());
+    LoadFromDataInMemory((const char*)&assetData->data[0], assetData->data.size());
+    disconnect(this, SLOT(TerrainAssetLoaded(AssetPtr)));
 }
 
 /// Releases all GPU resources used for the given patch.

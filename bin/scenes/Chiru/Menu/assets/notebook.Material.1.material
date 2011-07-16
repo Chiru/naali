@@ -1,0 +1,16 @@
+material notebook.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.22025743126869202 0.22025743126869202 0.22025743126869202 1.0
+			diffuse 0.1762059476406268 0.1762059476406268 0.1762059476406268 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

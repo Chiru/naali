@@ -14,11 +14,11 @@
 #include <QLabel>
 #include <QSize>
 
-#include <phonon/VideoPlayer>
-#include <phonon/MediaObject>
-#include <phonon/VideoWidget>
-#include <phonon/MediaSource>
-#include <phonon/AudioOutput>
+#include <phonon/videoplayer.h>
+#include <phonon/mediaobject.h>
+#include <phonon/videowidget.h>
+#include <phonon/mediasource.h>
+#include <phonon/audiooutput.h>
 
 class EC_VideoSource : public IComponent
 {

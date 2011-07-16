@@ -1,0 +1,24 @@
+material radio.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.708241879940033 0.7456521391868591 0.800000011920929 1.0
+			diffuse 0.5665935123949275 0.5965217202383535 0.6400000190734865 1.0
+			specular 0.125 0.125 0.125 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+			texture_unit
+			{
+				texture nappi.jpg
+				tex_address_mode wrap
+				scale 1.0 1.0
+				tex_coord_set 0
+				colour_op_ex blend_manual src_current src_texture 0.0
+			}
+		}
+	}
+}

@@ -1,0 +1,16 @@
+material facebook.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.1362624615430832 0.3021968603134155 0.800000011920929 1.0
+			diffuse 0.10900997085884168 0.24175749185319972 0.6400000190734865 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

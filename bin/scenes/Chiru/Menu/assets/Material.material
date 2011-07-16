@@ -1,0 +1,16 @@
+material Material 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.1489836722612381 0.1693589687347412 1.0
+			diffuse 0.6400000190734865 0.11918693958501425 0.1354871770067092 1.0
+			specular 0.0625 0.0625 0.0625 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

@@ -1,0 +1,16 @@
+material camera.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.23301555216312408 0.23301555216312408 0.23301555216312408 1.0
+			diffuse 0.1864124445082611 0.1864124445082611 0.1864124445082611 1.0
+			specular 0.1875 0.1875 0.1875 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

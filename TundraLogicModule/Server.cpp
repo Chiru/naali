@@ -94,7 +94,7 @@ bool Server::Start(unsigned short port)
 
         // Store current port and protocol
         current_port_ = (int)port;
-        current_protocol_ = transportLayer == kNet::SocketOverUDP ? "udp" : "tcp";
+	current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : (transportLayer == kNet::SocketOverTCP) ? "tcp" : "sctp";
 
         // Create the default server scene
         /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?

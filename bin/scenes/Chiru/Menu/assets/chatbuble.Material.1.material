@@ -1,0 +1,16 @@
+material chatbuble.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.19349895417690277 0.23644982278347015 0.800000011920929 0.5089285969734192
+			diffuse 0.1547991656482095 0.18915986104547766 0.6400000190734865 0.5089285969734192
+			specular 0.5 0.5 0.5 0.5089285969734192 12.5
+			emissive 0.0 0.0 0.0 0.5089285969734192
+			scene_blend one zero
+		}
+	}
+}

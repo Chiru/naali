@@ -1,0 +1,24 @@
+material album.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.7083220481872559 0.5780410170555115 1.0
+			diffuse 0.6400000190734865 0.5666576469936615 0.4624328205351951 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+			texture_unit
+			{
+				texture kirjansivu_small.JPG
+				tex_address_mode wrap
+				scale 1.0 1.0
+				tex_coord_set 0
+				colour_op_ex blend_manual src_current src_texture 0.0
+			}
+		}
+	}
+}

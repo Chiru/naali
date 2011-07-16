@@ -11,6 +11,7 @@ var loginButton;
 var exitButton;
 var tcpButton;
 var udpButton;
+var sctpButton;
 
 var configFile = "tundra";
 var configSection = "client";
@@ -39,6 +40,7 @@ function SetupLoginScreen() {
     passwordLineEdit = findChild(widget, "lineEdit_Password");
     tcpButton = findChild(widget, "radioButton_ProtocolTCP");
     udpButton = findChild(widget, "radioButton_ProtocolUDP");
+    sctpButton = findChild(widget, "radioButton_ProtocolSCTP");
 
     var logoLabel = findChild(widget, "label_ClientLogo");
     logoLabel.pixmap = new QPixmap("./data/ui/images/realxtend_logo.png");
@@ -71,6 +73,8 @@ function ReadConfigToUi() {
         tcpButton.checked = true;
     else if (configProtocol == "udp")
         udpButton.checked = true;
+    else if (configProtocol == "sctp")
+        sctpButton.checked = true;
 }
 
 function WriteConfigFromUi() {
@@ -90,6 +94,8 @@ function GetProtocol() {
         return "tcp";
     else if (udpButton.checked)
         return "udp";
+    else if (sctpButton.checked)
+        return "sctp";
     return "";
 }
 

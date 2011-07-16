@@ -1,0 +1,16 @@
+material mailbox.Material.2 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.4411827623844147 0.22153611481189728 1.0
+			diffuse 0.6400000190734865 0.3529462151668401 0.1772288944904341 1.0
+			specular 0.0 0.0 0.0 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

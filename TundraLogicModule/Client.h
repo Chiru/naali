@@ -80,10 +80,10 @@ signals:
     void AboutToConnect();
 
     /// This signal is emitted immediately after this client has successfully connected to a server.
-    void Connected();
+    void Connected(unsigned short);
 
     /// This signal is emitted when the client has disconnected from the server.
-    void Disconnected();
+    void Disconnected(unsigned short);
 
     /// This signal is emitted when connection to the server is lost and couldn't accomplish reconnection.
     void FallbackConnection();
@@ -96,11 +96,12 @@ signals:
     void deleteOgre(const QString&);
     void setOgre(const QString&);
     void changeScene(const QString&);
-    
+    void changeTab(const unsigned short);
+
 public slots:
     /// Connects and logs in. The QUrl's query parameters will be evaluated for the login data.
     /** Minimum information needed to try a connection in the url are host and username.
-        URL syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp}]
+	URL syntax: {tundra|http|https}://host[:port]/?username=x[&password=y&avatarurl=z&protocol={udp|tcp|sctp}]
         URL examples: tundra://server.com/?username=John tundra://server.com:5432/?username=John&password=pWd123&protocol=udp 
         @param loginUrl The login URL.
         @note The destination port is obtained from the URL's port, not from a query parameter. If no port present, using Tundra's default port 2345.
@@ -150,13 +151,14 @@ public slots:
     void emitSetOgreSignal(const QString&);
     void emitChangeSceneSignal(const QString&);
     unsigned short getActiveConnection() const;
+    bool hasConnections();
 
 private slots:
     void setActiveConnection(const QString&, unsigned short);
 
 private:
     // check if connected to same IP:port and port
-    bool checkIfConnected(QString, QString);
+    bool checkIfConnected(QString, QString, QString);
 
     // creates unique scenename TundraClientX | X = 0, 1, 2, ..., n; n € Z+
     // If TundraClient2 is deleted from middle of the list, next scene created will be TundraClient2
@@ -213,6 +215,9 @@ private:
 
     // This variable saves current active connection number
     unsigned short activeConnection;
+
+    // Flag if any connections available
+    bool connectionsAvailable;
 
 };
 

@@ -40,7 +40,8 @@ Client::Client(TundraLogicModule* owner) :
     framework_(owner->GetFramework()),
     loginstate_(NotConnected),
     reconnect_(false),
-    client_id_(0)
+    client_id_(0),
+    connectionsAvailable(false)
 {
     tundraEventCategory_ = framework_->GetEventManager()->QueryEventCategory("Tundra");
     kristalliEventCategory_ = framework_->GetEventManager()->QueryEventCategory("Kristalli");
@@ -85,7 +86,7 @@ void Client::Login(const QUrl& loginUrl)
     QString protocol = loginUrl.queryItemValue("protocol").trimmed().toLower();
     QString address = loginUrl.host();
     int port = loginUrl.port();
-
+    TundraLogicModule::LogInfo("Protocol: " + protocol.toStdString());
     // Validation: Username and address is the minimal set that with we can login with
     if (username.isEmpty() || address.isEmpty())
         return;
@@ -104,7 +105,7 @@ void Client::Login(const QUrl& loginUrl)
 void Client::Login(const QString& address, unsigned short port, const QString& username, const QString& password, const QString &protocol)
 {
     // Check if we already have a connection to this specific IP:port and if so, then switch to it
-    if (checkIfConnected(address, QString::number(port)))
+    if (checkIfConnected(address, QString::number(port), protocol))
         return;
 
     SetLoginProperty("address", address);
@@ -118,6 +119,8 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
         transportLayer = kNet::SocketOverTCP;
     else if (protocol.toLower() == "udp")
         transportLayer = kNet::SocketOverUDP;
+    else if (protocol.toLower() == "sctp")
+	transportLayer = kNet::SocketOverSCTP;
     Login(address, port, transportLayer);
 }
 
@@ -182,10 +185,19 @@ void Client::Logout(bool fail, unsigned short removedConnection_)
 
         // Check if we have connections up and running and switch to it.
         if (!scenenames_.isEmpty())
+        {
             owner_->changeScene(scenenames_.constBegin().value());
+            emit Disconnected(removedConnection_);
 
+            // This is for LoginWebScreen.js tabChange method.
+            QList<int> key = scenenames_.keys();
+            emit changeTab(key[0]);
+        }
         else
-            emit Disconnected();
+        {
+            connectionsAvailable = false;
+            emit Disconnected(removedConnection_);
+        }
     }
     
     if (fail)
@@ -209,7 +221,7 @@ bool Client::IsConnected() const
     return loginstate_ == LoggedIn;
 }
 
-bool Client::checkIfConnected(QString address, QString port)
+bool Client::checkIfConnected(QString address, QString port, QString protocol)
 {
     unsigned short counter = 0;
     QMapIterator<QString, std::map<QString, QString> > propertiesIterator(properties_list_);
@@ -220,10 +232,17 @@ bool Client::checkIfConnected(QString address, QString port)
         std::map<QString, QString> temp = propertiesIterator.value();
         QString tempAddress = temp["address"];
         QString tempPort = temp["port"];
+        QString tempProtocol = temp["protocol"];
 
-        if (address == tempAddress && port == tempPort)
+        if (address == tempAddress && port == tempPort && protocol == tempProtocol)
         {
-            emitChangeSceneSignal("TundraClient_" + QString::number(counter));
+            // If this is true, we got loginscreen connect-button smasher user. :)
+            if (scenenames_.size() < properties_list_.size())
+                return false;
+            QList<int> key = scenenames_.keys();
+            unsigned short keyInt = key[counter];
+            TundraLogicModule::LogInfo("Already connected to " + tempAddress.toStdString() + ":" + tempPort.toStdString() + ". Emitting " + ToString(keyInt));
+            emit changeTab(keyInt);
             return true;
         }
         counter++;
@@ -279,20 +298,16 @@ void Client::CheckLogin()
         propertiesIterator.next();
         loginstateIterator.next();
 
-        // Grep number from scenename; list[0] = TundraClient/TundraServer and list[1] = 0, 1, 2, ..., n: n â‚¬ Z+
+        // Grep number from scenename; list[0] = TundraClient/TundraServer and list[1] = 0, 1, 2, ..., n: n ¤ Z+
         // If we have multiple connections and one of them gets disconnected, our serverconnection map has "missing" key
         // while client has properties for it if it is making new connection. When this happens we compare if serverConnection
         // key is higher of value than loginstateIterator key after we grep the number out of it. If so, we proceed to next item
         // in loginstate and properties iterator.
-        QStringList list;
-        QString number;
         unsigned short temp;
 
         while (true)
         {
-            list = loginstateIterator.key().split("_");
-            number = list[1];
-            temp = number.toInt();
+            temp = owner_->Grep(loginstateIterator.key());
 
             if (temp < connectionIterator.key())
             {
@@ -426,6 +441,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
 
         loginstateIterator.value() = LoggedIn;
         client_idIterator.value() = msg.userID;
+        connectionsAvailable = true;
         TundraLogicModule::LogInfo("Logged in successfully");
         
         // Note: create scene & send info of login success only on first connection, not on reconnect
@@ -444,7 +460,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
             event_data.user_id_ = msg.userID;
             framework_->GetEventManager()->SendEvent(tundraEventCategory_, Events::EVENT_TUNDRA_CONNECTED, &event_data);
             
-            emit Connected();
+            emit Connected(conNumber);
         }
         else
         {
@@ -563,6 +579,11 @@ void Client::setActiveConnection(const QString& name, unsigned short con)
 unsigned short Client::getActiveConnection() const
 {
     return activeConnection;
+}
+
+bool Client::hasConnections()
+{
+    return connectionsAvailable;
 }
 
 }

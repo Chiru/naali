@@ -38,6 +38,7 @@ EC_3DCanvasSource::EC_3DCanvasSource(IModule *module) :
     sync2dbrowsing(this, "Sync 2D browsing", false),
     pageWidth(this, "Page width", 800),
     pageHeight(this, "Page height", 600),
+    menuactive(this, "Activate 3DMenu", false),
     widget_(0),
     content_widget_(0),
     placeholder_widget_(0),
@@ -45,7 +46,8 @@ EC_3DCanvasSource::EC_3DCanvasSource(IModule *module) :
     progress_bar_(0),
     proxy_(0),
     source_edit_(0),
-    canvas_started_(false)
+    canvas_started_(false),
+    MenuOpen_(false)
 {
     static AttributeMetadata size_metadata("", "100", "2000", "50");
     pageWidth.SetMetadata(&size_metadata);
@@ -67,14 +69,31 @@ void EC_3DCanvasSource::OnClick()
 {
     if ((getshow2d() == true) && (widget_) && (proxy_))
     {
-        if (!proxy_->scene())
-            return;
-        if (!proxy_->scene()->isActive())
-            return;
-        if (proxy_->isVisible())
-            proxy_->AnimatedHide();
+        //Temporary hack for 3DMenu test use
+        if(getmenuactive())
+        {
+            if(!MenuOpen_)
+            {
+                emit createMenu();
+                MenuOpen_=true;
+            }
+            else
+            {
+                MenuOpen_=false;
+                emit closeMenu();
+            }
+        }
         else
-            proxy_->show();
+        {
+            if (!proxy_->scene())
+                return;
+            if (!proxy_->scene()->isActive())
+                return;
+            if (proxy_->isVisible())
+                proxy_->AnimatedHide();
+            else
+                proxy_->show();
+        }
     }
 }
 
@@ -526,3 +545,18 @@ void EC_3DCanvasSource::RegisterActions()
         entity->ConnectAction("MousePress", this, SLOT(OnClick()));
 }
 
+void EC_3DCanvasSource::OpenWebview()
+{
+    if ((getshow2d() == true) && (widget_) && (proxy_))
+    {
+        if (!proxy_->scene())
+            return;
+        if (!proxy_->scene()->isActive())
+            return;
+        if (proxy_->isVisible())
+            proxy_->AnimatedHide();
+        else
+            proxy_->show();
+    }
+    MenuOpen_=false;
+}

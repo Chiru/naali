@@ -100,7 +100,7 @@ public slots:
 
     //! Get the running servers protocol.
     /// \note This function returns QString due we dont want kNet::TransportLayer enum here. If the module creators feels its ok then change this.
-    /// \return QString Will return 'udp' or 'tcp' if server is running. Otherwise an empty string.
+    /// \return QString Will return 'udp', 'tcp' or 'sctp' if server is running. Otherwise an empty string.
     QString GetProtocol() const;
     
     //! Get connected users' connection ID's

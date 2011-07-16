@@ -27,7 +27,7 @@ namespace MumbleLib
     void MumbleLibrary::Stop()
     {
         StopMumbleThread();
-//        emit Stoped();
+        //emit Stoped();
     }
 
     bool MumbleLibrary::IsRunning()

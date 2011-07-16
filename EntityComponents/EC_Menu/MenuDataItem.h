@@ -28,6 +28,8 @@ public slots:
 
     int GetChildCount();
     MenuDataItem* GetChildDataItem(int index);
+    QObject* GetChildDataItemRaw(int index);
+    MenuDataItem* GetParentDataItem();
 
     QString GetMeshRef();
     QStringList GetMaterialRef();

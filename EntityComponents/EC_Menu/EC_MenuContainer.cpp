@@ -456,6 +456,15 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         MenuItemList_.append(menuitem);
     }
 
+    int j=0;
+    //Counts which layer this is and based on that choose if menu is going to be horizontal or vertical.
+    MenuDataItem* tempitem = attachedMenuItem->GetDataItem()->GetParentDataItem();
+    while(tempitem)
+    {
+        tempitem = tempitem->GetParentDataItem();
+        j++;
+    }
+
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
     float phi;
     for(int i=0; i<MenuItemList_.count();i++)
@@ -463,7 +472,11 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         //Set newly created menuitems in some position..
 
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-        position.y = radius_ * cos(phi);
+        if(j%2!=0)
+            position.x = radius_ * cos(phi);
+        else
+            position.y = radius_ * cos(phi);
+
         position.z = radius_ * sin(phi);
 
         EC_MenuItem *menuitem = MenuItemList_.at(i);

@@ -39,6 +39,22 @@ MenuDataItem* MenuDataItem::GetChildDataItem(int index)
         return 0;
 }
 
+QObject* MenuDataItem::GetChildDataItemRaw(int index)
+{
+    if(index < childItems_.count() && index >= 0)
+        return childItems_.at(index);
+    else
+        return 0;
+}
+
+MenuDataItem* MenuDataItem::GetParentDataItem()
+{
+    if(parent_)
+        return parent_;
+    else
+        return 0;
+}
+
 QStringList MenuDataItem::GetMaterialRef()
 {
     return materialreference_;

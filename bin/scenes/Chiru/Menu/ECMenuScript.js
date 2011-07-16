@@ -50,6 +50,18 @@ function Create3DMenu()
     dataitem.AddChildren("local://notebook.mesh",["local://notebook.Material.0.material"]);
     dataitem.AddChildren("local://notebook.mesh",["local://notebook.Material.0.material"]);
 
+    var layer3 = dataitem.GetChildDataItemRaw(0);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+
+    layer3 = dataitem.GetChildDataItemRaw(1);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+    layer3.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
+
     dataitem = menudatamodel.GetMenuDataItemRaw(11);
     dataitem.AddChildren("local://camera.mesh",["local://camera.Material.0.material","local://camera.Material.1.material","local://camera.Material.2.material","local://camera.Material.3.material"]);
     dataitem.AddChildren("local://radio.mesh",["local://radio.Material.0.material","local://radio.Material.1.material","local://radio.Material.2.material"]);

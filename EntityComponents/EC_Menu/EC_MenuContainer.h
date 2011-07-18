@@ -101,6 +101,7 @@ private:
 
     float speed_;
     float radius_;
+    float item_offset_;
     float subMenuRadius_;
     InputContextPtr input_;
     int selected_;
@@ -131,12 +132,6 @@ public slots:
     /// Sets data for MenuContainer.
     /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
     void SetMenuWidgets(QList<QWidget*>);
-
-    /// Add component to menu
-    /// \param QString reference for mesh to use.
-    /// \param QStringList materialreferences for that mesh.
-    void AddComponentToMenu(QString meshref, QStringList materialList, int itemnumber=0);
-    void AddComponentToMenu(EC_MenuItem *menuitem);
 
     void ActivateMenu();
 
@@ -173,6 +168,8 @@ private slots:
 
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
+
+    void CalculateItemPosition(EC_MenuItem* itemPtr);
 
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);

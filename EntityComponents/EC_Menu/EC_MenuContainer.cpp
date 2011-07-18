@@ -51,7 +51,8 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     subMenuItemSelected_(0),
     menulayer_(1),
     subMenuRadius_(0.0),
-    radius_(0.0)
+    radius_(0.0),
+    item_offset_(0.0)
 {
     scrollerTimer_ = new QTimer();
 
@@ -116,34 +117,6 @@ void EC_MenuContainer::PrepareMenuContainer(float radius, MenuDataModel *parent)
     SetMenuContainerPosition();
 }
 
-void EC_MenuContainer::AddComponentToMenu(EC_MenuItem *menuitem)
-{
-    MenuItemList_.append(menuitem);
-}
-
-void EC_MenuContainer::AddComponentToMenu(QString meshref, QStringList materials, int itemnumber)
-{
-    if(itemnumber)
-    {
-        if(!menudatamodel_->AddItemToIndex(meshref, materials, itemnumber))
-            LogError("Error while adding menuitemdata to container! (error 1)");
-    }
-    else
-    {
-        if(!menudatamodel_->AddItem(meshref, materials))
-            LogError("Error while adding menuitemdata to container! (error 2)");
-    }
-
-//    EC_MenuItem *menuItem = CreateMenuItem();
-//    menuItem->SetMenuItemMesh(meshref, materials);
-//    assert(menuItem);
-//    if(itemnumber==0)
-//        MenuItemList_.append(menuItem);
-//    else
-//        MenuItemList_.at(itemnumber)->AddComponentToSubMenu(menuItem);
-
-}
-
 void EC_MenuContainer::ActivateMenu()
 {
     LogInfo("ActivateMenu()");
@@ -154,19 +127,20 @@ void EC_MenuContainer::ActivateMenu()
         MenuItemList_.append(menuItem);
     }
 
-    Vector3df position = Vector3df(0.0, 0.0, 0.0);
+    //Vector3df position = Vector3df(0.0, 0.0, 0.0);
     float phi;
     for (int i = 0; i < MenuItemList_.count(); i++)
     {
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-        position.x = radius_ * cos(phi);
-        position.z = radius_ * sin(phi);
+//        position.x = radius_ * cos(phi);
+//        position.z = radius_ * sin(phi);
 
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         //LogInfo(ToString(position));
         //LogInfo("Phi: " + ToString(phi));
         menuitem->setphi(phi);
-        menuitem->SetMenuItemPosition(position);
+        CalculateItemPosition(menuitem);
+        //menuitem->SetMenuItemPosition(position);
         menuitem->SetMenuItemVisible();
 
     }
@@ -237,7 +211,7 @@ void EC_MenuContainer::SetMenuContainerPosition()
 
     //Offset for menu from camera coordinates
     /// \todo add setter function for these parameters
-    distance.z=-12;
+    distance.z=-18;
     distance.y=-2;
 
     if(avatarCameraPtr)
@@ -280,9 +254,7 @@ void EC_MenuContainer::SetMenuContainerPosition()
 
 void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 {
-    /// \todo refactor mouseinput to handle different menulevels. ATM supports only 2 menu layers.
     //mouseinput
-
     if(mouse->IsLeftButtonDown() && !startingPositionSaved_)
     {
         mousePosition.setX(mouse->X());
@@ -341,20 +313,14 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             }
         }
 
-        Vector3df position = Vector3df(0.0,0.0,0.0);
         for(int i = 0; i<MenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
             float phi = MenuItemList_.at(i)->getphi() - float((float)mouse->RelativeX()/250);
 
             //Next position for menu components.
-
-            if(menulayer_%2!=0)
-                position.x = radius_ * cos(phi);
-            else
-                position.y = radius_ * cos(phi);
-            position.z = radius_ * Ogre::Math::Sin(phi);
             MenuItemList_.at(i)->setphi(phi);
+            CalculateItemPosition(MenuItemList_.at(i));
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
@@ -366,16 +332,9 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 {
                     if(subMenu_ && previousSelected_ != selected_)
                     {
-                        Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
-                        assert(sceneManager_);
-
-//                        MenuItemList_.at(selected_)->OpenSubMenu();
-
                     }
                 }
             }
-
-            MenuItemList_.at(i)->SetMenuItemPosition(position);
         }
         //LogInfo("Selected planar: " + ToString(selected_));
         speed_=mouse->RelativeX();
@@ -411,10 +370,10 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
                     }
                     else
+                    {
                         LogError("Error while creating Menucontainer for submenu");
-
+                    }
                 }
-
             }
         }
 
@@ -448,7 +407,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 //***************************************************
 void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
 {
-    radius_ = 3.0;
+    radius_ = 2.0;
     attachedMenuItem = attacheditem;
     for(int i=0; i<attachedMenuItem->GetDataItem()->GetChildCount();i++)
     {
@@ -469,46 +428,43 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         menulayer_++;
     }
 
-    Vector3df position = Vector3df(0.0, 0.0, 0.0);
+    item_offset_=radius_;
     float phi;
     for(int i=0; i<MenuItemList_.count();i++)
     {
         //Set newly created menuitems in some position..
 
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-        if(menulayer_%2!=0)
-            position.x = radius_ * cos(phi);
-        else
-            position.y = radius_ * cos(phi);
-
-        position.z = radius_ * sin(phi);
-
         EC_MenuItem *menuitem = MenuItemList_.at(i);
-        //LogInfo(ToString(position));
-        //LogInfo("Phi: " + ToString(phi));
         menuitem->setphi(phi);
-        menuitem->SetMenuItemPosition(position);
+        CalculateItemPosition(menuitem);
         menuitem->SetMenuItemVisible();
     }
+}
+
+void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
+{
+    Vector3df position = Vector3df(0.0,0.0,0.0);
+    float phi = itemPtr->getphi();
+
+    if(menulayer_%2!=0)
+        position.x = radius_ * cos(phi) + item_offset_;
+    else
+        position.y = radius_ * cos(phi) - item_offset_;
+    position.z = radius_ * sin(phi);
+
+    itemPtr->SetMenuItemPosition(position);
 }
 
 void EC_MenuContainer::KineticScroller()
 {
     if(speed_!=0)
     {
-        Vector3df position = Vector3df(0.0,0.0,0.0);
-
         for(int i=0; i<MenuItemList_.count(); i++)
         {
             float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
-            if(menulayer_%2!=0)
-                position.x = radius_ * cos(phi);
-            else
-                position.y = radius_ * cos(phi);
-            position.z = radius_ * sin(phi);
-
             MenuItemList_.at(i)->setphi(phi);
-            MenuItemList_.at(i)->SetMenuItemPosition(position);
+            CalculateItemPosition(MenuItemList_.at(i));
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
@@ -553,42 +509,25 @@ void EC_MenuContainer::CenterAfterRotation()
         position.z=2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
     */
 
-    Vector3df position = Vector3df(0.0,0.0,0.0);
-
-    float phi;
-    phi = 0.5*(float)Ogre::Math::PI;
-
+    float phi = 0.5*(float)Ogre::Math::PI;
     if(MenuItemList_.count()>0)
     {
         /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
 
-        if(menulayer_%2!=0)
-            position.x = radius_ * cos(phi);
-        else
-            position.y = radius_ * cos(phi);
-        position.z = radius_ * sin( phi );
-
-        MenuItemList_.at(selected_)->SetMenuItemPosition(position);
         MenuItemList_.at(selected_)->setphi(phi);
+        CalculateItemPosition(MenuItemList_.at(selected_));
 
         //LogInfo("Selected planar: " + ToString(selected_));
         int j = selected_;
         for (int i=1; i<MenuItemList_.count(); i++)
         {
             j++;
-
             if(j==MenuItemList_.count())
                 j=0;
 
             phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-            if(menulayer_%2!=0)
-                position.x = radius_ * cos(phi);
-            else
-                position.y = radius_ * cos(phi);
-            position.z = radius_ * sin(phi);
-
             MenuItemList_.at(j)->setphi(phi);
-            MenuItemList_.at(j)->SetMenuItemPosition(position);
+            CalculateItemPosition(MenuItemList_.at(j));
         }
     }
 }
@@ -623,7 +562,9 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
             return menuItem;
         }
         else
+        {
             LogError("Error while creating MenuItem");
+        }
     }
     return 0;
 }
@@ -683,7 +624,7 @@ void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::
             }
             distance.x=0;
             distance.y=-2;
-            distance.z=-12;
+            distance.z=-25;
 
             Transform entityTransform;
             entityTransform.position=distance;
@@ -696,7 +637,7 @@ void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::
             GetParentEntity()->RemoveComponent(GetParentEntity()->GetComponent("EC_Placeable"));
             ComponentPtr parentPlaceable = GetParentEntity()->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false);
 
-            distance.z=-12;
+            distance.z=-25;
             distance.y=-2;
 
             if(cameraPlaceable)

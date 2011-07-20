@@ -163,9 +163,7 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
     //Sets menu in front of camera
     SetMenuContainerPosition();
 
-    Vector3df position = Vector3df(0.0, 0.0, 0.0);
     float phi;
-
     //Set menuItem positions in circle.
     for(int i = 0; i < menuData.count(); i++)
     {
@@ -173,14 +171,8 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
         if(menuItem)
         {
             phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) + ( 0.5*Ogre::Math::PI);
-            position.x = radius_ * cos(phi);
-            position.z = radius_ * sin(phi);
-
-            //LogInfo(ToString(position));
-            //LogInfo(ToString(phi));
             menuItem->setphi(phi);
-            menuItem->SetMenuItemPosition(position);
-
+            CalculateItemPosition(menuItem);
 
             //hardcoded for now.. first item in every layout is "title" and rest of them are submenu items.
             /// \todo redesign this to support third data layer.
@@ -296,11 +288,6 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         }
     }
 
-    if(subMenu_clicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
-    {
-        speed_= -(mouse->RelativeY());
-    }
-
     if(menuClicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
 
@@ -316,10 +303,14 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         for(int i = 0; i<MenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
-            float phi = MenuItemList_.at(i)->getphi() - float((float)mouse->RelativeX()/250);
+            float phi;
+            if(menulayer_%2!=0)
+                phi = MenuItemList_.at(i)->getphi() - float((float)mouse->RelativeX()/250);
+            else
+                phi = MenuItemList_.at(i)->getphi() + float((float)mouse->RelativeY()/250);
 
-            //Next position for menu components.
             MenuItemList_.at(i)->setphi(phi);
+            //Next position for menu components.
             CalculateItemPosition(MenuItemList_.at(i));
 
             if(Ogre::Math::Sin(phi) > 0.950)
@@ -337,7 +328,11 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             }
         }
         //LogInfo("Selected planar: " + ToString(selected_));
-        speed_=mouse->RelativeX();
+        if(menulayer_%2!=0)
+            speed_=mouse->RelativeX();
+        else
+            speed_=-mouse->RelativeY();
+
     }
 
     if(mouse->eventType == MouseEvent::MouseReleased && (menuClicked_ || subMenu_clicked_))
@@ -355,7 +350,10 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 //returns false if item don't have childs
                 if(!MenuItemList_.at(selected_)->OpenSubMenu())
                 {
-                    emit OnMenuSelection(selected_, 0);
+                    if(menulayer_==1)
+                        emit OnMenuSelectionRaw(selected_, 0);
+                    else
+                        emit OnMenuSelection(selected_, 0, this);
                 }
                 else
                 {
@@ -368,6 +366,8 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                         EC_MenuContainer *menucontainer = dynamic_cast<EC_MenuContainer*>(iComponent);
                         menucontainer->SetAttachedMenuItem(MenuItemList_.at(selected_));
 
+                        //Connect signal from submenu
+                        connect(menucontainer, SIGNAL(OnMenuSelection(int, int, EC_MenuContainer*)), this, SLOT(ChildMenuClicked(int, int, EC_MenuContainer*)));
                     }
                     else
                     {
@@ -404,16 +404,20 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
 }
 
-//***************************************************
+void EC_MenuContainer::ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer)
+{
+    LogInfo("ChildMenuClicked: "+ToString(menuitem)+" "+ToString(submenuItem));
+    childcontainer->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+
+}
+
 void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
 {
     radius_ = 2.0;
     attachedMenuItem = attacheditem;
+    //Create new ring with given data.
     for(int i=0; i<attachedMenuItem->GetDataItem()->GetChildCount();i++)
     {
-        LogInfo("Creating submenu ring.. " + ToString(i));
-        //Create new ring with given data.
-
         EC_MenuItem *menuitem = CreateMenuItem();
         menuitem->SetDataItem(attachedMenuItem->GetDataItem()->GetChildDataItem(i));
         MenuItemList_.append(menuitem);
@@ -421,19 +425,19 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
 
     //Counts which layer this is and based on that choose if menu is going to be horizontal or vertical.
     MenuDataItem* tempitem = attachedMenuItem->GetDataItem()->GetParentDataItem();
-    menulayer_ = 0;
+    menulayer_ += 1;
     while(tempitem)
     {
         tempitem = tempitem->GetParentDataItem();
         menulayer_++;
     }
 
-    item_offset_=radius_;
+    item_offset_=radius_ + 1.0;
     float phi;
+
+    //Set newly created menuitems in some position..
     for(int i=0; i<MenuItemList_.count();i++)
     {
-        //Set newly created menuitems in some position..
-
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         menuitem->setphi(phi);

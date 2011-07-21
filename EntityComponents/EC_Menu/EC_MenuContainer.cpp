@@ -57,9 +57,9 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     scrollerTimer_ = new QTimer();
 
     // Connect signals from IComponent
-    //connect(this, SIGNAL(ParentEntitySet()), SLOT(PrepareMenuContainer()), Qt::UniqueConnection);
-    //connect(this, SIGNAL(OnAttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)), Qt::UniqueConnection);
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
+
+    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)),
+            SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
@@ -247,22 +247,15 @@ void EC_MenuContainer::SetMenuContainerPosition()
 void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 {
     //mouseinput
-    if(mouse->IsLeftButtonDown() && !startingPositionSaved_)
-    {
-        mousePosition.setX(mouse->X());
-        mousePosition.setY(mouse->Y());
-        startingPositionSaved_=true;
-    }
-
     if (mouse->IsLeftButtonDown() && !menuClicked_)
     {
         RaycastResult* result = 0;
-        int i=0;
         if(renderer_)
             result = renderer_->Raycast(mouse->X(), mouse->Y());
-
         assert(result);
-        while(!menuClicked_ && !subMenu_clicked_ && i<MenuItemList_.count())
+
+        int i=0;
+        while(!menuClicked_ && i < MenuItemList_.count())
         {
             if(result->entity_ == MenuItemList_.at(i)->GetParentEntity())
             {
@@ -272,34 +265,10 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             }
             i++;
         }
-        if(!menuClicked_)
-        {/*
-            int i=0;
-            while(!subMenu_clicked_ && i<subMenuItemList_.count())
-            {
-                if(result->entity_ == subMenuItemList_.at(i)->GetParentEntity())
-                {
-                    subMenu_clicked_ = true;
-                    //to stop scrolling when clicked
-                    speed_ = 0;
-                }
-                i++;
-            }*/
-        }
     }
 
     if(menuClicked_ && mouse->IsLeftButtonDown() && mouse->eventType == MouseEvent::MouseMove)
     {
-
-        if(SUBMENUCLOSE)
-        {
-            if(subMenu_)
-            {
-                Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
-                assert(sceneManager_);
-            }
-        }
-
         for(int i = 0; i<MenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
@@ -317,12 +286,13 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             {
                 previousSelected_ = selected_;
                 selected_=i;
-
-                //Predefined usecase.
-                if(SUBMENUCHANGE)
+                if(SUBMENUCHANGE && subMenu_)
                 {
-                    if(subMenu_ && previousSelected_ != selected_)
+                    if(previousSelected_ != selected_)
                     {
+                        MenuItemList_.at(previousSelected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+                        subMenu_=false;
+                        CreateSubMenu();
                     }
                 }
             }
@@ -332,7 +302,6 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             speed_=mouse->RelativeX();
         else
             speed_=-mouse->RelativeY();
-
     }
 
     if(mouse->eventType == MouseEvent::MouseReleased && (menuClicked_ || subMenu_clicked_))
@@ -347,7 +316,6 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             // SUBMENU HANDLER
             if(result->entity_ == MenuItemList_.at(selected_)->GetParentEntity() && !subMenu_)
             {
-                //returns false if item don't have childs
                 if(!MenuItemList_.at(selected_)->OpenSubMenu())
                 {
                     if(menulayer_==1)
@@ -356,24 +324,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                         emit OnMenuSelection(selected_, 0, this);
                 }
                 else
-                {
-                    //Create new menucontainer to selected_ entity
-                    Scene::Entity *menuitementity = MenuItemList_.at(selected_)->GetParentEntity();
-                    IComponent *iComponent = menuitementity->GetOrCreateComponent("EC_MenuContainer", AttributeChange::LocalOnly, false).get();
-
-                    if(iComponent)
-                    {
-                        EC_MenuContainer *menucontainer = dynamic_cast<EC_MenuContainer*>(iComponent);
-                        menucontainer->SetAttachedMenuItem(MenuItemList_.at(selected_));
-
-                        //Connect signal from submenu
-                        connect(menucontainer, SIGNAL(OnMenuSelection(int, int, EC_MenuContainer*)), this, SLOT(ChildMenuClicked(int, int, EC_MenuContainer*)));
-                    }
-                    else
-                    {
-                        LogError("Error while creating Menucontainer for submenu");
-                    }
-                }
+                    CreateSubMenu();
             }
         }
 
@@ -404,11 +355,35 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
 }
 
+void EC_MenuContainer::CreateSubMenu()
+{
+    if(MenuItemList_.at(selected_)->OpenSubMenu())
+    {
+        //Create new menucontainer to selected_ entity
+        Scene::Entity *menuitementity = MenuItemList_.at(selected_)->GetParentEntity();
+        IComponent *iComponent = menuitementity->GetOrCreateComponent("EC_MenuContainer", AttributeChange::LocalOnly, false).get();
+
+        if(iComponent)
+        {
+            EC_MenuContainer *menucontainer = dynamic_cast<EC_MenuContainer*>(iComponent);
+            menucontainer->SetAttachedMenuItem(MenuItemList_.at(selected_));
+
+            //Connect signal from submenu
+            connect(menucontainer, SIGNAL(OnMenuSelection(int, int, EC_MenuContainer*)), this, SLOT(ChildMenuClicked(int, int, EC_MenuContainer*)));
+            subMenu_=true;
+        }
+        else
+        {
+            LogError("Error while creating Menucontainer for submenu");
+        }
+    }
+}
+
 void EC_MenuContainer::ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer)
 {
     LogInfo("ChildMenuClicked: "+ToString(menuitem)+" "+ToString(submenuItem));
     childcontainer->GetParentEntity()->RemoveComponent("EC_MenuContainer");
-
+    subMenu_=false;
 }
 
 void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
@@ -476,20 +451,23 @@ void EC_MenuContainer::KineticScroller()
                 selected_=i;
                 if(SUBMENUCHANGE)
                 {
-                    /// \todo This functionality need some optimization. Also some logic upgrade could be needed.
                     if(subMenu_ && previousSelected_ != selected_)
                     {
-                        //Call for selectec menuitem to close it's submenu or emit signal to do that?
+                        MenuItemList_.at(previousSelected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+                        subMenu_=false;
+                        CreateSubMenu();
                     }
                 }
             }
         }
-            //LogInfo("Selected planar: " + ToString(selected_));
 
         if(speed_<0)
             speed_ += 1.0;
         else
             speed_ -= 1.0;
+        if(speed_ > -1 && speed_ < 1)
+            speed_=0;
+
 
         if(speed_ == 0)
             subMenuIsScrolling = false;

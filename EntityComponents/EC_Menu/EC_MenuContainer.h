@@ -171,6 +171,8 @@ private slots:
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
 
+    void CreateSubMenu();
+
     void CalculateItemPosition(EC_MenuItem* itemPtr);
 
     EC_MenuItem* CreateMenuItem();

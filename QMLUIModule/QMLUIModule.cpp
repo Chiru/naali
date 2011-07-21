@@ -78,7 +78,7 @@ void QMLUIModule::PostInitialize()
 
 void QMLUIModule::Uninitialize()
 {
-    SAFE_DELETE(declarativeview_);
+    //SAFE_DELETE(declarativeview_);
 }
 
 void QMLUIModule::Update(f64 frametime)

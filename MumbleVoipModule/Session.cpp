@@ -47,6 +47,7 @@ namespace MumbleVoip
     Session::~Session()
     {
         Close();
+        SAFE_DELETE(connection_);
     }
 
     void Session::OpenConnection(ServerInfo server_info)

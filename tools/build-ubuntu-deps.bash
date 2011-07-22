@@ -113,7 +113,7 @@ else
     cd generator
     qmake
     make -j $nprocs
-    ./generator --include-paths=/usr/include/qt4
+    ./generator --include-paths=`qmake -query QT_INSTALL_HEADERS`
     cd ..
 
     cd qtbindings
@@ -258,8 +258,9 @@ else
     cd $what
     cmake .
     make -j $nprocs
-    mkdir $prefix/include/mumbleclient
+    mkdir -p $prefix/include/mumbleclient
     cp *.h $prefix/include/mumbleclient
+    cp src/*.h $prefix/include/mumbleclient
     cp libmumbleclient.so $prefix/lib/
     touch $tags/$what-done
 fi

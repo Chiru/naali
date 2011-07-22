@@ -101,6 +101,7 @@ private:
 
     float speed_;
     float radius_;
+    float item_offset_;
     float subMenuRadius_;
     InputContextPtr input_;
     int selected_;
@@ -132,12 +133,6 @@ public slots:
     /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
     void SetMenuWidgets(QList<QWidget*>);
 
-    /// Add component to menu
-    /// \param QString reference for mesh to use.
-    /// \param QStringList materialreferences for that mesh.
-    void AddComponentToMenu(QString meshref, QStringList materialList, int itemnumber=0);
-    void AddComponentToMenu(EC_MenuItem *menuitem);
-
     void ActivateMenu();
 
     /// Prepares MenuContainer component
@@ -145,6 +140,8 @@ public slots:
     void PrepareMenuContainer(float radius, MenuDataModel *parent=0);
 
     void OpenMenu();
+
+    void ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer);
 
     QObject* GetMenuDataModel();
 
@@ -174,6 +171,10 @@ private slots:
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
 
+    void CreateSubMenu();
+
+    void CalculateItemPosition(EC_MenuItem* itemPtr);
+
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);
 
@@ -184,7 +185,8 @@ signals:
     /// This signal is emitted when one of the menuitems was selected.
     /// \param menuitem indicates which item was selected from main layer
     /// \param submenuItem indicates which item was selected from sublayer.
-    void OnMenuSelection(int menuitem, int submenuItem);
+    void OnMenuSelection(int menuitem, int submenuItem, EC_MenuContainer* container);
+    void OnMenuSelectionRaw(int menuitem, int submenuItem);
 
 };
 

@@ -58,14 +58,6 @@ if (!server.IsRunning())
     
     if (inWorldVoiceSession)
     {
-        // Register channels to inworldvoicesession
-        for(var i = 0; i < m_channels.length; i++)
-        {
-            inWorldVoiceSession.AddChannel(m_channels[i], username, m_server, m_port, m_password, m_version, i);
-        }
-        inWorldVoiceSession.SetActiveChannel(m_channels[0]); // Root
-        inWorldVoiceSession.EnablePositionalAudio(false);
-        
         // Connect UI controls
         sendEnabledButton.clicked.connect(setSendEnabled);
         receiveEnabledButton.clicked.connect(setReceiveEnabled);        

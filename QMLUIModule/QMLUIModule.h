@@ -13,9 +13,14 @@
 #include "UiProxyWidget.h"
 #include "EC_Script.h"
 #include "ScriptAsset.h"
+#include "InputFwd.h"
+
+#include "EC_Placeable.h"
+#include "EC_Mesh.h"
 
 
 #include <QtDeclarative>
+#include <QTimer>
 
 class QMLWidget;
 
@@ -55,8 +60,10 @@ public:
     // IModule override
     void Update(f64 frametime);
 
-    // IModule override
-    bool HandleEvent(event_category_id_t category_id, event_id_t event_id, IEventData* data);
+    /*// IModule override
+    bool HandleEvent(event_category_id_t category_id, event_id_t event_id, IEventData* data);*/
+
+
 
 
 
@@ -72,7 +79,9 @@ private:
     /// 2D UI widget.
     QDeclarativeView *declarativeview_;
 
-    /// Input context for this module.
+    QDeclarativeView *parentview_;
+
+    /*/// Input context for this module.
     boost::shared_ptr<InputContext> input_;
 
     /// "Framework" event category ID.
@@ -82,7 +91,7 @@ private:
     event_category_id_t network_category_;
 
     /// "Tundra" event category ID.
-    event_category_id_t tundra_category_;
+    event_category_id_t tundra_category_;*/
 
     /// Proxywidget for 2D UI
     UiProxyWidget *qmluiproxy_;
@@ -94,6 +103,47 @@ private:
 
     bool view_created_;
 
+    InputContextPtr input_;
+
+    EC_Placeable *camera_;
+
+    EC_Placeable *moving_placeable_;
+
+    ComponentPtr cameraptr_;
+
+    Foundation::RenderServiceInterface *renderer_;
+
+    bool camera_focused_on_entity;
+
+    bool camera_moving;
+
+    bool entity_movable;
+
+    int move_start_x;
+
+    int move_start_y;
+
+    float last_pos_x;
+    float last_pos_y;
+    float last_abs_x;
+    float last_abs_y;
+
+    QTimer *camera_movement_timer_;
+
+
+
+    Scene::Entity *entity_to_rotate_;
+
+    Scene::Entity *entity_to_drag_;
+
+    EC_Placeable *entity_to_focus_on_;
+
+private slots:
+    void SmoothCameraMove();
+
+    Scene::Entity* GetActiveFreeLookCamera() const;
+
+    Scene::Entity* GetActiveCamera() const;
 
 public slots:
 
@@ -124,6 +174,19 @@ public slots:
     void ScriptAssetChanged(ScriptAssetPtr newScript);
 
     void SceneAdded(const QString &name);
+
+    //void HandleGestureInputEvent(GestureEvent *event);
+
+    void HandleMouseInputEvent(MouseEvent *mouse);
+
+    void FocusCameraOnEntity(Scene::Entity *entity);
+
+    void RotateEntityHorizontally(Scene::Entity *entity, float rotation);
+
+    void StartDrag(MouseEvent *mouse);
+
+    void DragEntity(Scene::Entity *entity, MouseEvent *mouse);
+
 
 signals:
 

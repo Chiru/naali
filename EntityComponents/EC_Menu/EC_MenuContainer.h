@@ -141,6 +141,8 @@ public slots:
 
     void OpenMenu();
 
+    void ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer);
+
     QObject* GetMenuDataModel();
 
     void SetAttachedMenuItem(EC_MenuItem* attacheditem);
@@ -169,6 +171,8 @@ private slots:
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
 
+    void CreateSubMenu();
+
     void CalculateItemPosition(EC_MenuItem* itemPtr);
 
     EC_MenuItem* CreateMenuItem();
@@ -181,7 +185,8 @@ signals:
     /// This signal is emitted when one of the menuitems was selected.
     /// \param menuitem indicates which item was selected from main layer
     /// \param submenuItem indicates which item was selected from sublayer.
-    void OnMenuSelection(int menuitem, int submenuItem);
+    void OnMenuSelection(int menuitem, int submenuItem, EC_MenuContainer* container);
+    void OnMenuSelectionRaw(int menuitem, int submenuItem);
 
 };
 

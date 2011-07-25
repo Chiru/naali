@@ -261,7 +261,19 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             {
                 menuClicked_ = true;
                 //to stop scrolling when clicked
-                speed_ = 0;
+                if(speed_!=0)
+                    speed_ = 0;
+
+                else if(i != selected_)
+                {
+                    if(subMenu_)
+                    {
+                        MenuItemList_.at(selected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+                        subMenu_=false;
+                    }
+                    selected_ = i;
+                    RotateItemToSelected();
+                }
             }
             i++;
         }
@@ -286,9 +298,9 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             {
                 previousSelected_ = selected_;
                 selected_=i;
-                if(SUBMENUCHANGE && subMenu_)
+                if(SUBMENUCHANGE)
                 {
-                    if(previousSelected_ != selected_)
+                    if(previousSelected_ != selected_ && subMenu_)
                     {
                         MenuItemList_.at(previousSelected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
                         subMenu_=false;
@@ -343,7 +355,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         }
         else
         {
-            CenterAfterRotation();
+            RotateItemToSelected();
             if(scrollerTimer_)
                 scrollerTimer_->stop();
             speed_=0;
@@ -477,12 +489,12 @@ void EC_MenuContainer::KineticScroller()
 
     else
     {
-        CenterAfterRotation();
+        RotateItemToSelected();
         scrollerTimer_->stop();
     }
 }
 
-void EC_MenuContainer::CenterAfterRotation()
+void EC_MenuContainer::RotateItemToSelected()
 {
     //Rotate scroller so, that selected component is in the front.
     //Original positions. We want that planars are in those positions after scrolling is over.

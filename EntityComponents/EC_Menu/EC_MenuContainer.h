@@ -166,7 +166,7 @@ private slots:
     EC_Placeable *GetOrCreatePlaceableComponent();
 
     /// Centers menuitems after rotation, so that selectet item is always nearest one.
-    void CenterAfterRotation();
+    void RotateItemToSelected();
 
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();

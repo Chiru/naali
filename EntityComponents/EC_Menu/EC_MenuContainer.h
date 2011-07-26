@@ -68,6 +68,7 @@ class EC_OgreCamera;
 class QListView;
 class QMouseEvent;
 class RaycastResult;
+class EC_RigidBody;
 
 class EC_MenuContainer : public IComponent
 {
@@ -125,6 +126,9 @@ public:
     Q_PROPERTY(bool follow READ getfollow WRITE setfollow);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, follow);
 
+    Q_PROPERTY(bool PhysicsEnabled READ getPhysicsEnabled WRITE setPhysicsEnabled);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, PhysicsEnabled);
+
 public slots:
 
     /// Handles kinetic scrolling for both, menu and submenu items.
@@ -180,6 +184,8 @@ private slots:
     void CreateSubMenu();
 
     Vector3df CalculateItemPosition(float phi, bool isSelected=false);
+
+    EC_RigidBody* GetOrCreateRigidBody(Scene::Entity* entity);
 
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);

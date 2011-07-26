@@ -14,6 +14,7 @@
 
 #include "EC_MenuContainer.h"
 #include "EC_MenuItem.h"
+#include "EC_RigidBody.h"
 #include "Entity.h"
 
 #include <OgreCamera.h>
@@ -47,6 +48,7 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     startingPositionSaved_(false),
     menuIsRotating_(false),
     follow(this, "Follow camera", false),
+    PhysicsEnabled(this, "Physics for menu", false),
     scrollerTimer_Interval(50),
     selected_(0),
     previousSelected_(0),
@@ -132,6 +134,18 @@ void EC_MenuContainer::ActivateMenu()
         EC_MenuItem *menuItem = CreateMenuItem();
         menuItem->SetDataItem(menudatamodel_->GetMenuDataItem(i));
         MenuItemList_.append(menuItem);
+    }
+
+    if(getPhysicsEnabled())
+    {
+        for(int i=0; i<MenuItemList_.count();i++)
+        {
+            EC_RigidBody *rigidbody = GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+            Vector3df zeroVec;
+            zeroVec.set(0,0,0);
+            rigidbody->setangularFactor(zeroVec); // Set zero angular factor so that body stays upright
+
+        }
     }
 
     //Vector3df position = Vector3df(0.0, 0.0, 0.0);
@@ -450,6 +464,15 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         MenuItemList_.append(menuitem);
     }
 
+    if(getPhysicsEnabled())
+    {
+        for(int i=0; i<MenuItemList_.count();i++)
+        {
+            EC_RigidBody *rigidbody = GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+
+        }
+    }
+
     //Counts which layer this is and based on that choose if menu is going to be horizontal or vertical.
     MenuDataItem* tempitem = attachedMenuItem->GetDataItem()->GetParentDataItem();
     menulayer_ += 1;
@@ -665,6 +688,18 @@ QObject* EC_MenuContainer::GetMenuDataModel()
     }
 }
 
+EC_RigidBody* EC_MenuContainer::GetOrCreateRigidBody(Scene::Entity* entity)
+{
+    IComponent *iComponent = entity->GetOrCreateComponent("EC_RigidBody", AttributeChange::LocalOnly, false).get();
+    EC_RigidBody *rigidbody = dynamic_cast<EC_RigidBody*>(iComponent);
+    rigidbody->setmass(1.0);
+    rigidbody->setgravityEnabled(true);
+    rigidbody->RespectMyAuthority(true);
+    //sceneManager_->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
+
+    return rigidbody;
+}
+
 EC_Placeable *EC_MenuContainer::GetOrCreatePlaceableComponent()
 {
     if (!GetParentEntity())
@@ -682,6 +717,26 @@ void EC_MenuContainer::ComponentRemoved(IComponent *component, AttributeChange::
 
 void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::Type change)
 {
+    if(attribute == &PhysicsEnabled)
+    {
+        if(PhysicsEnabled.Get() == true)
+        {
+            /// \todo add physics to old menuitems
+            for(int i=0;i<MenuItemList_.count();i++)
+            {
+                GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+            }
+        }
+        else
+        {
+            /// \todo remove physics from old menuitems
+            for(int i=0;i<MenuItemList_.count();i++)
+            {
+                MenuItemList_.at(i)->GetParentEntity()->RemoveComponent("EC_RigidBody");
+            }
+        }
+    }
+
     if (attribute == &follow)
     {
         Scene::Entity *parent = GetParentEntity();

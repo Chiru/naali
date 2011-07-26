@@ -139,17 +139,13 @@ void EC_MenuContainer::ActivateMenu()
     for (int i = 0; i < MenuItemList_.count(); i++)
     {
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-//        position.x = radius_ * cos(phi);
-//        position.z = radius_ * sin(phi);
-
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         //LogInfo(ToString(position));
         //LogInfo("Phi: " + ToString(phi));
+
         menuitem->setphi(phi);
         CalculateItemPosition(menuitem);
-        //menuitem->SetMenuItemPosition(position);
         menuitem->SetMenuItemVisible();
-
     }
 }
 
@@ -346,9 +342,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 while(!itemFound && i<MenuItemList_.count())
                 {
                     if(result->entity_ == MenuItemList_.at(i)->GetParentEntity())
-                    {
                         itemFound = true;
-                    }
                     else
                         i++;
                 }
@@ -476,11 +470,17 @@ void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
     Vector3df position = Vector3df(0.0,0.0,0.0);
     float phi = itemPtr->getphi();
 
-    if(menulayer_%2!=0)
-        position.x = radius_ * cos(phi) + item_offset_;
-    else
-        position.y = radius_ * cos(phi) - item_offset_;
     position.z = radius_ * sin(phi);
+    if(menulayer_%2!=0)
+    {
+        position.x = radius_ * cos(phi) + item_offset_;
+        position.y = -0.2*position.z;
+    }
+    else
+    {
+        position.y = radius_ * cos(phi) - item_offset_;
+        position.x = -0.2*position.z;
+    }
 
     itemPtr->SetMenuItemPosition(position);
 }

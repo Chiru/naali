@@ -8,7 +8,7 @@ engine.ImportExtension("qt.network");
 
 engine.IncludeFile("jsmodules/lib/class.js");
 engine.IncludeFile("jsmodules/lib/json2.js");
-engine.IncludeFile("jsmodules/startup/LoginScn.js");
+engine.IncludeFile("jsmodules/startup/LoginScreen.js");
 
 var iconRefresh = new QIcon("./data/ui/images/browser/refresh.png");
 var iconStop = new QIcon("./data/ui/images/browser/stop.png");

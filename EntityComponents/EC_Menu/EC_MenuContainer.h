@@ -98,19 +98,23 @@ private:
     bool subMenu_;
     bool subMenuIsScrolling;
     bool startingPositionSaved_;
+    bool menuIsRotating_;
 
     float speed_;
     float radius_;
     float item_offset_;
     float subMenuRadius_;
+    float rotationDirection_;
     InputContextPtr input_;
     int selected_;
     int previousSelected_;
     int subMenuItemSelected_;
     int menulayer_;
+    int itemToRotate_;
 
     /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;
+    QTimer *rotatingTimer_;
     int scrollerTimer_Interval;
 
 public:
@@ -125,6 +129,8 @@ public slots:
 
     /// Handles kinetic scrolling for both, menu and submenu items.
     void KineticScroller();
+
+    void RotatingMenu();
 
     /// Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);

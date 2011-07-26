@@ -93,6 +93,8 @@ public slots:
 
     MenuDataItem* GetDataItem();
 
+    Vector3df GetMenuItemPosition();
+
     //! Setter for entity position
     void SetMenuItemPosition(Vector3df position);
 

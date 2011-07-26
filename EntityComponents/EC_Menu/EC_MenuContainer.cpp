@@ -45,22 +45,28 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     subMenu_(false),
     subMenuIsScrolling(false),
     startingPositionSaved_(false),
+    menuIsRotating_(false),
     follow(this, "Follow camera", false),
+    scrollerTimer_Interval(50),
     selected_(0),
     previousSelected_(0),
     subMenuItemSelected_(0),
+    itemToRotate_(0),
     menulayer_(1),
     subMenuRadius_(0.0),
     radius_(0.0),
+    rotationDirection_(0.0),
     item_offset_(0.0)
 {
     scrollerTimer_ = new QTimer();
+    rotatingTimer_ = new QTimer();
 
     // Connect signals from IComponent
 
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)),
-            SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
+    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
+
+    QObject::connect(rotatingTimer_, SIGNAL(timeout()), this, SLOT(RotatingMenu()));
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
 
@@ -96,6 +102,7 @@ EC_MenuContainer::~EC_MenuContainer()
     }
 
     SAFE_DELETE(scrollerTimer_);
+    SAFE_DELETE(rotatingTimer_);
     SAFE_DELETE(menudatamodel_);
 }
 
@@ -119,7 +126,7 @@ void EC_MenuContainer::PrepareMenuContainer(float radius, MenuDataModel *parent)
 
 void EC_MenuContainer::ActivateMenu()
 {
-    LogInfo("ActivateMenu()");
+    //LogInfo("ActivateMenu()");
     for(int i=0; i<menudatamodel_->GetNumberOfDataItems();i++)
     {
         EC_MenuItem *menuItem = CreateMenuItem();
@@ -261,19 +268,8 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             {
                 menuClicked_ = true;
                 //to stop scrolling when clicked
-                if(speed_!=0)
-                    speed_ = 0;
+                speed_ = 0;
 
-                else if(i != selected_)
-                {
-                    if(subMenu_)
-                    {
-                        MenuItemList_.at(selected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
-                        subMenu_=false;
-                    }
-                    selected_ = i;
-                    RotateItemToSelected();
-                }
             }
             i++;
         }
@@ -338,11 +334,53 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 else
                     CreateSubMenu();
             }
+            else
+            {
+                if(subMenu_)
+                {
+                    MenuItemList_.at(selected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+                    subMenu_=false;
+                }
+                int i=0;
+                bool itemFound = false;
+                while(!itemFound && i<MenuItemList_.count())
+                {
+                    if(result->entity_ == MenuItemList_.at(i)->GetParentEntity())
+                    {
+                        itemFound = true;
+                    }
+                    else
+                        i++;
+                }
+                if(itemFound)
+                {
+                    if(menulayer_%2!=0)
+                    {
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().x>=0)
+                            rotationDirection_=-0.1;
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x<=0)
+                            rotationDirection_=0.1;
+                    }
+                    else
+                    {
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().z>=0)
+                            rotationDirection_=0.1;
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().z<=0)
+                            rotationDirection_=-0.1;
+                    }
+                    itemToRotate_ = i;
+                    rotatingTimer_->setInterval(scrollerTimer_Interval);
+                    rotatingTimer_->start();
+                    menuIsRotating_ = true;
+                    //RotateItemToSelected();
+
+                    itemFound = false;
+                }
+            }
         }
 
-        if(speed_>3 || speed_<-3)
+        else if(speed_>3 || speed_<-3)
         {
-            scrollerTimer_Interval=50;
             //LogInfo(ToString(speed_));
             if(subMenu_clicked_)
                 subMenuIsScrolling = true;
@@ -353,7 +391,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 scrollerTimer_->start();
             }
         }
-        else
+        else if(!menuIsRotating_)
         {
             RotateItemToSelected();
             if(scrollerTimer_)
@@ -449,7 +487,7 @@ void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
 
 void EC_MenuContainer::KineticScroller()
 {
-    if(speed_!=0)
+    if(speed_!=0 /*&& !menuIsRotating_*/)
     {
         for(int i=0; i<MenuItemList_.count(); i++)
         {
@@ -492,6 +530,33 @@ void EC_MenuContainer::KineticScroller()
         RotateItemToSelected();
         scrollerTimer_->stop();
     }
+}
+
+void EC_MenuContainer::RotatingMenu()
+{
+    if(menuIsRotating_)
+    {
+        for(int i=0; i<MenuItemList_.count(); i++)
+        {
+            float phi = MenuItemList_.at(i)->getphi() - rotationDirection_;
+            MenuItemList_.at(i)->setphi(phi);
+            //LogInfo("i: "+ToString(i)+" phi: "+ToString(phi)+" itemphi: "+ToString(MenuItemList_.at(i)->getphi()));
+            CalculateItemPosition(MenuItemList_.at(i));
+            if(Ogre::Math::Sin(phi) > 0.950)
+            {
+                previousSelected_ = selected_;
+                selected_ = i;
+            }
+            if(selected_ == itemToRotate_)
+            {
+                menuIsRotating_ = false;
+                rotatingTimer_->stop();
+                RotateItemToSelected();
+            }
+        }
+    }
+    else
+        RotateItemToSelected();
 }
 
 void EC_MenuContainer::RotateItemToSelected()

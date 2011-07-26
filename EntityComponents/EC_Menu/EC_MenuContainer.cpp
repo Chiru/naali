@@ -144,7 +144,7 @@ void EC_MenuContainer::ActivateMenu()
         //LogInfo("Phi: " + ToString(phi));
 
         menuitem->setphi(phi);
-        CalculateItemPosition(menuitem);
+        menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
         menuitem->SetMenuItemVisible();
     }
 }
@@ -170,12 +170,12 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
     //Set menuItem positions in circle.
     for(int i = 0; i < menuData.count(); i++)
     {
-        EC_MenuItem *menuItem = CreateMenuItem();
-        if(menuItem)
+        EC_MenuItem *menuitem = CreateMenuItem();
+        if(menuitem)
         {
             phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) + ( 0.5*Ogre::Math::PI);
-            menuItem->setphi(phi);
-            CalculateItemPosition(menuItem);
+            menuitem->setphi(phi);
+            menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
 
             //hardcoded for now.. first item in every layout is "title" and rest of them are submenu items.
             /// \todo redesign this to support third data layer.
@@ -189,7 +189,7 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
                 LogError("Failed to set data for menu item!");
             */
             //LogInfo("Items in submenu " + ToString(i) + ": " + ToString(MenuData_.at(i)->layout()->count()));
-            MenuItemList_.append(menuItem);
+            MenuItemList_.append(menuitem);
 
         }
         else
@@ -284,7 +284,15 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
             MenuItemList_.at(i)->setphi(phi);
             //Next position for menu components.
-            CalculateItemPosition(MenuItemList_.at(i));
+            if(i != selected_)
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+            else
+            {
+                //offset for selected item to popup from other items.
+
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
+            }
+
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
@@ -460,15 +468,15 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         menuitem->setphi(phi);
-        CalculateItemPosition(menuitem);
+        menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
         menuitem->SetMenuItemVisible();
     }
 }
 
-void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
+Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
 {
+    Vector3df selectedOffset = Vector3df(-1,0.0,1.5);
     Vector3df position = Vector3df(0.0,0.0,0.0);
-    float phi = itemPtr->getphi();
 
     position.z = radius_ * sin(phi);
     if(menulayer_%2!=0)
@@ -482,7 +490,13 @@ void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
         position.x = -0.2*position.z;
     }
 
-    itemPtr->SetMenuItemPosition(position);
+    if(isSelected)
+    {
+        position+=selectedOffset;
+        return position;
+    }
+    else
+        return position;
 }
 
 void EC_MenuContainer::KineticScroller()
@@ -493,7 +507,10 @@ void EC_MenuContainer::KineticScroller()
         {
             float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
             MenuItemList_.at(i)->setphi(phi);
-            CalculateItemPosition(MenuItemList_.at(i));
+            if(i!=selected_)
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+            else
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
@@ -541,12 +558,16 @@ void EC_MenuContainer::RotatingMenu()
             float phi = MenuItemList_.at(i)->getphi() - rotationDirection_;
             MenuItemList_.at(i)->setphi(phi);
             //LogInfo("i: "+ToString(i)+" phi: "+ToString(phi)+" itemphi: "+ToString(MenuItemList_.at(i)->getphi()));
-            CalculateItemPosition(MenuItemList_.at(i));
+
             if(Ogre::Math::Sin(phi) > 0.950)
             {
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi,true));
                 previousSelected_ = selected_;
                 selected_ = i;
             }
+            else
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+
             if(selected_ == itemToRotate_)
             {
                 menuIsRotating_ = false;
@@ -574,7 +595,7 @@ void EC_MenuContainer::RotateItemToSelected()
         /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
 
         MenuItemList_.at(selected_)->setphi(phi);
-        CalculateItemPosition(MenuItemList_.at(selected_));
+        MenuItemList_.at(selected_)->SetMenuItemPosition(CalculateItemPosition(phi, true));
 
         //LogInfo("Selected planar: " + ToString(selected_));
         int j = selected_;
@@ -586,7 +607,7 @@ void EC_MenuContainer::RotateItemToSelected()
 
             phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
             MenuItemList_.at(j)->setphi(phi);
-            CalculateItemPosition(MenuItemList_.at(j));
+            MenuItemList_.at(j)->SetMenuItemPosition(CalculateItemPosition(phi));
         }
     }
 }

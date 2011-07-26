@@ -179,7 +179,7 @@ private slots:
 
     void CreateSubMenu();
 
-    void CalculateItemPosition(EC_MenuItem* itemPtr);
+    Vector3df CalculateItemPosition(float phi, bool isSelected=false);
 
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);

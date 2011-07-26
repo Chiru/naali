@@ -8,7 +8,7 @@ engine.ImportExtension("qt.network");
 
 engine.IncludeFile("jsmodules/lib/class.js");
 engine.IncludeFile("jsmodules/lib/json2.js");
-engine.IncludeFile("jsmodules/startup/LoginScreen.js");
+engine.IncludeFile("jsmodules/startup/LoginScn.js");
 
 var iconRefresh = new QIcon("./data/ui/images/browser/refresh.png");
 var iconStop = new QIcon("./data/ui/images/browser/stop.png");
@@ -330,9 +330,11 @@ var BrowserManager = Class.extend
         if (p_.tabs.currentIndex > 1)
         {
             var index = p_.tabs.currentIndex;
-            p_.connected[index - 2] = false;
-            //p_.refreshSqueezer(index);
-            //p_.onTabIndexChanged(p_.tabs.currentIndex);
+            if (p_.connected[index -2])
+            {
+                p_.connected[index - 2] = false;
+                p_.onTabCloseRequest(index);
+            }
         }
 
         
@@ -622,7 +624,10 @@ var BrowserManager = Class.extend
             p_.tabs.currentIndex = 0;
             p_.onTabIndexChanged(p_.tabs.currentIndex);
             if (p_.connected[index-2] == true)
+            {
+                p_.connected[index-2] = false;
                 client.Logout(false, client.getActiveConnection());
+            }
             p_.connected.splice(index-2,1);
             p_.clientTabOrderList.splice(index-2,1);
             p_.tabs.removeTab(index);

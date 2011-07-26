@@ -68,6 +68,7 @@ class EC_OgreCamera;
 class QListView;
 class QMouseEvent;
 class RaycastResult;
+class EC_RigidBody;
 
 class EC_MenuContainer : public IComponent
 {
@@ -98,19 +99,23 @@ private:
     bool subMenu_;
     bool subMenuIsScrolling;
     bool startingPositionSaved_;
+    bool menuIsRotating_;
 
     float speed_;
     float radius_;
     float item_offset_;
     float subMenuRadius_;
+    float rotationDirection_;
     InputContextPtr input_;
     int selected_;
     int previousSelected_;
     int subMenuItemSelected_;
     int menulayer_;
+    int itemToRotate_;
 
     /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;
+    QTimer *rotatingTimer_;
     int scrollerTimer_Interval;
 
 public:
@@ -121,10 +126,15 @@ public:
     Q_PROPERTY(bool follow READ getfollow WRITE setfollow);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, follow);
 
+    Q_PROPERTY(bool PhysicsEnabled READ getPhysicsEnabled WRITE setPhysicsEnabled);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, PhysicsEnabled);
+
 public slots:
 
     /// Handles kinetic scrolling for both, menu and submenu items.
     void KineticScroller();
+
+    void RotatingMenu();
 
     /// Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
@@ -166,14 +176,16 @@ private slots:
     EC_Placeable *GetOrCreatePlaceableComponent();
 
     /// Centers menuitems after rotation, so that selectet item is always nearest one.
-    void CenterAfterRotation();
+    void RotateItemToSelected();
 
     /// Sets MenuContainer's position in front of camera.
     void SetMenuContainerPosition();
 
     void CreateSubMenu();
 
-    void CalculateItemPosition(EC_MenuItem* itemPtr);
+    Vector3df CalculateItemPosition(float phi, bool isSelected=false);
+
+    EC_RigidBody* GetOrCreateRigidBody(Scene::Entity* entity);
 
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);

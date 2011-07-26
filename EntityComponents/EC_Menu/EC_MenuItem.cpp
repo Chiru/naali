@@ -89,6 +89,11 @@ MenuDataItem* EC_MenuItem::GetDataItem()
     return itemdata_;
 }
 
+Vector3df EC_MenuItem::GetMenuItemPosition()
+{
+    return GetOrCreatePlaceableComponent()->GetPosition();
+}
+
 void EC_MenuItem::SetMenuItemMesh(QString meshref, QStringList materials)
 {
     meshreference_=meshref;

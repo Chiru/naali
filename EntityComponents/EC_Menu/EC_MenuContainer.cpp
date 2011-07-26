@@ -14,6 +14,7 @@
 
 #include "EC_MenuContainer.h"
 #include "EC_MenuItem.h"
+#include "EC_RigidBody.h"
 #include "Entity.h"
 
 #include <OgreCamera.h>
@@ -45,22 +46,29 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     subMenu_(false),
     subMenuIsScrolling(false),
     startingPositionSaved_(false),
+    menuIsRotating_(false),
     follow(this, "Follow camera", false),
+    PhysicsEnabled(this, "Physics for menu", false),
+    scrollerTimer_Interval(50),
     selected_(0),
     previousSelected_(0),
     subMenuItemSelected_(0),
+    itemToRotate_(0),
     menulayer_(1),
     subMenuRadius_(0.0),
     radius_(0.0),
+    rotationDirection_(0.0),
     item_offset_(0.0)
 {
     scrollerTimer_ = new QTimer();
+    rotatingTimer_ = new QTimer();
 
     // Connect signals from IComponent
 
-    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)),
-            SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
+    connect(this, SIGNAL(AttributeChanged(IAttribute*, AttributeChange::Type)), SLOT(AttributeChanged(IAttribute*, AttributeChange::Type)));
     QObject::connect(scrollerTimer_, SIGNAL(timeout()), this, SLOT(KineticScroller()));
+
+    QObject::connect(rotatingTimer_, SIGNAL(timeout()), this, SLOT(RotatingMenu()));
 
     renderer_ = module->GetFramework()->GetService<Foundation::RenderServiceInterface>();
 
@@ -96,6 +104,7 @@ EC_MenuContainer::~EC_MenuContainer()
     }
 
     SAFE_DELETE(scrollerTimer_);
+    SAFE_DELETE(rotatingTimer_);
     SAFE_DELETE(menudatamodel_);
 }
 
@@ -119,7 +128,7 @@ void EC_MenuContainer::PrepareMenuContainer(float radius, MenuDataModel *parent)
 
 void EC_MenuContainer::ActivateMenu()
 {
-    LogInfo("ActivateMenu()");
+    //LogInfo("ActivateMenu()");
     for(int i=0; i<menudatamodel_->GetNumberOfDataItems();i++)
     {
         EC_MenuItem *menuItem = CreateMenuItem();
@@ -127,22 +136,30 @@ void EC_MenuContainer::ActivateMenu()
         MenuItemList_.append(menuItem);
     }
 
+    if(getPhysicsEnabled())
+    {
+        for(int i=0; i<MenuItemList_.count();i++)
+        {
+            EC_RigidBody *rigidbody = GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+            Vector3df zeroVec;
+            zeroVec.set(0,0,0);
+            rigidbody->setangularFactor(zeroVec); // Set zero angular factor so that body stays upright
+
+        }
+    }
+
     //Vector3df position = Vector3df(0.0, 0.0, 0.0);
     float phi;
     for (int i = 0; i < MenuItemList_.count(); i++)
     {
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
-//        position.x = radius_ * cos(phi);
-//        position.z = radius_ * sin(phi);
-
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         //LogInfo(ToString(position));
         //LogInfo("Phi: " + ToString(phi));
-        menuitem->setphi(phi);
-        CalculateItemPosition(menuitem);
-        //menuitem->SetMenuItemPosition(position);
-        menuitem->SetMenuItemVisible();
 
+        menuitem->setphi(phi);
+        menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
+        menuitem->SetMenuItemVisible();
     }
 }
 
@@ -167,12 +184,12 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
     //Set menuItem positions in circle.
     for(int i = 0; i < menuData.count(); i++)
     {
-        EC_MenuItem *menuItem = CreateMenuItem();
-        if(menuItem)
+        EC_MenuItem *menuitem = CreateMenuItem();
+        if(menuitem)
         {
             phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) + ( 0.5*Ogre::Math::PI);
-            menuItem->setphi(phi);
-            CalculateItemPosition(menuItem);
+            menuitem->setphi(phi);
+            menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
 
             //hardcoded for now.. first item in every layout is "title" and rest of them are submenu items.
             /// \todo redesign this to support third data layer.
@@ -186,7 +203,7 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
                 LogError("Failed to set data for menu item!");
             */
             //LogInfo("Items in submenu " + ToString(i) + ": " + ToString(MenuData_.at(i)->layout()->count()));
-            MenuItemList_.append(menuItem);
+            MenuItemList_.append(menuitem);
 
         }
         else
@@ -262,6 +279,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 menuClicked_ = true;
                 //to stop scrolling when clicked
                 speed_ = 0;
+
             }
             i++;
         }
@@ -280,15 +298,23 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
 
             MenuItemList_.at(i)->setphi(phi);
             //Next position for menu components.
-            CalculateItemPosition(MenuItemList_.at(i));
+            if(i != selected_)
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+            else
+            {
+                //offset for selected item to popup from other items.
+
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
+            }
+
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
                 previousSelected_ = selected_;
                 selected_=i;
-                if(SUBMENUCHANGE && subMenu_)
+                if(SUBMENUCHANGE)
                 {
-                    if(previousSelected_ != selected_)
+                    if(previousSelected_ != selected_ && subMenu_)
                     {
                         MenuItemList_.at(previousSelected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
                         subMenu_=false;
@@ -326,11 +352,51 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 else
                     CreateSubMenu();
             }
+            else
+            {
+                if(subMenu_)
+                {
+                    MenuItemList_.at(selected_)->GetParentEntity()->RemoveComponent("EC_MenuContainer");
+                    subMenu_=false;
+                }
+                int i=0;
+                bool itemFound = false;
+                while(!itemFound && i<MenuItemList_.count())
+                {
+                    if(result->entity_ == MenuItemList_.at(i)->GetParentEntity())
+                        itemFound = true;
+                    else
+                        i++;
+                }
+                if(itemFound)
+                {
+                    if(menulayer_%2!=0)
+                    {
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().x>=0)
+                            rotationDirection_=-0.1;
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x<=0)
+                            rotationDirection_=0.1;
+                    }
+                    else
+                    {
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().z>=0)
+                            rotationDirection_=0.1;
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().z<=0)
+                            rotationDirection_=-0.1;
+                    }
+                    itemToRotate_ = i;
+                    rotatingTimer_->setInterval(scrollerTimer_Interval);
+                    rotatingTimer_->start();
+                    menuIsRotating_ = true;
+                    //RotateItemToSelected();
+
+                    itemFound = false;
+                }
+            }
         }
 
-        if(speed_>3 || speed_<-3)
+        else if(speed_>3 || speed_<-3)
         {
-            scrollerTimer_Interval=50;
             //LogInfo(ToString(speed_));
             if(subMenu_clicked_)
                 subMenuIsScrolling = true;
@@ -341,9 +407,9 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 scrollerTimer_->start();
             }
         }
-        else
+        else if(!menuIsRotating_)
         {
-            CenterAfterRotation();
+            RotateItemToSelected();
             if(scrollerTimer_)
                 scrollerTimer_->stop();
             speed_=0;
@@ -398,6 +464,15 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         MenuItemList_.append(menuitem);
     }
 
+    if(getPhysicsEnabled())
+    {
+        for(int i=0; i<MenuItemList_.count();i++)
+        {
+            EC_RigidBody *rigidbody = GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+
+        }
+    }
+
     //Counts which layer this is and based on that choose if menu is going to be horizontal or vertical.
     MenuDataItem* tempitem = attachedMenuItem->GetDataItem()->GetParentDataItem();
     menulayer_ += 1;
@@ -416,34 +491,49 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         menuitem->setphi(phi);
-        CalculateItemPosition(menuitem);
+        menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
         menuitem->SetMenuItemVisible();
     }
 }
 
-void EC_MenuContainer::CalculateItemPosition(EC_MenuItem* itemPtr)
+Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
 {
+    Vector3df selectedOffset = Vector3df(-1,0.0,1.5);
     Vector3df position = Vector3df(0.0,0.0,0.0);
-    float phi = itemPtr->getphi();
 
-    if(menulayer_%2!=0)
-        position.x = radius_ * cos(phi) + item_offset_;
-    else
-        position.y = radius_ * cos(phi) - item_offset_;
     position.z = radius_ * sin(phi);
+    if(menulayer_%2!=0)
+    {
+        position.x = radius_ * cos(phi) + item_offset_;
+        position.y = -0.2*position.z;
+    }
+    else
+    {
+        position.y = radius_ * cos(phi) - item_offset_;
+        position.x = -0.2*position.z;
+    }
 
-    itemPtr->SetMenuItemPosition(position);
+    if(isSelected)
+    {
+        position+=selectedOffset;
+        return position;
+    }
+    else
+        return position;
 }
 
 void EC_MenuContainer::KineticScroller()
 {
-    if(speed_!=0)
+    if(speed_!=0 /*&& !menuIsRotating_*/)
     {
         for(int i=0; i<MenuItemList_.count(); i++)
         {
             float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
             MenuItemList_.at(i)->setphi(phi);
-            CalculateItemPosition(MenuItemList_.at(i));
+            if(i!=selected_)
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+            else
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
 
             if(Ogre::Math::Sin(phi) > 0.950)
             {
@@ -477,12 +567,43 @@ void EC_MenuContainer::KineticScroller()
 
     else
     {
-        CenterAfterRotation();
+        RotateItemToSelected();
         scrollerTimer_->stop();
     }
 }
 
-void EC_MenuContainer::CenterAfterRotation()
+void EC_MenuContainer::RotatingMenu()
+{
+    if(menuIsRotating_)
+    {
+        for(int i=0; i<MenuItemList_.count(); i++)
+        {
+            float phi = MenuItemList_.at(i)->getphi() - rotationDirection_;
+            MenuItemList_.at(i)->setphi(phi);
+            //LogInfo("i: "+ToString(i)+" phi: "+ToString(phi)+" itemphi: "+ToString(MenuItemList_.at(i)->getphi()));
+
+            if(Ogre::Math::Sin(phi) > 0.950)
+            {
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi,true));
+                previousSelected_ = selected_;
+                selected_ = i;
+            }
+            else
+                MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
+
+            if(selected_ == itemToRotate_)
+            {
+                menuIsRotating_ = false;
+                rotatingTimer_->stop();
+                RotateItemToSelected();
+            }
+        }
+    }
+    else
+        RotateItemToSelected();
+}
+
+void EC_MenuContainer::RotateItemToSelected()
 {
     //Rotate scroller so, that selected component is in the front.
     //Original positions. We want that planars are in those positions after scrolling is over.
@@ -497,7 +618,7 @@ void EC_MenuContainer::CenterAfterRotation()
         /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
 
         MenuItemList_.at(selected_)->setphi(phi);
-        CalculateItemPosition(MenuItemList_.at(selected_));
+        MenuItemList_.at(selected_)->SetMenuItemPosition(CalculateItemPosition(phi, true));
 
         //LogInfo("Selected planar: " + ToString(selected_));
         int j = selected_;
@@ -509,7 +630,7 @@ void EC_MenuContainer::CenterAfterRotation()
 
             phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
             MenuItemList_.at(j)->setphi(phi);
-            CalculateItemPosition(MenuItemList_.at(j));
+            MenuItemList_.at(j)->SetMenuItemPosition(CalculateItemPosition(phi));
         }
     }
 }
@@ -567,6 +688,18 @@ QObject* EC_MenuContainer::GetMenuDataModel()
     }
 }
 
+EC_RigidBody* EC_MenuContainer::GetOrCreateRigidBody(Scene::Entity* entity)
+{
+    IComponent *iComponent = entity->GetOrCreateComponent("EC_RigidBody", AttributeChange::LocalOnly, false).get();
+    EC_RigidBody *rigidbody = dynamic_cast<EC_RigidBody*>(iComponent);
+    rigidbody->setmass(1.0);
+    rigidbody->setgravityEnabled(true);
+    rigidbody->RespectMyAuthority(true);
+    //sceneManager_->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
+
+    return rigidbody;
+}
+
 EC_Placeable *EC_MenuContainer::GetOrCreatePlaceableComponent()
 {
     if (!GetParentEntity())
@@ -584,6 +717,26 @@ void EC_MenuContainer::ComponentRemoved(IComponent *component, AttributeChange::
 
 void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::Type change)
 {
+    if(attribute == &PhysicsEnabled)
+    {
+        if(PhysicsEnabled.Get() == true)
+        {
+            /// \todo add physics to old menuitems
+            for(int i=0;i<MenuItemList_.count();i++)
+            {
+                GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
+            }
+        }
+        else
+        {
+            /// \todo remove physics from old menuitems
+            for(int i=0;i<MenuItemList_.count();i++)
+            {
+                MenuItemList_.at(i)->GetParentEntity()->RemoveComponent("EC_RigidBody");
+            }
+        }
+    }
+
     if (attribute == &follow)
     {
         Scene::Entity *parent = GetParentEntity();

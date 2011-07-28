@@ -143,6 +143,7 @@ void KristalliProtocolModule::Initialize()
 	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "sctp")
 	    defaultTransport = kNet::SocketOverSCTP;
 #else
+    LogInfo("SCTP is not supported. Fallbacking to UDP");
     defaultTransport = kNet::SocketOverUDP;
 #endif
 

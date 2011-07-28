@@ -94,8 +94,12 @@ bool Server::Start(unsigned short port)
 
         // Store current port and protocol
         current_port_ = (int)port;
-	current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : (transportLayer == kNet::SocketOverTCP) ? "tcp" : "sctp";
 
+#ifdef KNET_HAS_SCTP
+	current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : (transportLayer == kNet::SocketOverTCP) ? "tcp" : "sctp";
+#else
+        current_protocol_ = (transportLayer == kNet::SocketOverUDP) ? "udp" : "tcp";
+#endif
         // Create the default server scene
         /// \todo Should be not hard coded like this. Give some unique id (uuid perhaps) that could be returned to the client to make the corresponding named scene in client?
         // SyncManager is registered to scene after scene creation via signaling.

@@ -608,7 +608,14 @@ void Client::printConnections()
             temp = propertiesIterator.value();
             QString address = temp["address"];
             QString port = temp["port"];
-            QString protocol = temp["protocol"];
+            QString protocol;
+
+#ifdef KNET_HAS_SCTP
+            protocol = temp["protocol"];
+#else
+            protocol = "udp";   //If SCTP is not supported the fallback transport is UDP
+#endif
+
             TundraLogicModule::LogInfo("[" + ToString(counter) + "]: " + address.toStdString() + ":" + port.toStdString() + ":" + protocol.toStdString());
             counter++;
         }

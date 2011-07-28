@@ -138,8 +138,14 @@ void KristalliProtocolModule::Initialize()
 	    defaultTransport = kNet::SocketOverTCP;
         if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "udp")
             defaultTransport = kNet::SocketOverUDP;
+
+#ifdef KNET_HAS_SCTP
 	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "sctp")
 	    defaultTransport = kNet::SocketOverSCTP;
+#else
+    defaultTransport = kNet::SocketOverUDP;
+#endif
+
     }
 }
 
@@ -299,8 +305,11 @@ void KristalliProtocolModule::PerformConnection()
     // For TCP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(false);
+
+#ifdef KNET_HAS_SCTP
     if (serverConnection->GetSocket() && serverConnection->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
         serverConnection->GetSocket()->SetNaglesAlgorithmEnabled(true);
+#endif
 }
 
 void KristalliProtocolModule::Disconnect()
@@ -366,9 +375,11 @@ void KristalliProtocolModule::NewConnectionEstablished(kNet::MessageConnection *
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(false);
 
-    // For SCTP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
+#ifdef KNET_HAS_SCTP
+    // For SCTP mode sockets, set the SCTP_NODELAY option to improve latency for the messages we send.
     if (source->GetSocket() && source->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
         source->GetSocket()->SetNaglesAlgorithmEnabled(true);
+#endif
 
     LogInfo("User connected from " + source->RemoteEndPoint().ToString() + ", connection ID " + ToString((int)connection->userID));
     
@@ -569,9 +580,11 @@ void KristalliProtocolModule::PerformReconnection(QMutableMapIterator<unsigned s
     if (iterator.value()->GetSocket() && iterator.value()->GetSocket()->TransportLayer() == kNet::SocketOverTCP)
         iterator.value()->GetSocket()->SetNaglesAlgorithmEnabled(false);
 
+#ifdef KNET_HAS_SCTP
     // For SCTP mode sockets, set the TCP_NODELAY option to improve latency for the messages we send.
     if (iterator.value()->GetSocket() && iterator.value()->GetSocket()->TransportLayer() == kNet::SocketOverSCTP)
         iterator.value()->GetSocket()->SetNaglesAlgorithmEnabled(true);
+#endif
 }
 
 void KristalliProtocolModule::Disconnect(bool fail, unsigned short con)

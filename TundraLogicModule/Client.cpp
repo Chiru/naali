@@ -119,8 +119,15 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
         transportLayer = kNet::SocketOverTCP;
     else if (protocol.toLower() == "udp")
         transportLayer = kNet::SocketOverUDP;
+
+#ifdef KNET_HAS_SCTP
     else if (protocol.toLower() == "sctp")
 	transportLayer = kNet::SocketOverSCTP;
+#else
+    transportLayer = kNet::SocketOverUDP;
+#endif
+
+
     Login(address, port, transportLayer);
 }
 

@@ -136,17 +136,17 @@ void KristalliProtocolModule::Initialize()
     {
 	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "tcp")
 	    defaultTransport = kNet::SocketOverTCP;
-        if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "udp")
+        else if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "udp")
             defaultTransport = kNet::SocketOverUDP;
-
-#ifdef KNET_HAS_SCTP
-	if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "sctp")
-	    defaultTransport = kNet::SocketOverSCTP;
-#else
-    LogInfo("SCTP is not supported. Fallbacking to UDP");
-    defaultTransport = kNet::SocketOverUDP;
-#endif
-
+        else if (QString(options["protocol"].as<std::string>().c_str()).trimmed().toLower() == "sctp")
+        {
+            #ifdef KNET_HAS_SCTP
+                        defaultTransport = kNet::SocketOverSCTP;
+            #else
+                        LogInfo("SCTP not supported! Fallbacking to UDP!");
+                        defaultTransport = kNet::SocketOverUDP;
+            #endif
+        }
     }
 }
 

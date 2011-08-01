@@ -119,13 +119,15 @@ void Client::Login(const QString& address, unsigned short port, const QString& u
         transportLayer = kNet::SocketOverTCP;
     else if (protocol.toLower() == "udp")
         transportLayer = kNet::SocketOverUDP;
-
-#ifdef KNET_HAS_SCTP
     else if (protocol.toLower() == "sctp")
-	transportLayer = kNet::SocketOverSCTP;
-#else
-    transportLayer = kNet::SocketOverUDP;
-#endif
+    {
+        #ifdef KNET_HAS_SCTP
+                transportLayer = kNet::SocketOverSCTP;
+        #else
+                TundraLogicModule::LogInfo("SCTP not supported! Fallbacking to UDP!");
+                transportLayer = kNet::SocketOverUDP;
+        #endif
+    }
 
 
     Login(address, port, transportLayer);
@@ -608,7 +610,14 @@ void Client::printConnections()
             temp = propertiesIterator.value();
             QString address = temp["address"];
             QString port = temp["port"];
-            QString protocol = temp["protocol"];
+            QString protocol;
+
+#ifdef KNET_HAS_SCTP
+            protocol = temp["protocol"];
+#else
+            protocol = "udp";   //If SCTP is not supported the fallback transport is UDP
+#endif
+
             TundraLogicModule::LogInfo("[" + ToString(counter) + "]: " + address.toStdString() + ":" + port.toStdString() + ":" + protocol.toStdString());
             counter++;
         }

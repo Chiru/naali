@@ -39,6 +39,7 @@ export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
 private_ogre=false
+build_valgrind=true
 
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
@@ -47,6 +48,9 @@ if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         fi
         if [ x$private_ogre != xtrue ]; then
             more="$more libogre-dev"
+        fi
+        if [ x$build_valgrind != xfalse ]; then
+            more="$more libc6 libc6-dbg valgrind"
         fi
 	sudo aptitude -y install scons python-dev libogg-dev libvorbis-dev \
 	 libopenjpeg-dev libcurl4-gnutls-dev libexpat1-dev libphonon-dev \
@@ -140,6 +144,14 @@ else
     cd knet
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt
+    # If valgrind build: Change connection timeout to 3min.
+    if [ x$build_valgrind != xtrue ]; then
+        sed -e "s/180.f/30.f/" < src/MessageConnection.cpp > x
+        mv x src/MessageConnection.cpp
+    else
+        sed -e "s/30.f/180.f/" < src/MessageConnection.cpp > x
+        mv x src/MessageConnection.cpp
+    fi
     cmake . -DCMAKE_BUILD_TYPE=Debug
     make -j $nprocs
     cp lib/libkNet.so $prefix/lib/
@@ -278,10 +290,16 @@ if test "$1" = "--depsonly"; then
     exit 0
 fi
 
+if [ x$build_valgrind != xtrue ]; then
+    options="-O -g"
+else
+    options="-O0 -fno-inline -Wall -g"
+fi
+
 cd $viewer
 cat > ccache-g++-wrapper <<EOF
 #!/bin/sh
-exec ccache g++ -O -g \$@
+exec ccache g++ $options \$@
 EOF
 chmod +x ccache-g++-wrapper
 NAALI_DEP_PATH=$prefix cmake -DCMAKE_CXX_COMPILER="$viewer/ccache-g++-wrapper" .

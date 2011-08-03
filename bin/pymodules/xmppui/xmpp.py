@@ -21,6 +21,8 @@ class xmppUi(Component):
         self.menuToggleAction = PythonQt.QtGui.QAction("XMPP", 0)
         self.menuToggleAction.connect("triggered()", self.menuActionToggled)
         viewMenu = mainWindow.GetMenu("&View")
+        if not viewMenu:
+            viewMenu = mainWindow.AddMenu("&View")
         viewMenu.addAction(self.menuToggleAction)
         
     def menuActionToggled(self):

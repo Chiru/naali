@@ -290,7 +290,7 @@ else
     make -j $nprocs
     mkdir -p $prefix/include/$what
     cp src/*.h $prefix/include/$what
-    cp lib/libqxmpp.a $prefic/lib/
+    cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
 

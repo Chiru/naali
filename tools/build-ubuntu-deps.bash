@@ -59,7 +59,7 @@ if lsb_release -c | egrep -q "lucid|maverick|natty"; then
 	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
 	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev libsctp-dev \
 	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev \
-	 autoconf automake $more
+	 autoconf automake libspeex-dev $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \
@@ -274,6 +274,23 @@ else
     cp *.h $prefix/include/mumbleclient
     cp src/*.h $prefix/include/mumbleclient
     cp libmumbleclient.so $prefix/lib/
+    touch $tags/$what-done
+fi
+
+cd $build
+what=qxmpp
+ver=0.3.0
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    svn checkout http://qxmpp.googlecode.com/svn/tags/qxmpp-$ver $what
+    cd $what
+    qmake
+    make -j $nprocs
+    mkdir -p $prefix/include/$what
+    cp src/*.h $prefix/include/$what
+    cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
 

@@ -19,7 +19,8 @@ export QTDIR=$QTTARGETDIR
 export PATH=$QTDIR/bin:$PATH
 
 #---- Make sure some extra dependencies are present for builds
-sudo aptitude -y install libxv-dev libbluetooth-dev libdbus-1-dev
+sudo aptitude -y install libxv-dev libbluetooth-dev libdbus-1-dev libssl-dev
+sudo apt-get build-dep libqt4-dev
 
 #---- Build QT
 git clone git://gitorious.org/qt/qt.git

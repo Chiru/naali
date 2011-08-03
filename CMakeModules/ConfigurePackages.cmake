@@ -42,6 +42,15 @@ macro (configure_boost)
     sagase_configure_report (BOOST)
 endmacro (configure_boost)
 
+macro (configure_qxmpp)
+    sagase_configure_package (QXMPP
+        NAMES qxmpp
+        COMPONENTS qxmpp speex
+        PREFIXES ${ENV_NAALI_DEP_PATH})
+    sagase_configure_report (QXMPP)
+endmacro (configure_qxmpp)
+
+
 macro (configure_poco)
     sagase_configure_package (POCO 
         NAMES Poco PoCo poco

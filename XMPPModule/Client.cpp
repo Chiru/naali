@@ -58,8 +58,8 @@ namespace XMPP
     void Client::disconnect()
     {
         /// \note check this logic
-        if(xmpp_client_->state() == QXmppClient::ConnectedState)
-            xmpp_client_->disconnectFromServer();
+        //if(xmpp_client_->state() == QXmppClient::ConnectedState) // state() method only available in bleeding edge QXmpp
+        xmpp_client_->disconnectFromServer();
         emit Disconnected();
     }
 

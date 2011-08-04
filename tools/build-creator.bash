@@ -39,6 +39,7 @@ export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
 private_ogre=false
+build_valgrind=false
 
 function build-regular {
     urlbase=$1
@@ -119,6 +120,14 @@ else
     cd knet
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt
+    # If valgrind build: Change connection timeout to 3min.
+    if [ x$build_valgrind != xtrue ]; then
+        sed -e "s/180.f/30.f/" < src/MessageConnection.cpp > x
+        mv x src/MessageConnection.cpp
+    else
+        sed -e "s/30.f/180.f/" < src/MessageConnection.cpp > x
+        mv x src/MessageConnection.cpp
+    fi
     cmake . -DCMAKE_BUILD_TYPE=Debug
     make -j $nprocs
     cp lib/libkNet.so $prefix/lib/
@@ -257,10 +266,28 @@ if test "$1" = "--depsonly"; then
     exit 0
 fi
 
+if [ x$build_valgrind != xtrue ]; then
+    options="-O -g"
+else
+    options="-O0 -fno-inline -Wall -g"
+    cd $viewer/bin/
+    cat > ./.valgrindrc <<EOF
+--leak-check=full
+--error-limit=no
+--suppressions=$viewer/bin/supps/gtk_init.supp
+--suppressions=$viewer/bin/supps/libgdk.supp
+--suppressions=$viewer/bin/supps/libgobject.supp
+--suppressions=$viewer/bin/supps/libPython.supp
+--suppressions=$viewer/bin/supps/nVidia-libGL.supp
+--suppressions=$viewer/bin/supps/qt47supp.supp
+--suppressions=$viewer/bin/supps/qtjsc.supp
+EOF
+fi
+
 cd $viewer
 cat > ccache-g++-wrapper <<EOF
 #!/bin/sh
-exec ccache g++ -O -g \$@
+exec ccache g++ $options \$@
 EOF
 chmod +x ccache-g++-wrapper
 NAALI_DEP_PATH=$prefix cmake -DCMAKE_CXX_COMPILER="$viewer/ccache-g++-wrapper" .

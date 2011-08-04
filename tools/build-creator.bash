@@ -270,6 +270,18 @@ if [ x$build_valgrind != xtrue ]; then
     options="-O -g"
 else
     options="-O0 -fno-inline -Wall -g"
+    cd $viewer/bin/
+    cat > ./.valgrindrc <<EOF
+--leak-check=full
+--error-limit=no
+--suppressions=$viewer/bin/supps/gtk_init.supp
+--suppressions=$viewer/bin/supps/libgdk.supp
+--suppressions=$viewer/bin/supps/libgobject.supp
+--suppressions=$viewer/bin/supps/libPython.supp
+--suppressions=$viewer/bin/supps/nVidia-libGL.supp
+--suppressions=$viewer/bin/supps/qt47supp.supp
+--suppressions=$viewer/bin/supps/qtjsc.supp
+EOF
 fi
 
 cd $viewer

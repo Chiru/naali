@@ -26,7 +26,7 @@ AccountManager::~AccountManager()
     SAFE_DELETE(accounts_);
 }
 
-QStringList AccountManager::GetServers()
+QStringList AccountManager::getServers()
 {
     QStringList list;
     QDomElement element = accounts_->documentElement().firstChildElement("account");
@@ -40,7 +40,7 @@ QStringList AccountManager::GetServers()
     return list;
 }
 
-QStringList AccountManager::GetUserJids(QString server)
+QStringList AccountManager::getUserJids(QString server)
 {
     QStringList list;
     QDomElement element = accounts_->documentElement().firstChildElement("account");
@@ -54,7 +54,7 @@ QStringList AccountManager::GetUserJids(QString server)
     return list;
 }
 
-QString AccountManager::GetUserPassword(QString userJid, QString server)
+QString AccountManager::getUserPassword(QString userJid, QString server)
 {
     QDomElement element = accounts_->documentElement().firstChildElement("account");
     while(!element.isNull())
@@ -72,7 +72,7 @@ QString AccountManager::GetUserPassword(QString userJid, QString server)
     return "";
 }
 
-void AccountManager::AddLoginData(QString userJid, QString server, QString password)
+void AccountManager::addLoginData(QString userJid, QString server, QString password)
 {
     if(userJid.isEmpty() || server.isEmpty())
     {

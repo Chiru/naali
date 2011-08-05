@@ -12,11 +12,11 @@
 
 namespace XMPP
 {
-    UserItem::UserItem(const QXmppRosterIq::Item &roster_item) :
+    UserItem::UserItem(const QXmppRosterIq::Item &rosterItem) :
         has_vcard_(false),
         available_(false)
     {
-        bare_jid_ = roster_item.bareJid();
+        bare_jid_ = rosterItem.bareJid();
     }
 
     UserItem::~UserItem()
@@ -31,7 +31,7 @@ namespace XMPP
         if(resources_.size() == 0)
         {
             available_ = false;
-            emit AvailabilityChanged(available_);
+            emit availabilityChanged(available_);
             return;
         }
 
@@ -46,7 +46,7 @@ namespace XMPP
         if(available_ != available)
         {
             available_ = available;
-            emit AvailabilityChanged(available_);
+            emit availabilityChanged(available_);
 
             if(available_)
                 XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability: true");

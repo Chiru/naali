@@ -33,7 +33,7 @@ public:
         QStringList capabilities; // QStringList for script friendliness (scripts don't mix well with enums)
     };
 
-    UserItem(const QXmppRosterIq::Item &roster_item);
+    UserItem(const QXmppRosterIq::Item &rosterItem);
     ~UserItem();
 
     void updateRosterItem(const QXmppRosterIq::Item &item);
@@ -78,7 +78,7 @@ private:
     bool has_vcard_;
 
 signals:
-    void AvailabilityChanged(bool availability);
+    void availabilityChanged(bool availability);
 };
 
 } // end of namespace: XMPP

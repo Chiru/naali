@@ -276,15 +276,18 @@ else
     cat > ./.valgrindrc <<EOF
 --memcheck:leak-check=full
 --memcheck:error-limit=no
---memcheck:log-file=valgrindMemcheck.log
---memcheck:suppressions=$viewer/bin/supps/gtk_init.supp
---memcheck:suppressions=$viewer/bin/supps/libgdk.supp
---memcheck:suppressions=$viewer/bin/supps/libgobject.supp
---memcheck:suppressions=$viewer/bin/supps/libPython.supp
---memcheck:suppressions=$viewer/bin/supps/nVidia-libGL.supp
---memcheck:suppressions=$viewer/bin/supps/qt47supp.supp
---memcheck:suppressions=$viewer/bin/supps/qtjsc.supp
+--memcheck:track-origins=yes
+--memcheck:suppressions=$viewer/bin/valgrind/supps/gtk_init.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libgdk.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libgobject.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libPython.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/nVidia-libGL.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/qt47supp.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/qtjsc.supp
+--memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
+--massif:stacks=yes
 --massif:depth=40
+--smc-check=all
 EOF
 fi
 

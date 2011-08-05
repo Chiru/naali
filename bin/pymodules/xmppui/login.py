@@ -5,7 +5,7 @@ class LoginDialog():
     def __init__(self, accountManager):
         self.visible = False
         self.accountManager = accountManager
-        self.servers = self.accountManager.GetServers()
+        self.servers = self.accountManager.getServers()
     
         self.dialog = PythonQt.QtGui.QDialog()
         self.dialog.setWindowTitle("XMPP Login")
@@ -49,7 +49,7 @@ class LoginDialog():
         self.visible = False
         
     def setUserCompleter(self):
-        self.users = self.accountManager.GetUserJids(self.serverEdit.text)
+        self.users = self.accountManager.getUserJids(self.serverEdit.text)
         self.userCompleter = PythonQt.QtGui.QCompleter(self.users)
         self.userCompleter.setCompletionMode(PythonQt.QtGui.QCompleter.InlineCompletion)
         self.jidEdit.setCompleter(self.userCompleter)

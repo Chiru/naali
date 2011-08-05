@@ -48,20 +48,20 @@ public:
 
 public slots:
     //! Accept call request from Jabber ID
-    void AcceptIncomingCall(QString callerJid);
+    void acceptIncomingCall(QString callerJid);
 
     //! End active voice call
-    void EndCall();
+    void endCall();
 
     //! Set own presence status
     //! \param QString
-    void SetPresence(QString presenceType);
+    void setPresence(QString presenceType);
 
     //! Connect to a XMPP Server, script friendly overload
     //! \param userJid User's Jabber ID
     //! \param userPassword User's password
     //! \param xmppServer XMPP Server (host:port)
-    void Connect(QString userJid, QString userPassword, QString xmppServer);
+    void connectToServer(QString userJid, QString userPassword, QString xmppServer);
 
     //! Get host associated with this connection
     //! \return QString current host (host)
@@ -110,17 +110,17 @@ public slots:
     void setStreamLogging(bool state);
 
 private slots:
-    void HandleIncomingCall(QXmppCall *call);
-    void HandleCallStateChanged(QXmppCall::State state);
-    void HandleMessageReceived(const QXmppMessage &message);
-    void HandlePresenceChanged(const QString& userJid, const QString& resource);
-    void HandlePresenceReceived(const QXmppPresence& presence);
-    void HandleSetPresence(QXmppPresence::Type presenceType);
-    void HandleRosterReceived();
-    void HandleRosterChanged(const QString& userJid);
-    void HandleVCardReceived(const QXmppVCardIq& vcard);
-    void HandleLogMessage(QXmppLogger::MessageType type, const QString& message);
-    void HandleMucInvite(const QString& roomJid, const QString& inviterJid, const QString& reason);
+    void handleIncomingCall(QXmppCall *call);
+    void handleCallStateChanged(QXmppCall::State state);
+    void handleMessageReceived(const QXmppMessage &message);
+    void handlePresenceChanged(const QString& userJid, const QString& resource);
+    void handlePresenceReceived(const QXmppPresence& presence);
+    void handleSetPresence(QXmppPresence::Type presenceType);
+    void handleRosterReceived();
+    void handleRosterChanged(const QString& userJid);
+    void handleVCardReceived(const QXmppVCardIq& vcard);
+    void handleLogMessage(QXmppLogger::MessageType type, const QString& message);
+    void handleMucInvite(const QString& roomJid, const QString& inviterJid, const QString& reason);
 
 private:
     QXmppClient *xmpp_client_;
@@ -140,16 +140,16 @@ private:
 signals:
     //! Signals incoming call from other jabber user,
     //! must be accepted with AcceptIncomingCall(QString CallerJid)
-    void IncomingCall(QString CallerJid);
+    void incomingCall(QString CallerJid);
 
     //! Signals accepted call succesfully started
-    void CallStarted(QString CallerJid);
+    void callStarted(QString CallerJid);
 
     //! Signals active call has ended
-    void CallEnded(QString CallerJid);
+    void callEnded(QString CallerJid);
 
     //! Forwards incoming private message
-    void PrivateMessageReceived(QString UserJid, QString Message);
+    void privateMessageReceived(QString UserJid, QString Message);
 
     //! Forwards incoming multi user chatroom message
     //void mucMessageReceived(QString roomJid, QString userNick, QString message);
@@ -158,20 +158,20 @@ signals:
     void mucInvitationReceived(QString roomJid, QString inviterJid, QString reason);
 
     //! Signals changes in current roster
-    void RosterChanged();
+    void rosterChanged();
 
     //! Signals changes in users presence
     //! Can indicate that capabilities were received
-    void PresenceChanged(QString UserJid);
+    void presenceChanged(QString UserJid);
 
-    void VCardChanged(QString UserJid);
+    void vCardChanged(QString UserJid);
 
     //! Signals disconnect by request
-    void Disconnected();
+    void disconnected();
 
     //! Signals connected status
     //! \note This signal gets emitted when the underlying QXmppClient signals connected state
-    void Connected();
+    void connected();
 
 };
 

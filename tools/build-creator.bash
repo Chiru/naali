@@ -41,7 +41,7 @@ export CCACHE_DIR=$deps/ccache
 private_ogre=false
 # Set build_valgrind true if you want zero optimizations build-options and valgrind installed.
 # Also kNet messageConnection.cpp is modified so that server keepAliveTimeout is 3min instead of 15s.
-build_valgrind=false
+build_valgrind=true
 
 function build-regular {
     urlbase=$1
@@ -284,7 +284,7 @@ else
 --memcheck:suppressions=$viewer/bin/supps/nVidia-libGL.supp
 --memcheck:suppressions=$viewer/bin/supps/qt47supp.supp
 --memcheck:suppressions=$viewer/bin/supps/qtjsc.supp
---massif:depth=40:
+--massif:depth=40
 EOF
 fi
 

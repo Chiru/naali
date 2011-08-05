@@ -325,7 +325,7 @@ else
 --memcheck:suppressions=$viewer/bin/supps/nVidia-libGL.supp
 --memcheck:suppressions=$viewer/bin/supps/qt47supp.supp
 --memcheck:suppressions=$viewer/bin/supps/qtjsc.supp
---massif:depth=40:
+--massif:depth=40
 EOF
 fi
 

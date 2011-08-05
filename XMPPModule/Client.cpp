@@ -22,10 +22,13 @@ namespace XMPP
         framework_(framework),
         xmpp_client_(new QXmppClient()),
         xmpp_call_manager_(new QXmppCallManager()),
+        xmpp_muc_manager_(new QXmppMucManager()),
         log_stream_(false),
         current_call_(0)
     {
         xmpp_client_->addExtension(xmpp_call_manager_);
+        xmpp_client_->addExtension(xmpp_muc_manager_);
+
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         connect(xmpp_client_, SIGNAL(messageReceived(const QXmppMessage&)), this, SLOT(HandleMessageReceived(const QXmppMessage&)));
@@ -39,6 +42,9 @@ namespace XMPP
         connect(&xmpp_client_->rosterManager(), SIGNAL(rosterChanged(const QString&)), this, SLOT(HandleRosterChanged(const QString&)));
         connect(&xmpp_client_->rosterManager(), SIGNAL(presenceChanged(const QString&, const QString&)), this, SLOT(HandlePresenceChanged(const QString&, const QString&)));
 
+
+        bool success = connect(xmpp_muc_manager_, SIGNAL(invitationReceived(QString,QString,QString)), this, SLOT(HandleMucInvite(QString,QString,QString)));
+        Q_ASSERT(success);
 
         connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(const QXmppVCardIq&)), this, SLOT(HandleVCardReceived(const QXmppVCardIq&)));
 
@@ -117,6 +123,29 @@ namespace XMPP
         return users_.keys();
     }
 
+    void Client::HandleMucInvite(const QString &roomJid, const QString &inviterJid, const QString &reason)
+    {
+        XMPPModule::LogInfo("Muc request to join room \"" + roomJid.toStdString() + "\" from: \"" + inviterJid.toStdString() + "\" reason: \"" + reason.toStdString() + "\"");
+        emit mucInvitationReceived(roomJid, inviterJid, reason);
+    }
+
+    QObject* Client::joinRoom(QString roomJid, QString nickname, QString password)
+    {
+        if(muc_rooms_.contains(roomJid))
+            return getRoom(roomJid);
+
+        if(xmpp_muc_manager_->joinRoom(roomJid, nickname, password))
+        {
+            MucRoom *muc_room = new MucRoom(xmpp_muc_manager_, roomJid, nickname, password);
+            muc_rooms_.insert(roomJid, muc_room);
+            return dynamic_cast<QObject*>(muc_room);
+        }
+        else
+        {
+            return 0;
+        }
+    }
+
 
     void Client::AcceptIncomingCall(QString callerJid)
     {
@@ -176,7 +205,39 @@ namespace XMPP
     {
         QString jid = jidToBareJid(message.from());
         QString msg = message.body();
+
+        // Consume GroupChat messages that also get sent here
+        if(message.type() == QXmppMessage::GroupChat)
+        {
+            if(muc_rooms_.size() <= 0)
+                return;
+
+            QString room_jid = message.from().split("/").at(0);
+            QString sender_jid = message.from().split("/").at(1);
+
+            XMPPModule::LogDebug("Group message from room: " + room_jid.toStdString() + " from sender: " + sender_jid.toStdString());
+
+            if(muc_rooms_.contains(room_jid))
+                muc_rooms_[room_jid]->receiveMessage(sender_jid, msg);
+            else
+                XMPPModule::LogDebug("Received message from unknown chatroom: " + room_jid.toStdString());
+
+            return;
+        }
+
         emit PrivateMessageReceived(jid, msg);
+    }
+
+    QStringList Client::getRooms()
+    {
+        return muc_rooms_.keys();
+    }
+
+    QObject* Client::getRoom(QString roomJid)
+    {
+        if(muc_rooms_.contains(roomJid))
+            return dynamic_cast<QObject*>(muc_rooms_[roomJid]);
+        return 0;
     }
 
     void Client::HandlePresenceReceived(const QXmppPresence &presence)

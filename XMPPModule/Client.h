@@ -5,6 +5,7 @@
 
 #include "VoiceCall.h"
 #include "UserItem.h"
+#include "MucRoom.h"
 
 #include "qxmpp/QXmppClient.h"
 #include "qxmpp/QXmppCallManager.h"
@@ -18,6 +19,7 @@
 #include "qxmpp/QXmppVCardIq.h"
 #include "qxmpp/QXmppLogger.h"
 #include "qxmpp/QXmppStanza.h"
+#include "qxmpp/QXmppMucManager.h"
 
 #include <QObject>
 #include <QThread>
@@ -69,9 +71,25 @@ public slots:
     //! \param userJid Jabber ID for the user
     QObject* getUser(QString userJid);
 
+    //! Get multi user chatroom pointer
+    //! \param roomName name of the muc room (room@service)
+    //! \return QObject pointer for room if found, null pointer for room not found
+    QObject* getRoom(QString roomName);
+
+    //! Get available muc rooms
+    //! \return QStringList containing available muc rooms
+    QStringList getRooms();
+
     //! Get current roster
     //! \return QStringList containing known Jabber ID's
     QStringList getRoster();
+
+    //! Join multi user chatroom
+    //! \param roomJid name of the muc room (room@service)
+    //! \param nickname user's nickname in the room
+    //! \param password optional room password
+    //! \return QObject pointer on success (pointer to old room if already joined), null pointer if join unsuccessfull
+    QObject* joinRoom(QString roomJid, QString nickname, QString password = QString());
 
     //! Send message
     //! \param userJid Jabber ID the message is sent to
@@ -102,14 +120,16 @@ private slots:
     void HandleRosterChanged(const QString& userJid);
     void HandleVCardReceived(const QXmppVCardIq& vcard);
     void HandleLogMessage(QXmppLogger::MessageType type, const QString& message);
+    void HandleMucInvite(const QString& roomJid, const QString& inviterJid, const QString& reason);
 
 private:
     QXmppClient *xmpp_client_;
     QXmppCallManager *xmpp_call_manager_;
+    QXmppMucManager *xmpp_muc_manager_;
     QXmppConfiguration *current_configuration_;
     VoiceCall *current_call_;
-    QMap<QString, QXmppRosterIq::Item*> current_roster_;
-    QMap<QString, UserItem*> users_;
+    QMap<QString, UserItem*> users_;    /// \todo do we need to use QMap when UserJid's can be fetched from UserItems?
+    QMap<QString, MucRoom*> muc_rooms_;
     Foundation::Framework* framework_;
     bool log_stream_;
 
@@ -132,7 +152,10 @@ signals:
     void PrivateMessageReceived(QString UserJid, QString Message);
 
     //! Forwards incoming multi user chatroom message
-    void MucMessageReceived(QString mucRoom, QString userNick, QString message);
+    //void mucMessageReceived(QString roomJid, QString userNick, QString message);
+
+    //! Forwards invitation to join multi user chatroom
+    void mucInvitationReceived(QString roomJid, QString inviterJid, QString reason);
 
     //! Signals changes in current roster
     void RosterChanged();

@@ -39,6 +39,8 @@ export CXX="ccache g++"
 export CCACHE_DIR=$deps/ccache
 
 private_ogre=false
+# Set build_valgrind true if you want zero optimizations build-options and valgrind installed.
+# Also kNet messageConnection.cpp is modified so that server keepAliveTimeout is 3min instead of 15s.
 build_valgrind=false
 
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
@@ -313,15 +315,20 @@ else
     options="-O0 -fno-inline -Wall -g"
     cd $viewer/bin/
     cat > ./.valgrindrc <<EOF
---leak-check=full
---error-limit=no
---suppressions=$viewer/bin/supps/gtk_init.supp
---suppressions=$viewer/bin/supps/libgdk.supp
---suppressions=$viewer/bin/supps/libgobject.supp
---suppressions=$viewer/bin/supps/libPython.supp
---suppressions=$viewer/bin/supps/nVidia-libGL.supp
---suppressions=$viewer/bin/supps/qt47supp.supp
---suppressions=$viewer/bin/supps/qtjsc.supp
+--memcheck:leak-check=full
+--memcheck:error-limit=no
+--memcheck:track-origins=yes
+--memcheck:suppressions=$viewer/bin/valgrind/supps/gtk_init.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libgdk.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libgobject.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/libPython.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/nVidia-libGL.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/qt47supp.supp
+--memcheck:suppressions=$viewer/bin/valgrind/supps/qtjsc.supp
+--memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
+--massif:stacks=yes
+--massif:depth=40
+--smc-check=all
 EOF
 fi
 

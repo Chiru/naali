@@ -33,8 +33,8 @@ class xmppUi(Component):
 
     def connectToServer(self):
         self.client = xmpp.newClient(self.loginDialog.serverEdit.text, self.loginDialog.jidEdit.text, self.loginDialog.passwordEdit.text)
-        self.client.connect('PrivateMessageReceived(QString,QString)', self.messageReceived)
-        self.client.connect('Connected()', self.createUserDialog())
+        self.client.connect('privateMessageReceived(QString,QString)', self.messageReceived)
+        self.client.connect('connected()', self.createUserDialog())
         
     def createUserDialog(self):
         self.loginDialog.hideDialog()

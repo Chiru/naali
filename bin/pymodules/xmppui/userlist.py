@@ -32,9 +32,9 @@ class UserDialog():
         self.buttonLayout.addWidget(self.settingsButton)
         self.layout.addLayout(self.buttonLayout)
         
-        self.client.connect('RosterChanged()', self.populateUserList)
-        self.client.connect('PresenceChanged(QString)', self.updateUser)
-        self.client.connect('VCardChanged(QString)', self.updateUser)
+        self.client.connect('rosterChanged()', self.populateUserList)
+        self.client.connect('presenceChanged(QString)', self.updateUser)
+        self.client.connect('vCardChanged(QString)', self.updateUser)
 
     def getUserByName(self, name):
         for user in self.users:
@@ -74,6 +74,7 @@ class User():
         
     def update(self):
         self.fullName = self.userItem.getFullName()
+        print "debug: ", len(self.fullName)
         pixmap = PythonQt.QtGui.QPixmap()
         if not(pixmap.loadFromData(self.userItem.getPhoto())):
             pixmap = PythonQt.QtGui.QPixmap(30,30)

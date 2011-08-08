@@ -85,7 +85,7 @@ QObject* XMPPModule::getAccountManager()
     return 0;
 }
 
-void XMPPModule::HandleClientDisconnect(Client *client)
+void XMPPModule::handleClientDisconnect(Client *client)
 {
     //SAFE_DELETE(client);
 }

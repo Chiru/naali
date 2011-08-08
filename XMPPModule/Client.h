@@ -5,6 +5,7 @@
 
 #include "VoiceCall.h"
 #include "UserItem.h"
+#include "MucRoom.h"
 
 #include "qxmpp/QXmppClient.h"
 #include "qxmpp/QXmppCallManager.h"
@@ -18,6 +19,7 @@
 #include "qxmpp/QXmppVCardIq.h"
 #include "qxmpp/QXmppLogger.h"
 #include "qxmpp/QXmppStanza.h"
+#include "qxmpp/QXmppMucManager.h"
 
 #include <QObject>
 #include <QThread>
@@ -46,20 +48,20 @@ public:
 
 public slots:
     //! Accept call request from Jabber ID
-    void AcceptIncomingCall(QString callerJid);
+    void acceptIncomingCall(QString callerJid);
 
     //! End active voice call
-    void EndCall();
+    void endCall();
 
     //! Set own presence status
     //! \param QString
-    void SetPresence(QString presenceType);
+    void setPresence(QString presenceType);
 
     //! Connect to a XMPP Server, script friendly overload
     //! \param userJid User's Jabber ID
     //! \param userPassword User's password
     //! \param xmppServer XMPP Server (host:port)
-    void Connect(QString userJid, QString userPassword, QString xmppServer);
+    void connectToServer(QString userJid, QString userPassword, QString xmppServer);
 
     //! Get host associated with this connection
     //! \return QString current host (host)
@@ -69,9 +71,25 @@ public slots:
     //! \param userJid Jabber ID for the user
     QObject* getUser(QString userJid);
 
+    //! Get multi user chatroom pointer
+    //! \param roomName name of the muc room (room@service)
+    //! \return QObject pointer for room if found, null pointer for room not found
+    QObject* getRoom(QString roomName);
+
+    //! Get available muc rooms
+    //! \return QStringList containing available muc rooms
+    QStringList getRooms();
+
     //! Get current roster
     //! \return QStringList containing known Jabber ID's
     QStringList getRoster();
+
+    //! Join multi user chatroom
+    //! \param roomJid name of the muc room (room@service)
+    //! \param nickname user's nickname in the room
+    //! \param password optional room password
+    //! \return QObject pointer on success (pointer to old room if already joined), null pointer if join unsuccessfull
+    QObject* joinRoom(QString roomJid, QString nickname, QString password = QString());
 
     //! Send message
     //! \param userJid Jabber ID the message is sent to
@@ -92,24 +110,26 @@ public slots:
     void setStreamLogging(bool state);
 
 private slots:
-    void HandleIncomingCall(QXmppCall *call);
-    void HandleCallStateChanged(QXmppCall::State state);
-    void HandleMessageReceived(const QXmppMessage &message);
-    void HandlePresenceChanged(const QString& userJid, const QString& resource);
-    void HandlePresenceReceived(const QXmppPresence& presence);
-    void HandleSetPresence(QXmppPresence::Type presenceType);
-    void HandleRosterReceived();
-    void HandleRosterChanged(const QString& userJid);
-    void HandleVCardReceived(const QXmppVCardIq& vcard);
-    void HandleLogMessage(QXmppLogger::MessageType type, const QString& message);
+    void handleIncomingCall(QXmppCall *call);
+    void handleCallStateChanged(QXmppCall::State state);
+    void handleMessageReceived(const QXmppMessage &message);
+    void handlePresenceChanged(const QString& userJid, const QString& resource);
+    void handlePresenceReceived(const QXmppPresence& presence);
+    void handleSetPresence(QXmppPresence::Type presenceType);
+    void handleRosterReceived();
+    void handleRosterChanged(const QString& userJid);
+    void handleVCardReceived(const QXmppVCardIq& vcard);
+    void handleLogMessage(QXmppLogger::MessageType type, const QString& message);
+    void handleMucInvite(const QString& roomJid, const QString& inviterJid, const QString& reason);
 
 private:
     QXmppClient *xmpp_client_;
     QXmppCallManager *xmpp_call_manager_;
+    QXmppMucManager *xmpp_muc_manager_;
     QXmppConfiguration *current_configuration_;
     VoiceCall *current_call_;
-    QMap<QString, QXmppRosterIq::Item*> current_roster_;
-    QMap<QString, UserItem*> users_;
+    QMap<QString, UserItem*> users_;    /// \todo do we need to use QMap when UserJid's can be fetched from UserItems?
+    QMap<QString, MucRoom*> muc_rooms_;
     Foundation::Framework* framework_;
     bool log_stream_;
 
@@ -120,35 +140,38 @@ private:
 signals:
     //! Signals incoming call from other jabber user,
     //! must be accepted with AcceptIncomingCall(QString CallerJid)
-    void IncomingCall(QString CallerJid);
+    void incomingCall(QString CallerJid);
 
     //! Signals accepted call succesfully started
-    void CallStarted(QString CallerJid);
+    void callStarted(QString CallerJid);
 
     //! Signals active call has ended
-    void CallEnded(QString CallerJid);
+    void callEnded(QString CallerJid);
 
     //! Forwards incoming private message
-    void PrivateMessageReceived(QString UserJid, QString Message);
+    void privateMessageReceived(QString UserJid, QString Message);
 
     //! Forwards incoming multi user chatroom message
-    void MucMessageReceived(QString mucRoom, QString userNick, QString message);
+    //void mucMessageReceived(QString roomJid, QString userNick, QString message);
+
+    //! Forwards invitation to join multi user chatroom
+    void mucInvitationReceived(QString roomJid, QString inviterJid, QString reason);
 
     //! Signals changes in current roster
-    void RosterChanged();
+    void rosterChanged();
 
     //! Signals changes in users presence
     //! Can indicate that capabilities were received
-    void PresenceChanged(QString UserJid);
+    void presenceChanged(QString UserJid);
 
-    void VCardChanged(QString UserJid);
+    void vCardChanged(QString UserJid);
 
     //! Signals disconnect by request
-    void Disconnected();
+    void disconnected();
 
     //! Signals connected status
     //! \note This signal gets emitted when the underlying QXmppClient signals connected state
-    void Connected();
+    void connected();
 
 };
 

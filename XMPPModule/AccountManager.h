@@ -38,22 +38,22 @@ public slots:
     //! \param password User password
     //! \note IMPORTANT: Storing passwords uses weak Xor cipher. This is
     //!       not secure, and should be made very clear for the user.
-    void AddLoginData(QString userJid, QString xmppServer, QString password);
+    void addLoginData(QString userJid, QString xmppServer, QString password);
 
     //! Get list of XMPP Servers we have stored credentials for
     //! \return QStringList containing known servers
-    QStringList GetServers();
+    QStringList getServers();
 
     //! Get saved Jabber IDs
     //! \param xmppServer Server associated with the Jid
     //! \return QStringList containing saved Jids
-    QStringList GetUserJids(QString xmppServer);
+    QStringList getUserJids(QString xmppServer);
 
     //! Get password for Jabber ID
     //! \param userJid Jabber ID for querying the password
     //! \param xmppServer XMPP Server the Jid is associated with
     //! \return QString containing the user password
-    QString GetUserPassword(QString userJid, QString xmppServer);
+    QString getUserPassword(QString userJid, QString xmppServer);
 
 private slots:
 

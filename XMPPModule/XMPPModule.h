@@ -73,7 +73,7 @@ public slots:
     QObject *getAccountManager();
 
 private slots:
-    void HandleClientDisconnect(Client *client);
+    void handleClientDisconnect(Client *client);
 
 
 private:

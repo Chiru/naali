@@ -39,11 +39,6 @@ while 1:
     url_temp = url_temp.strip()
     f.write("Received string from stdin: " + url_temp + "\n")
 
-    #print url_temp
-    #sys.stdout.flush()
-    #f.flush()
-    #continue
-
     t_url = url_temp.split(" ", 1)
     url = t_url[0]
     #f.write("Split URL: " + str(url) + "\n")
@@ -53,6 +48,10 @@ while 1:
 
     # We shall redirect all images, and all meshes into translator. Other assets
     # will go pass through, as-is.
+    #
+    # at the moment we intend to support these filetypes:
+    #  - images: png, jpg, gif, tga
+    #  - meshes: mesh
 
     rewrite_url = ""
     for i in [ ".png", ".jpg", ".jpeg", ".tga", ".gif", ".mesh" ]:

@@ -11,6 +11,14 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         print message
 
     def parseURL(self, URL):
+        """ self.parseURL(URL): This method will split the incoming URL into parameters
+            which will be used later in the proxy code. After calling this method, internal
+            class params:
+                - URL
+                - asset
+                - params (LOD, profile)
+            are filled and can be used accordingly afterwards.
+        """
         self.logMessage("Incoming URL: "+str(URL))
         try:
             self.baseurl, self.asset = URL.split("?", 1)
@@ -22,7 +30,8 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.logMessage("asset: '"+str(self.asset)+"'")
         self.logMessage("params: '"+str(self.params)+"'")
 
-        if self.asset == None or self.params == None: return
+        if self.asset == None or self.params == None:
+            return
 
         for i in self.params.split("&"):
             self.logMessage("Processing param: "+str(i))
@@ -40,11 +49,6 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.logMessage("Detected param '"+str(p)+"' with value '"+str(v))
             else:
                 self.logMessage("Errorneous param '"+str(p)+"'. Ignoring!")
-
-        for i in ["png", "jpg", "jpeg", "tga", "gif"]:
-            if self.asset.lower().endswith(i):
-                self.logMessage("Graphics format '"+str(i)+"' detected")
-                break;
 
     def pushData(self, localfile, mimetype):
         try: f = open(localfile)
@@ -89,6 +93,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             - LOD: A number ranging from 1-5 stating the dynamic LOD level which must be
               passed to client. Default LOD is 1, meaning the lower possible translation quality
             - Profile: A name of the
+
+            Note: Squid URLManger passes all relevant URLs to this script. It will handle the
+            decision, which URLs shall be translated. All traffic which reaches this point of
+            process, shall be translated.
         """
         self.baseurl = ""
         self.asset = ""
@@ -107,8 +115,12 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.logMessage("Downloaded into: "+str(local_filename))
         if os.path.exists(local_filename) == False:
             self.send_response(404)
-            self.logMessage("Downloading failed")
+            self.logMessage("Downloading of the asset failed")
             return
+
+        # At the moment jpg, png, gif and tga file formats are passed
+        # from squid url mangler. In this code we shall distinguish just between
+        # image and mesh assets, and act accordingly.
 
         for t in ["jpg", "jpeg", "png", "gif", "tga"]:
             if self.asset.lower().endswith(t):
@@ -116,6 +128,9 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.logMessage("Imagetype "+str(t)+" detected.")
                 self.handleImageAndResponse(local_filename, t)
                 return
+
+        # Same applies for the meshes. At the moment the code below supports only
+        # Ogre meshes, but will be extended to other formats as well.
 
         for t in ["mesh"]:
             if self.asset.lower().endswith(t):

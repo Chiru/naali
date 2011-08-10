@@ -158,10 +158,12 @@ void EC_MenuContainer::ActivateMenu()
         {
             EC_RigidBody *rigidbody = GetOrCreateRigidBody(MenuItemList_.at(i)->GetParentEntity());
             Vector3df zeroVec;
-            zeroVec.set(0,0,0);
+            zeroVec.set(1,1,1);
+            rigidbody->Activate();
             rigidbody->setangularFactor(zeroVec); // Set zero angular factor so that body stays upright
 
         }
+        //EC_RigidBody *rigidbody = GetOrCreateRigidBody(GetParentEntity());
     }
 
     float phi;
@@ -169,7 +171,8 @@ void EC_MenuContainer::ActivateMenu()
 
     for (int i = 0; i < MenuItemList_.count(); i++)
     {
-        phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+        //phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+        phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) - ( 0.5 * Ogre::Math::PI );
         EC_MenuItem *menuitem = MenuItemList_.at(i);
         //LogInfo(ToString(position));
         //LogInfo("Phi: " + ToString(phi));
@@ -230,7 +233,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
             meshreference_ ="local://Torus_pysty.mesh";
             position = Vector3df(0.0, -1.0, 0.0);
             mesh->SetAdjustPosition(position);
-            mesh->SetAdjustOrientation(orientation.rotationFromTo(Vector3df(10.0, 20.0, 60.0),Vector3df(-50.0, 50.0, 180.0))); //magic numbers..
+            //mesh->SetAdjustOrientation(orientation.rotationFromTo(Vector3df(10.0, 20.0, 60.0),Vector3df(-50.0, 50.0, 180.0))); //magic numbers..
             break;
 
         case 3:
@@ -246,7 +249,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         //Set newly created menuitems in some position..
         for(int i=0; i<MenuItemList_.count();i++)
         {
-            phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+            phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) - ( 0.5*Ogre::Math::PI);
             EC_MenuItem *menuitem = MenuItemList_.at(i);
             menuitem->setphi(phi);
             menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
@@ -301,7 +304,7 @@ void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
         EC_MenuItem *menuitem = CreateMenuItem();
         if(menuitem)
         {
-            phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) + ( 0.5*Ogre::Math::PI);
+            phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) - ( 0.5*Ogre::Math::PI);
             menuitem->setphi(phi);
             menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
 
@@ -366,7 +369,11 @@ void EC_MenuContainer::SetMenuContainerPosition()
 
         Transform entityTransform;
         entityTransform.position=ownEntityPos;
-        entityTransform.rotation=cameraTransform.rotation;
+
+        //test hack
+        entityTransform.rotation.x=cameraTransform.rotation.x-90;
+        entityTransform.rotation.y=cameraTransform.rotation.y;
+        entityTransform.rotation.z=cameraTransform.rotation.z;
 
         //LogInfo(ToString(entityTransform.position));
         //LogInfo(ToString(cameraTransform.position));
@@ -414,9 +421,9 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             //Sets new angle for components using polar coordinates.
             float phi;
             if(menulayer_%2!=0)
-                phi = MenuItemList_.at(i)->getphi() - (float)mouse->RelativeX()/250;
+                phi = MenuItemList_.at(i)->getphi() + (float)mouse->RelativeX()/250;
             else
-                phi = MenuItemList_.at(i)->getphi() + (float)mouse->RelativeY()/250;
+                phi = MenuItemList_.at(i)->getphi() - (float)mouse->RelativeY()/250;
 
             MenuItemList_.at(i)->setphi(phi);
             //Next position for menu components.
@@ -429,7 +436,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
             }
 
 
-            if(Ogre::Math::Sin(phi) > 0.970)
+            if(Ogre::Math::Sin(phi) < -0.970)
             {
                 previousSelected_ = selected_;
                 selected_=i;
@@ -499,26 +506,26 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                     {
                     case 1:
                         //horizontal, main layer
-                        if(MenuItemList_.at(i)->GetMenuItemPosition().x>=0)
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().x<=0)
                             rotationDirection_=-0.1;
-                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x<=0)
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x>=0)
                             rotationDirection_=0.1;
                         break;
 
                     case 2:
                         //vertical, sub layer
-                        if(MenuItemList_.at(i)->GetMenuItemPosition().y>=0)
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().z<=0)
                             rotationDirection_=-0.1;
-                        else if(MenuItemList_.at(i)->GetMenuItemPosition().y<=0)
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().z>=0)
                             rotationDirection_=0.1;
 
                         break;
 
                     case 3:
                         //horizontal, sub layer
-                        if(MenuItemList_.at(i)->GetMenuItemPosition().x>=item_offset_)
+                        if(MenuItemList_.at(i)->GetMenuItemPosition().x<=item_offset_)
                             rotationDirection_=-0.1;
-                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x<=item_offset_)
+                        else if(MenuItemList_.at(i)->GetMenuItemPosition().x>=item_offset_)
                             rotationDirection_=0.1;
                         break;
                     }
@@ -642,7 +649,7 @@ Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
     //Vector3df selectedOffset = Vector3df(-0.5, 0.5, 0.5);
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
 
-    position.z = radius_ * sin(phi);
+    position.y = radius_ * sin(phi);
 
     switch(menulayer_)
     {
@@ -650,22 +657,22 @@ Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
         //horizontal, main layer
         //LogInfo("horizontal, case 1");
         position.x = radius_ * cos(phi) + item_offset_;
-        position.y = -0.5*position.z;
+        position.z = 0.5*position.y;
         break;
 
     case 2:
         //vertical
         //LogInfo("vertical, case 2");
-        position.y = radius_ * cos(phi) - item_offset_;
-        position.x = -0.5*position.z;
-        position += Vector3df(0.0, 1.0, 0.0);
+        position.z = radius_ * cos(phi) - item_offset_;
+        position.x = 0.5*position.y;
+        position += Vector3df(0.0, 0.0, 1.0);
         break;
 
     case 3:
         //horizontal, sub layer
         //LogInfo("horizontal, case 3");
         position.x = radius_ * cos(phi) - item_offset_;
-        position.y = -0.2*position.z;
+        position.z = -0.2*position.z;
         position += Vector3df(2*radius_, -2.0, 0.0);
         break;
     }
@@ -690,14 +697,14 @@ void EC_MenuContainer::KineticScroller()
     {
         for(int i=0; i<MenuItemList_.count(); i++)
         {
-            float phi = MenuItemList_.at(i)->getphi() - speed_ * scrollerTimer_Interval/10000;
+            float phi = MenuItemList_.at(i)->getphi() + speed_ * scrollerTimer_Interval/10000;
             MenuItemList_.at(i)->setphi(phi);
             if(i!=selected_)
                 MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi));
             else
                 MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
 
-            if(Ogre::Math::Sin(phi) > 0.970)
+            if(Ogre::Math::Sin(phi) < -0.970)
             {
                 previousSelected_ = selected_;
                 selected_=i;
@@ -753,7 +760,7 @@ void EC_MenuContainer::RotatingMenu()
             MenuItemList_.at(i)->setphi(phi);
             //LogInfo("i: "+ToString(i)+" phi: "+ToString(phi)+" itemphi: "+ToString(MenuItemList_.at(i)->getphi()));
 
-            if(Ogre::Math::Sin(phi) > 0.970)
+            if(Ogre::Math::Sin(phi) < -0.970)
             {
                 MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi,true));
                 previousSelected_ = selected_;
@@ -783,7 +790,7 @@ void EC_MenuContainer::RotateItemToSelected()
         position.z=2 * sin( i * 2 * Ogre::Math::PI / MeshList_.count() + ( 0.5*Ogre::Math::PI) );
     */
 
-    float phi = 0.5*(float)Ogre::Math::PI;
+    float phi = -0.5*(float)Ogre::Math::PI;
     if(MenuItemList_.count()>0)
     {
         /// \todo Add functionality to change the selected menuitem if mouse is moved more than 10 in x-axis after clicking.
@@ -799,7 +806,7 @@ void EC_MenuContainer::RotateItemToSelected()
             if(j==MenuItemList_.count())
                 j=0;
 
-            phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) + ( 0.5*Ogre::Math::PI);
+            phi = 2 * float(i) * Ogre::Math::PI / float(MenuItemList_.count()) - ( 0.5*Ogre::Math::PI);
             MenuItemList_.at(j)->setphi(phi);
             MenuItemList_.at(j)->SetMenuItemPosition(CalculateItemPosition(phi));
         }
@@ -830,8 +837,11 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
         if(iComponent)
         {
             EC_MenuItem *menuItem = dynamic_cast<EC_MenuItem*>(iComponent);
+
             //Sets parent entity for menuItem-entitys placeable component
+            /// \bug parenting placeables brokes physics.
             menuItem->SetParentMenuContainer(parentPlaceable);
+            //menuItem->GetOrCreatePlaceableComponent()->; //->Translate(Vector3df(90.0, 90.0, 90.0));
             sceneManager_->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
             return menuItem;
         }
@@ -957,7 +967,10 @@ void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::
 
                 Transform entityTransform;
                 entityTransform.position=ownEntityPos;
-                entityTransform.rotation=cameraTransform.rotation;
+                //entityTransform.rotation=cameraTransform.rotation;
+                entityTransform.rotation.x=cameraTransform.rotation.x-90;
+                entityTransform.rotation.y=cameraTransform.rotation.y;
+                entityTransform.rotation.z=cameraTransform.rotation.z;
 
                 //LogInfo(ToString(entityTransform.position));
                 //LogInfo(ToString(cameraTransform.position));

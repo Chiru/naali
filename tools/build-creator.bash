@@ -41,7 +41,7 @@ export CCACHE_DIR=$deps/ccache
 private_ogre=false
 # Set build_valgrind true if you want zero optimizations build-options and valgrind installed.
 # Also kNet messageConnection.cpp is modified so that server keepAliveTimeout is 3min instead of 15s.
-build_valgrind=true
+build_valgrind=false
 
 function build-regular {
     urlbase=$1
@@ -287,6 +287,7 @@ else
 --memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
 --massif:stacks=yes
 --massif:depth=40
+--massif:massif-out-file=valgrind/massif.out
 --smc-check=all
 EOF
 fi

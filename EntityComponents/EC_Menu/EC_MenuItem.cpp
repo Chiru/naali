@@ -10,7 +10,7 @@
 #include "StableHeaders.h"
 
 #include "EC_MenuItem.h"
-#include "EC_MenuContainer.h"
+//#include "EC_MenuContainer.h"
 
 #include "EC_3DCanvas.h"
 #include "EC_Mesh.h"
@@ -84,10 +84,7 @@ void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
     SetMenuItemMesh(itemdata_->GetMeshRef(), itemdata_->GetMaterialRef());
 }
 
-MenuDataItem* EC_MenuItem::GetDataItem()
-{
-    return itemdata_;
-}
+//EC_MenuContainer
 
 Vector3df EC_MenuItem::GetMenuItemPosition()
 {
@@ -101,6 +98,11 @@ void EC_MenuItem::SetMenuItemMesh(QString meshref, QStringList materials)
     {
         materials_.Append(AssetReference(materials.at(i)));
     }
+}
+
+void EC_MenuItem::SetScale(Vector3df scale)
+{
+    GetOrCreateMeshComponent()->SetAdjustScale(scale);
 }
 
 void EC_MenuItem::SetMenuItemPosition(Vector3df position)

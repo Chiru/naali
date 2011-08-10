@@ -328,6 +328,7 @@ else
 --memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
 --massif:stacks=yes
 --massif:depth=40
+--massif:massif-out-file=valgrind/massif.out
 --smc-check=all
 EOF
 fi

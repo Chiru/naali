@@ -57,7 +57,7 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-class EC_MenuContainer;
+//class EC_MenuContainer;
 
 
 class EC_MenuItem : public IComponent
@@ -91,9 +91,16 @@ public slots:
 
     void SetDataItem(MenuDataItem *dataitemptr);
 
-    MenuDataItem* GetDataItem();
+    //EC_MenuContainer* GetChildContainer();
 
+    //! Returns MenuDataItem related to this EC_MenuItem
+    MenuDataItem* GetDataItem() { return itemdata_; }
+
+    //! Returns position data from EC_Placeable in same entity
     Vector3df GetMenuItemPosition();
+
+    //! Set scale for EC_Mesh attached in same entity
+    void SetScale(Vector3df scale);
 
     //! Setter for entity position
     void SetMenuItemPosition(Vector3df position);

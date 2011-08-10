@@ -65,10 +65,11 @@ class EC_MenuItem;
 class MenuDataModel;
 class EC_Placeable;
 class EC_OgreCamera;
+class EC_Mesh;
+class EC_RigidBody;
 class QListView;
 class QMouseEvent;
 class RaycastResult;
-class EC_RigidBody;
 
 class EC_MenuContainer : public IComponent
 {
@@ -91,13 +92,14 @@ private:
     MenuDataModel *menudatamodel_;
 
     EC_MenuItem *attachedMenuItem;
+    ComponentPtr ringmesh_;
 
-    QPoint mousePosition;
+    //QPoint mousePosition;
 
     bool menuClicked_;
-    bool subMenu_clicked_;
+    //bool subMenu_clicked_;
     bool subMenu_;
-    bool subMenuIsScrolling;
+    //bool subMenuIsScrolling;
     bool startingPositionSaved_;
     bool menuIsRotating_;
 
@@ -112,6 +114,8 @@ private:
     int subMenuItemSelected_;
     int menulayer_;
     int itemToRotate_;
+
+    QPoint startingPosition_;
 
     /// Internal timer for kinetic scroller.
     QTimer *scrollerTimer_;
@@ -131,7 +135,16 @@ public:
 
 public slots:
 
-    /// Handles kinetic scrolling for both, menu and submenu items.
+    //! Create first menu layer from data in MenuDataModel
+    void ActivateMenu();
+
+    //! Close submenu
+    void CloseSubMenu(int index);
+    void CloseSubMenu(EC_MenuContainer* childmenucontainer);
+
+    void ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer);
+
+    /// Handles kinetic scrolling for one menu ring.
     void KineticScroller();
 
     void RotatingMenu();
@@ -139,11 +152,16 @@ public slots:
     /// Handle MouseEvents
     void HandleMouseInputEvent(MouseEvent *mouse);
 
+    //! Attach parent menuitem for sublayer menucontainer
+    void SetAttachedMenuItem(EC_MenuItem* attacheditem);
+
+    //! Scale menu
+    /// \param float scale, 1.0 is normal size
+    void ScaleMenu(float scale);
+
     /// Sets data for MenuContainer.
     /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
     void SetMenuWidgets(QList<QWidget*>);
-
-    void ActivateMenu();
 
     /// Prepares MenuContainer component
     /// \param float menu radius
@@ -151,12 +169,9 @@ public slots:
 
     void OpenMenu();
 
-    void ChildMenuClicked(int menuitem, int submenuItem, EC_MenuContainer* childcontainer);
-
     QObject* GetMenuDataModel();
 
-    void SetAttachedMenuItem(EC_MenuItem* attacheditem);
-
+    ComponentPtr GetRingMesh() { return ringmesh_; }
 
 private slots:
 

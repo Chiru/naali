@@ -1,7 +1,7 @@
 //FileType: RealXtend naali Valgrind test-script
 //Function: Make one connection to localhost server, disconnect and make connection to another localhost server. Repeat few times.
 //Date: 10.08.2011
-//Made by: Jukka Vatjus-Anttila / Center for Internet Excellence
+//Author: Jukka Vatjus-Anttila / Center for Internet Excellence
 
 var counter = 6;
 var doFirst = true;
@@ -23,7 +23,7 @@ function ConnectionHandler()
     var isserver = server.IsRunning() || server.IsAboutToStart();
     if (!isserver)
     {
-        frame.DelayedExecute(20).Triggered.connect(this,MakeConnection1);
+        frame.DelayedExecute(60).Triggered.connect(this,MakeConnection1);
     }     
 }
 function MakeConnection1()
@@ -32,11 +32,14 @@ function MakeConnection1()
     {
         console.ExecuteCommand("Disconnect");
         client.Login("localhost",2345,"Guest","","tcp");
-        frame.DelayedExecute(180).Triggered.connect(this,MakeConnection2);
+        frame.DelayedExecute(300).Triggered.connect(this,MakeConnection2);
         counter--;
     }
     else
+    { 
+        print("Counter: " + counter);
         console.ExecuteCommand("Exit");
+    }
 }
 function MakeConnection2()
 {
@@ -44,10 +47,13 @@ function MakeConnection2()
     {
         console.ExecuteCommand("Disconnect");
         client.Login("localhost",2346,"Guest","","tcp");
-        frame.DelayedExecute(180).Triggered.connect(this,MakeConnection1);
+        frame.DelayedExecute(300).Triggered.connect(this,MakeConnection1);
         counter--;
     }
     else
+    {
+        print("Counter: " + counter);
         console.ExecuteCommand("Exit");
+    }
 }
     

@@ -22,7 +22,7 @@ function Disconnect1()
     // Disconnect second connection we made.
     console.ExecuteCommand("Disconnect(1)");
     // Again we wait for valgrind.
-    frame.DelayedExecute(100).Triggered.connect(this,Disconnect2);
+    frame.DelayedExecute(150).Triggered.connect(this,Disconnect2);
 }
 
 function Disconnect2()
@@ -38,7 +38,7 @@ function AutoConnect1()
         // Make 1st connection to one of the local servers
         client.Login("localhost",2345,"Guest","","tcp");
         // Again wait for valgrind. We dont want to make next connection before 1st connection handshake is even completed.
-        frame.DelayedExecute(200).Triggered.connect(this,AutoConnect2);
+        frame.DelayedExecute(270).Triggered.connect(this,AutoConnect2);
     }     
 }
 function AutoConnect2()
@@ -46,7 +46,7 @@ function AutoConnect2()
     // Make 2nd connection to one of the local servers
     client.Login("localhost",2346,"Guest","","tcp");
     // Again we wait for valgrind.
-    frame.DelayedExecute(100).Triggered.connect(this,Disconnect1)
+    frame.DelayedExecute(270).Triggered.connect(this,Disconnect1)
 }
     
 

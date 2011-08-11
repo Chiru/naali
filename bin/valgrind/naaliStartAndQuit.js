@@ -14,7 +14,9 @@ function StartProcess()
     {
         doFirst = false;          
         // Wait for valgrind startup.
-        frame.DelayedExecute(100).Triggered.connect(this,Disconnect);
+        var isserver = server.IsRunning() || server.IsAboutToStart();
+        if (!isserver)
+            frame.DelayedExecute(200).Triggered.connect(this,Disconnect);
     }
 }
 function Disconnect()

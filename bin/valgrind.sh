@@ -19,7 +19,10 @@ bashtrapKillTerm()
 # Test if file exists which is given as 1st parameter for this script.
 if [ ! -e "$1" ];
 then
-    echo "File '"$1"' does not exists!"
+    echo "File '"$1"' does not exists! Example startup scripts found at:" $PWD/valgrind/startupScripts/
+    echo '------------'
+    ls -l $PWD/valgrind/startupScripts/ | grep '\.js'
+    echo '------------'
 else
     trap bashtrapKillTerm INT TERM KILL
     trap bashtrapExit EXIT
@@ -49,7 +52,8 @@ else
     # Make massif.out human readable and save it to valgrind directory.
     if [ -e "valgrind/logs/massif.out" ]; then
         cd valgrind/logs/
-        cat massif.out | grep ^time= -A2 | cut -d= -f2 | tr "\\n" ";" | tr "-" "\\n" | grep ^\; | sed 's/.\(.*\)/\1/' | sed 's/\(.*\)./\1/' > massifExcel.xls
+        cp ../base.txt massifExcel.xls
+        cat massif.out | grep ^time= -A2 | cut -d= -f2 | tr "\\n" ";" | tr "-" "\\n" | grep ^\; | sed 's/.\(.*\)/\1/' | sed 's/\(.*\)./\1/' >> massifExcel.xls
         ms_print massif.out > massif.log
         cd ..
     fi

@@ -12,6 +12,11 @@ and analyses possible memory leaks and massif profiles naali heap-memory usage.
 Purpose of this script is to help naali developers spot possible memory hogs/leaks in the code and
 this way make naali more memory efficient and run better.
 
+Valgrind.sh script is not meant to be 'make all do all' type of script. Purpose is that you make 
+your own test scenario in javascript and give that file as parameter for valgrind.sh. This way 
+you get test data meaningfull for your particular scenario. Make your script and place it in 
+bin/valgrind/startupScripts/.
+
 NOTICE: Running naali under Valgrind is extremely slow because every memory operation is analyzed 
 by Valgrind. Therefore memcheck-tool runs ~100x slower than running standalone naali. Massif-tool
 slows down naali by factor of ~50x. Running a test script which made two connections with naali
@@ -34,7 +39,7 @@ done this and naali is built just run valgrind.sh script in bin/ directory:
 
 ./valgrind.sh <startupScript_path/filename>
 
-There are few startup scripts in bin/valgrind/startupScripts/ to give you an example.
+There are few example startup scripts in bin/valgrind/startupScripts/.
 
 4. Need more info?
 ------------------

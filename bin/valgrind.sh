@@ -43,7 +43,7 @@ else
         cd valgrind/logs/
         cat valgrindMemcheck.log | grep 'are definitely lost' -A12 > definitelyLost.log && cat valgrindMemcheck.log | grep 'LEAK SUMMARY' -A15 -B1 >> definitelyLost.log
         cat valgrindMemcheck.log | grep 'are possibly lost' -A12 > possiblyLost.log && cat valgrindMemcheck.log | grep 'LEAK SUMMARY' -A15 -B1 >> possiblyLost.log
-        cd ..
+        cd ../../
     fi
     
     # Start viewer with valgrind tool massif.
@@ -55,17 +55,17 @@ else
         cp ../base.txt massifExcel.xls
         cat massif.out | grep ^time= -A2 | cut -d= -f2 | tr "\\n" ";" | tr "-" "\\n" | grep ^\; | sed 's/.\(.*\)/\1/' | sed 's/\(.*\)./\1/' >> massifExcel.xls
         ms_print massif.out > massif.log
-        cd ..
+        cd ../../
     fi
     
     # Print massif graph and leak summary for the user.
     if [ -e "valgrind/logs/massif.log" ]; then
-        cat valgrind/massif.log | head -30
+        cat valgrind/logs/massif.log | head -30
     else
         echo 'massif.log not found.'
     fi
     if [ -e "valgrind/logs/valgrindMemcheck.log" ]; then    
-        cat valgrind/valgrindMemcheck.log | grep 'LEAK SUMMARY' -A15 -B1
+        cat valgrind/logs/valgrindMemcheck.log | grep 'LEAK SUMMARY' -A15 -B1
     else
         echo 'valgrindMemcheck.log not found.'
     fi

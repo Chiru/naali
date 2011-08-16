@@ -284,7 +284,7 @@ else
 --memcheck:suppressions=$viewer/bin/valgrind/supps/nVidia-libGL.supp
 --memcheck:suppressions=$viewer/bin/valgrind/supps/qt47supp.supp
 --memcheck:suppressions=$viewer/bin/valgrind/supps/qtjsc.supp
---memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
+--memcheck:log-file=$viewer/bin/valgrind/logs/valgrindMemcheck.log
 --massif:stacks=yes
 --massif:depth=40
 --massif:massif-out-file=valgrind/logs/massif.out

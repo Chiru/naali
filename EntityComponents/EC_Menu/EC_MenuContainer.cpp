@@ -137,7 +137,7 @@ void EC_MenuContainer::ActivateMenu()
     {
         //hardcoded test for menu visualization
         QString meshreference_ ="local://Torus_paa_vaaka.mesh";
-        Vector3df position = Vector3df(0.0,0.8,0.0);
+        Vector3df position = Vector3df(0.0, 0.0, 0.0);
         EC_Mesh* mesh = dynamic_cast<EC_Mesh*>(iComponent);
         mesh->SetMeshRef(meshreference_);
         mesh->SetAdjustPosition(position);
@@ -148,8 +148,8 @@ void EC_MenuContainer::ActivateMenu()
         meshOrientation.y=55.0;
         mesh->SetAdjustOrientation(meshOrientation);
 
-        //calculate this scale somehow from radius(?)
-        mesh->SetAdjustScale(Vector3df(1.5, 1.5, 1.5));
+        float scale = radius_/4.0;
+        mesh->SetAdjustScale(Vector3df(scale, scale, scale));
     }
 
     if(getPhysicsEnabled())
@@ -216,6 +216,8 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
     item_offset_=radius_ ;
     float phi;
 
+    //Parent entity is MenuItem's entity.
+    //This causes some probles for menu rotating, because submenus "ring mesh" is part of parent ring
     ringmesh_ = GetParentEntity()->CreateComponent("EC_Mesh", AttributeChange::LocalOnly, false);
     IComponent *iComponent = ringmesh_.get();
     if (iComponent)
@@ -231,9 +233,11 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         //case 1 should newer occur here.
         case 2:
             meshreference_ ="local://Torus_pysty.mesh";
-            position = Vector3df(0.0, -1.0, 0.0);
+            //x,z,-y (?)
+            position = Vector3df(0.0, 0.0, -2.0/3.0 * radius_);
             mesh->SetAdjustPosition(position);
-            //mesh->SetAdjustOrientation(orientation.rotationFromTo(Vector3df(10.0, 20.0, 60.0),Vector3df(-50.0, 50.0, 180.0))); //magic numbers..
+            mesh->SetAdjustOrientation(orientation.rotationFromTo(Vector3df(1.0, 1.0, 1.0),Vector3df(60.0, -10.0, 75.0))); //magic numbers..
+
             break;
 
         case 3:
@@ -370,7 +374,7 @@ void EC_MenuContainer::SetMenuContainerPosition()
         Transform entityTransform;
         entityTransform.position=ownEntityPos;
 
-        //test hack
+        //Remove extra 90 degrees which is originally placed to camera's rotation.
         entityTransform.rotation.x=cameraTransform.rotation.x-90;
         entityTransform.rotation.y=cameraTransform.rotation.y;
         entityTransform.rotation.z=cameraTransform.rotation.z;
@@ -419,6 +423,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         for(int i = 0; i<MenuItemList_.count(); i++)
         {
             //Sets new angle for components using polar coordinates.
+            //switch - case could be better way to do this(?)
             float phi;
             if(menulayer_%2!=0)
                 phi = MenuItemList_.at(i)->getphi() + (float)mouse->RelativeX()/250;
@@ -434,7 +439,6 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 //offset for selected item to popup from other items.
                 MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(phi, true));
             }
-
 
             if(Ogre::Math::Sin(phi) < -0.970)
             {
@@ -452,7 +456,8 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
                 {
                     if(previousSelected_ != selected_ && subMenu_)
                     {
-                        CloseSubMenu(previousSelected_);
+                        CloseSubMenu(selected_);
+                        //LogInfo("CloseSubMenu index: "+ToString(previousSelected_));
                     }
                 }
             }
@@ -470,7 +475,7 @@ void EC_MenuContainer::HandleMouseInputEvent(MouseEvent *mouse)
         {
             RaycastResult* result = 0;
             if(renderer_)
-            result = renderer_->Raycast(mouse->X(), mouse->Y());
+                result = renderer_->Raycast(mouse->X(), mouse->Y());
             assert(result);
 
             // SUBMENU HANDLER
@@ -582,6 +587,7 @@ void EC_MenuContainer::CloseSubMenu(int index)
 //        assert(ringptr);
 //        LogInfo("ringptr: "+ToString(ringptr));
 //        LogInfo("childmenucontainer: "+ToString(childmenucontainer));
+//        LogInfo("Closing childmenucontainer with index: "+ToString(index));
 //        //debug ^^
 
         CloseSubMenu(childmenucontainer);
@@ -604,8 +610,10 @@ void EC_MenuContainer::CloseSubMenu(EC_MenuContainer *childmenucontainer)
 
     MenuItemList_.at(selected_)->GetParentEntity()->RemoveComponent(ringptr);
     childmenucontainer->GetParentEntity()->RemoveComponent("EC_MenuContainer");
-    subMenu_ = false;
 
+    //Remove offset for selected item when submenu is closed.
+    MenuItemList_.at(selected_)->GetOrCreateMeshComponent()->SetAdjustPosition(Vector3df(0.0, 0.0, 0.0));
+    subMenu_ = false;
 }
 
 void EC_MenuContainer::CreateSubMenu()
@@ -620,6 +628,9 @@ void EC_MenuContainer::CreateSubMenu()
         //Create new menucontainer to selected_ entity
         Scene::Entity *menuitementity = MenuItemList_.at(selected_)->GetParentEntity();
         IComponent *iComponent = menuitementity->GetOrCreateComponent("EC_MenuContainer", AttributeChange::LocalOnly, false).get();
+
+        //Set offset for mesh item.
+        MenuItemList_.at(selected_)->GetOrCreateMeshComponent()->SetAdjustPosition(Vector3df(-1.5, -1.5, 0.0));
 
         if(iComponent)
         {
@@ -646,7 +657,7 @@ void EC_MenuContainer::ChildMenuClicked(int menuitem, int submenuItem, EC_MenuCo
 
 Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
 {
-    //Vector3df selectedOffset = Vector3df(-0.5, 0.5, 0.5);
+    //Vector3df selectedOffset = Vector3df(-1.5, 1.5, 0.0);
     Vector3df position = Vector3df(0.0, 0.0, 0.0);
 
     position.y = radius_ * sin(phi);
@@ -677,7 +688,7 @@ Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
         break;
     }
 
-    if(isSelected)
+    if(isSelected && subMenu_)
     {
         //position+=selectedOffset;
         return position;

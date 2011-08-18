@@ -9,6 +9,7 @@
 MenuDataItem::MenuDataItem(MenuDataItem *parent)
 {
     parent_ = parent;
+    widget_=0;
 }
 
 MenuDataItem::~MenuDataItem()
@@ -21,6 +22,18 @@ bool MenuDataItem::AddChildren(QString meshref, QStringList materialref)
     MenuDataItem *childitem = new MenuDataItem(this);
     childitem->SetMeshRef(meshref);
     childitem->SetMaterialRef(materialref);
+    childItems_.append(childitem);
+
+    return true;
+}
+bool MenuDataItem::AddChildren(QWidget *widget, QString meshref, QStringList materialref)
+{
+    MenuDataItem *childitem = new MenuDataItem(this);
+    if(meshref.isEmpty())
+        meshref.append("rect_plane.mesh");
+    childitem->SetMeshRef(meshref);
+    childitem->SetMaterialRef(materialref);
+    childitem->SetWidget(widget);
     childItems_.append(childitem);
 
     return true;
@@ -82,4 +95,8 @@ bool MenuDataItem::SetMaterialRef(QStringList materialref)
     return true;
 }
 
-
+bool MenuDataItem::SetWidget(QWidget *widget)
+{
+    widget_=widget;
+    return true;
+}

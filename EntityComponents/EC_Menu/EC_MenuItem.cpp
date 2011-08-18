@@ -82,6 +82,7 @@ void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
 {
     itemdata_ = dataitemptr;
     SetMenuItemMesh(itemdata_->GetMeshRef(), itemdata_->GetMaterialRef());
+    SetMenuItemWidget(0,itemdata_->GetWidget());
 }
 
 //EC_MenuContainer
@@ -130,6 +131,8 @@ void EC_MenuItem::SetMenuItemVisible()
     {
         EC_Mesh *mesh = GetOrCreateMeshComponent();
         mesh->SetMeshRef(meshreference_);
+        if(!meshreference_.compare("rect_plane.mesh"))
+            mesh->SetAdjustOrientation(Quaternion(0.0, 0.0, 180.0, 0.0));
         if(materials_.Size()>0)
         {
             AttributeChange::Type type = AttributeChange::Default;
@@ -142,6 +145,8 @@ void EC_MenuItem::SetMenuItemVisible()
         EC_3DCanvas *canvas = GetOrCreateCanvasComponent();
         canvas->SetSubmesh(widgetSubmesh_);
         canvas->SetWidget(widget_);
+        canvas->SetRefreshRate(10);
+        canvas->Start();
     }
 }
 

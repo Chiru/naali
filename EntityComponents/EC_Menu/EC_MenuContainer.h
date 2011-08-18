@@ -159,10 +159,6 @@ public slots:
     /// \param float scale, 1.0 is normal size
     void ScaleMenu(float scale);
 
-    /// Sets data for MenuContainer.
-    /// \param QList of QWidgets, each widget should have one layout with widgets for submenu.
-    void SetMenuWidgets(QList<QWidget*>);
-
     /// Prepares MenuContainer component
     /// \param float menu radius
     void PrepareMenuContainer(float radius, MenuDataModel *parent=0);

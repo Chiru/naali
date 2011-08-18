@@ -137,7 +137,7 @@ void EC_MenuContainer::ActivateMenu()
     {
         //hardcoded test for menu visualization
         QString meshreference_ ="local://Torus_paa_vaaka.mesh";
-        Vector3df position = Vector3df(0.0, 0.0, 0.0);
+        Vector3df position = Vector3df(0.0, -0.7, 0.7);
         EC_Mesh* mesh = dynamic_cast<EC_Mesh*>(iComponent);
         mesh->SetMeshRef(meshreference_);
         mesh->SetAdjustPosition(position);
@@ -236,6 +236,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
             //x,z,-y (?)
             position = Vector3df(0.0, 0.0, -2.0/3.0 * radius_);
             mesh->SetAdjustPosition(position);
+            //mesh->SetAdjustScale(Vector3df(0.5*radius_, 0.5*radius_, 0.5*radius_));
             mesh->SetAdjustOrientation(orientation.rotationFromTo(Vector3df(1.0, 1.0, 1.0),Vector3df(60.0, -10.0, 75.0))); //magic numbers..
 
             break;
@@ -283,55 +284,6 @@ void EC_MenuContainer::ScaleMenu(float scale)
         MenuItemList_.at(i)->SetMenuItemPosition(CalculateItemPosition(MenuItemList_.at(i)->getphi()));
     }
 }
-
-void EC_MenuContainer::SetMenuWidgets(QList<QWidget*> menuData)
-{
-    /// \todo refactor this initialization for submeshIndex and radius_
-    int submeshIndex = 0;
-    //radius_= 2.0;
-
-    //MenuData_ = menuData;
-    //numberOfMenuelements_ = menuData.count();
-    //LogInfo("Components in menuData: " +ToString(numberOfMenuelements_));
-
-    // Don't do anything if rendering is not enabled
-    if (!ViewEnabled() || GetFramework()->IsHeadless())
-        return;
-
-    //Sets menu in front of camera
-    SetMenuContainerPosition();
-
-    float phi;
-    //Set menuItem positions in circle.
-    for(int i = 0; i < menuData.count(); i++)
-    {
-        EC_MenuItem *menuitem = CreateMenuItem();
-        if(menuitem)
-        {
-            phi = 2 * float(i) * Ogre::Math::PI / float(menuData.count()) - ( 0.5*Ogre::Math::PI);
-            menuitem->setphi(phi);
-            menuitem->SetMenuItemPosition(CalculateItemPosition(phi));
-
-            //hardcoded for now.. first item in every layout is "title" and rest of them are submenu items.
-            /// \todo redesign this to support third data layer.
-            //QLayoutItem * item = MenuData_.at(i)->layout()->itemAt(0);
-            //assert(item);
-
-            //isWidgetType() returns true if widget and it is much faster than dynamic_cast
-            /*if(item->widget()->isWidgetType())
-                menuItem->SetMenuItemWidget(submeshIndex, item->widget());
-            else
-                LogError("Failed to set data for menu item!");
-            */
-            //LogInfo("Items in submenu " + ToString(i) + ": " + ToString(MenuData_.at(i)->layout()->count()));
-            MenuItemList_.append(menuitem);
-
-        }
-        else
-            LogError("Error while creating menu items");
-    }
-}
-
 
 void EC_MenuContainer::SetMenuContainerPosition()
 {
@@ -582,14 +534,6 @@ void EC_MenuContainer::CloseSubMenu(int index)
     {
         EC_MenuContainer *childmenucontainer = dynamic_cast<EC_MenuContainer*>(component);
 
-//        //debug
-//        ComponentPtr ringptr = childmenucontainer->GetRingMesh();
-//        assert(ringptr);
-//        LogInfo("ringptr: "+ToString(ringptr));
-//        LogInfo("childmenucontainer: "+ToString(childmenucontainer));
-//        LogInfo("Closing childmenucontainer with index: "+ToString(index));
-//        //debug ^^
-
         CloseSubMenu(childmenucontainer);
     }
     else
@@ -599,10 +543,6 @@ void EC_MenuContainer::CloseSubMenu(int index)
 void EC_MenuContainer::CloseSubMenu(EC_MenuContainer *childmenucontainer)
 {
 //    LogInfo("CloseSubMenu() - childmenucontainer");
-
-//    Vector3df position = Vector3df(-3.0, -3.0, 0.0);
-//    position += GetOrCreatePlaceableComponent()->GetPosition();
-//    GetOrCreatePlaceableComponent()->SetPosition(position);
 
     ComponentPtr ringptr = childmenucontainer->GetRingMesh();
     assert(ringptr);
@@ -621,10 +561,6 @@ void EC_MenuContainer::CreateSubMenu()
 
     if(MenuItemList_.at(selected_)->OpenSubMenu())
     {
-//        Vector3df position = Vector3df(3.0, 3.0, 0.0);
-//        position += GetOrCreatePlaceableComponent()->GetPosition();
-//        GetOrCreatePlaceableComponent()->SetPosition(position);
-
         //Create new menucontainer to selected_ entity
         Scene::Entity *menuitementity = MenuItemList_.at(selected_)->GetParentEntity();
         IComponent *iComponent = menuitementity->GetOrCreateComponent("EC_MenuContainer", AttributeChange::LocalOnly, false).get();
@@ -684,7 +620,7 @@ Vector3df EC_MenuContainer::CalculateItemPosition(float phi, bool isSelected)
         //LogInfo("horizontal, case 3");
         position.x = radius_ * cos(phi) - item_offset_;
         position.z = -0.2*position.z;
-        position += Vector3df(2*radius_, -2.0, 0.0);
+        position += Vector3df(2*radius_, -2.0, -0.5);
         break;
     }
 

@@ -113,7 +113,7 @@ cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 what=knet
 # todo: check tag against version hash in hg repo
-if test -f $tags/$what-done; then 
+if false && test -f $tags/$what-done; then
    echo $what is done
 else
     cd $build
@@ -284,10 +284,10 @@ else
 --memcheck:suppressions=$viewer/bin/valgrind/supps/nVidia-libGL.supp
 --memcheck:suppressions=$viewer/bin/valgrind/supps/qt47supp.supp
 --memcheck:suppressions=$viewer/bin/valgrind/supps/qtjsc.supp
---memcheck:log-file=$viewer/bin/valgrind/valgrindMemcheck.log
+--memcheck:log-file=$viewer/bin/valgrind/logs/valgrindMemcheck.log
 --massif:stacks=yes
 --massif:depth=40
---massif:massif-out-file=valgrind/massif.out
+--massif:massif-out-file=valgrind/logs/massif.out
 --smc-check=all
 EOF
 fi

@@ -113,6 +113,9 @@ public slots:
     //! Setter for EC_Placeable parameters
     void SetParentMenuContainer(ComponentPtr);
 
+    //! Create as many EC_Mesh components to the parent entity as given in input.
+    EC_Mesh* GetOrCreateMeshComponent();
+
 
 private slots:
     //! Prepares everything related to the parent widget and other needed components.
@@ -133,8 +136,8 @@ private slots:
     //! Get parent entitys EC_3DCanvas. Return 0 if not present.
     EC_3DCanvas* GetOrCreateCanvasComponent();
 
-    //! Create as many EC_Mesh components to the parent entity as given in input.
-    EC_Mesh* GetOrCreateMeshComponent();
+//    //! Create as many EC_Mesh components to the parent entity as given in input.
+//    EC_Mesh* GetOrCreateMeshComponent();
 
     EC_Placeable* GetOrCreatePlaceableComponent();
 

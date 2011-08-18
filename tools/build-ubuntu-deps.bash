@@ -43,25 +43,24 @@ private_ogre=false
 # Also kNet messageConnection.cpp is modified so that server keepAliveTimeout is 3min instead of 15s.
 build_valgrind=false
 
+if [ x$private_ogre != xtrue ]; then
+   more="$more libogre-dev"
+fi
+
 if lsb_release -c | egrep -q "lucid|maverick|natty"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
-        if lsb_release -c | egrep -q "maverick|natty"; then
-            more="$more libqt4-webkit-dev"
-        fi
-        if [ x$private_ogre != xtrue ]; then
-            more="$more libogre-dev"
-        fi
         if [ x$build_valgrind != xfalse ]; then
             more="$more libc6 libc6-dbg valgrind"
         fi
 	sudo aptitude -y install scons python-dev libogg-dev libvorbis-dev \
 	 libopenjpeg-dev libcurl4-gnutls-dev libexpat1-dev libphonon-dev \
 	 build-essential g++ libboost-all-dev libpoco-dev \
-	 ccache libqt4-dev python-dev zlib1g-dev libois-dev libcppunit-dev \
-	 freeglut3-dev mercurial libfreeimage-dev doxygen libxrandr-dev libglu-dev \
-	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev libsctp-dev \
-	 liboil0.3-dev mercurial unzip xsltproc libtool libssl-dev libprotobuf-dev \
-	 autoconf automake libspeex-dev subversion $more
+	 ccache libqt4-dev python-dev \
+	 freeglut3-dev \
+	 libxmlrpc-epi-dev bison flex libxml2-dev cmake libalut-dev \
+	 liboil0.3-dev mercurial unzip xsltproc libqtscript4-qtbindings \
+	 nvidia-cg-toolkit libfreetype6-dev libxaw7-dev libois-dev doxygen libcppunit-dev \
+     libzzip-dev libxrandr-dev libfreeimage-dev $more
 fi
 	 #python-gtk2-dev libdbus-glib-1-dev \
          #libtelepathy-farsight-dev libnice-dev libgstfarsight0.10-dev \
@@ -119,7 +118,7 @@ else
     cd generator
     qmake
     make -j $nprocs
-    ./generator --include-paths=`qmake -query QT_INSTALL_HEADERS`
+    ./generator --include-paths=/usr/include/qt4
     cd ..
 
     cd qtbindings
@@ -136,13 +135,12 @@ cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 
 what=knet
-# todo: check tag against version hash in hg repo
 if false && test -f $tags/$what-done; then 
    echo $what is done
 else
     cd $build
     rm -rf knet
-    hg clone https://bitbucket.org/karivatj/knet-sctp knet
+    hg clone -r stable http://bitbucket.org/clb/knet
     cd knet
     sed -e "s/USE_TINYXML TRUE/USE_TINYXML FALSE/" -e "s/kNet STATIC/kNet SHARED/" < CMakeLists.txt > x
     mv x CMakeLists.txt
@@ -161,6 +159,7 @@ else
     touch $tags/$what-done
 fi
 
+
 if [ x$private_ogre = xtrue ]; then
     what=ogre
     if test -f $tags/$what-done; then
@@ -168,7 +167,7 @@ if [ x$private_ogre = xtrue ]; then
     else
         cd $build
         rm -rf $what
-        hg clone http://bitbucket.org/sinbad/$what/ -u v1-8
+        hg clone http://bitbucket.org/sinbad/$what/ -u v1-7-3
         cd $what
         mkdir -p $what-build
         cd $what-build
@@ -199,6 +198,7 @@ else
     cp main/include/* $prefix/include/
     touch $tags/$what-done
 fi
+
 
 cd $build
 what=PythonQt
@@ -242,57 +242,6 @@ else
     cp lib/lib* $prefix/lib/
     # luckily only extensionless headers under src match Qt*:
     cp src/qt*.h src/Qt* $prefix/include/
-    touch $tags/$what-done
-fi
-
-cd $build
-what=celt
-ver=v0.11.3
-if test -f $tags/$what-done; then
-    echo $what is done
-else
-    rm -rf $what
-    git clone git://git.xiph.org/$what.git
-    cd $what
-    git checkout $ver
-    ./autogen.sh
-    ./configure --prefix=$prefix
-    make -j $nprocs
-    make install
-    touch $tags/$what-done
-fi
-
-cd $build
-what=libmumbleclient
-if test -f $tags/$what-done; then
-    echo $what is done
-else
-    rm -rf $what
-    git clone git://github.com/msantala/libmumbleclient.git
-    cd $what
-    cmake .
-    make -j $nprocs
-    mkdir -p $prefix/include/mumbleclient
-    cp *.h $prefix/include/mumbleclient
-    cp src/*.h $prefix/include/mumbleclient
-    cp libmumbleclient.so $prefix/lib/
-    touch $tags/$what-done
-fi
-
-cd $build
-what=qxmpp
-ver=0.3.0
-if test -f $tags/$what-done; then
-    echo $what is done
-else
-    rm -rf $what
-    svn checkout http://qxmpp.googlecode.com/svn/tags/qxmpp-$ver $what
-    cd $what
-    qmake
-    make -j $nprocs
-    mkdir -p $prefix/include/$what
-    cp src/*.h $prefix/include/$what
-    cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
 fi
 
@@ -342,3 +291,6 @@ chmod +x ccache-g++-wrapper
 NAALI_DEP_PATH=$prefix cmake -DCMAKE_CXX_COMPILER="$viewer/ccache-g++-wrapper" .
 make -j $nprocs VERBOSE=1
 
+if [ x$private_ogre = xtrue ]; then
+sed '/PluginFolder/c \PluginFolder=lib/OGRE' $viewer/bin/plugins-unix.cfg > tmpfile ; mv tmpfile /$viewer/bin/plugins-unix.cfg
+fi

@@ -102,7 +102,7 @@ chmod 555 /$REX_DIR/$PACKAGE_NAME-$BRANCH-$VER-$ARCH/DEBIAN/postinst
 chmod 555 /$REX_DIR/config/postrm /$REX_DIR/$PACKAGE_NAME-$BRANCH-$VER-$ARCH/DEBIAN/postrm
 
 #WE NEED TO REMOVE -g SWITCH FROM THE BASH SCRIPT BELOW SINCE WE DON'T NEED DEBUG INFORMATION + FILE SIZE INCREASES DRAMATICALLY
-sed -i 's/ccache g++ -O -g/ccache g++ -O/g' /$REX_DIR/naali/tools/build-ubuntu-deps.bash
+#sed -i 's/ccache g++ -O -g/ccache g++ -O/g' /$REX_DIR/naali/tools/build-ubuntu-deps.bash
 
 #ENABLE OGRE BUILD
 sed -i "s#private_ogre=false#private_ogre=true#g" /$REX_DIR/naali/tools/build-ubuntu-deps.bash

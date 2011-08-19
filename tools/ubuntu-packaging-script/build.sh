@@ -152,7 +152,7 @@ sudo mount --bind /proc $INSTALL_DIR/proc
 if [ $BRANCH == "tundra" ]; then
     sudo git stash
     sudo git checkout $BRANCH
-    sudo git pull git://github.com/realXtend/naali.git $BRANCH
+    sudo git pull git://github.com/Chiru/naali.git $BRANCH
     sudo git clone ../../. $INSTALL_DIR/$REX_DIR/naali
 fi
 
@@ -160,7 +160,7 @@ if [ $BRANCH == "master" ]; then
     cd ../../../master
     sudo git stash
     sudo git checkout $BRANCH
-    sudo git pull git://github.com/realXtend/naali.git $BRANCH
+    sudo git pull git://github.com/Chiru/naali.git $BRANCH
     sudo git clone . $INSTALL_DIR/$REX_DIR/naali
     cd -
 fi

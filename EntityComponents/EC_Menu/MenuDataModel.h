@@ -17,7 +17,7 @@ class MenuDataModel : public QObject
 {
     Q_OBJECT
 public:
-    MenuDataModel(QObject *parent = 0);
+    MenuDataModel();
     ~MenuDataModel();
 
 public slots:
@@ -32,10 +32,7 @@ public slots:
 
     int GetNumberOfDataItems();
 
-    MenuDataItem* GetParent();
-
 private:
-    MenuDataItem *parent_;
     QList<MenuDataItem*> menudataitems_;
 
 };

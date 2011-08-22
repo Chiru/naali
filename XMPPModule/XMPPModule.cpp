@@ -50,6 +50,10 @@ void XMPPModule::Uninitialize()
 
 void XMPPModule::Update(f64 frametime)
 {
+    for(int i = 0; i < clients_.size(); i++)
+    {
+        clients_[i]->Update(frametime);
+    }
 }
 
 QObject* XMPPModule::getClient(QString host)
@@ -68,6 +72,7 @@ QObject* XMPPModule::newClient(QString xmppServer, QString userJid, QString pass
     configuration.setHost(xmppServer);
     configuration.setJid(userJid);
     configuration.setPassword(password);
+    configuration.setKeepAliveTimeout(15);
     return newClient(configuration);
 }
 

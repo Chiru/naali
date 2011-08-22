@@ -81,24 +81,18 @@ bool EC_MenuItem::OpenSubMenu()
 void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
 {
     itemdata_ = dataitemptr;
-    SetMenuItemMesh(itemdata_->GetMeshRef(), itemdata_->GetMaterialRef());
-    SetMenuItemWidget(0,itemdata_->GetWidget());
+    connect(itemdata_, SIGNAL(DataChanged()), SLOT(UpdateChangedData()));
+    meshreference_ = itemdata_->GetMeshRef();
+    for(int i=0; i<itemdata_->GetMaterialRef().count();i++)
+    {
+        materials_.Append(AssetReference(itemdata_->GetMaterialRef().at(i)));
+    }
+    widget_ = itemdata_->GetWidget();
 }
-
-//EC_MenuContainer
 
 Vector3df EC_MenuItem::GetMenuItemPosition()
 {
     return GetOrCreatePlaceableComponent()->GetPosition();
-}
-
-void EC_MenuItem::SetMenuItemMesh(QString meshref, QStringList materials)
-{
-    meshreference_=meshref;
-    for(int i=0; i<materials.count();i++)
-    {
-        materials_.Append(AssetReference(materials.at(i)));
-    }
 }
 
 void EC_MenuItem::SetScale(Vector3df scale)
@@ -109,12 +103,6 @@ void EC_MenuItem::SetScale(Vector3df scale)
 void EC_MenuItem::SetMenuItemPosition(Vector3df position)
 {
     GetOrCreatePlaceableComponent()->SetPosition(position);
-}
-
-void EC_MenuItem::SetMenuItemWidget(int subMeshIndex, QWidget *data)
-{
-    widget_ = data;
-    widgetSubmesh_ = subMeshIndex;
 }
 
 void EC_MenuItem::SetParentMenuContainer(ComponentPtr MenuContainer)
@@ -195,12 +183,14 @@ EC_Placeable *EC_MenuItem::GetOrCreatePlaceableComponent()
     }
 }
 
-void EC_MenuItem::ComponentRemoved(IComponent *component, AttributeChange::Type change)
+void EC_MenuItem::UpdateChangedData()
 {
-}
-
-void EC_MenuItem::ComponentAdded(IComponent *component, AttributeChange::Type change)
-{
+    meshreference_ = itemdata_->GetMeshRef();
+    for(int i=0; i<itemdata_->GetMaterialRef().count();i++)
+    {
+        materials_.Append(AssetReference(itemdata_->GetMaterialRef().at(i)));
+    }
+    widget_ = itemdata_->GetWidget();
 }
 
 void EC_MenuItem::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)

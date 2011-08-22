@@ -26,14 +26,14 @@ bool MenuDataItem::AddChildren(QString meshref, QStringList materialref)
 
     return true;
 }
-bool MenuDataItem::AddChildren(QWidget *widget, QString meshref, QStringList materialref)
+bool MenuDataItem::AddChildren(QWidget *widget,int widgetsubmesh, QString meshref, QStringList materialref)
 {
     MenuDataItem *childitem = new MenuDataItem(this);
     if(meshref.isEmpty())
         meshref.append("rect_plane.mesh");
     childitem->SetMeshRef(meshref);
     childitem->SetMaterialRef(materialref);
-    childitem->SetWidget(widget);
+    childitem->SetWidget(widget, widgetsubmesh);
     childItems_.append(childitem);
 
     return true;
@@ -86,17 +86,21 @@ MenuDataItem* MenuDataItem::Parent()
 bool MenuDataItem::SetMeshRef(QString meshref)
 {
     meshreference_ = meshref;
+    emit DataChanged();
     return true;
 }
 
 bool MenuDataItem::SetMaterialRef(QStringList materialref)
 {
     materialreference_ = materialref;
+    emit DataChanged();
     return true;
 }
 
-bool MenuDataItem::SetWidget(QWidget *widget)
+bool MenuDataItem::SetWidget(QWidget *widget, int widgetsubmesh)
 {
-    widget_=widget;
+    widget_ = widget;
+    widgetsubmesh_ = widgetsubmesh;
+    emit DataChanged();
     return true;
 }

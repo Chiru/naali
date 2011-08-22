@@ -45,19 +45,6 @@ void EC_MenuItem::PrepareMenuItem()
     if (!ViewEnabled() || GetFramework()->IsHeadless())
         return;
 
-    // Get parent and connect to the signals.
-    Scene::Entity *parent = GetParentEntity();
-    assert(parent);
-    if (parent)
-    {
-        connect(parent, SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
-    }
-    else
-    {
-        LogError("PrepareComponent: Could not get parent entity pointer!");
-        return;
-    }
-
 }
 
 bool EC_MenuItem::OpenSubMenu()

@@ -9,18 +9,15 @@
 #include "MenuDataModel.h"
 #include "MenuDataItem.h"
 
-MenuDataModel::MenuDataModel(QObject *parent)
+MenuDataModel::MenuDataModel()
 {
-
-    parent_ = dynamic_cast<MenuDataItem*>(parent);
-    //
 }
 
 MenuDataModel::~MenuDataModel()
 {
-    for(int i=0;i<menudataitems_.count();i++)
+    foreach(MenuDataItem *menudataitem, menudataitems_)
     {
-        delete menudataitems_.at(i);
+        delete menudataitem;
     }
 }
 
@@ -85,9 +82,4 @@ QObject* MenuDataModel::GetMenuDataItemRaw(int index)
 int MenuDataModel::GetNumberOfDataItems()
 {
     return menudataitems_.count();
-}
-
-MenuDataItem* MenuDataModel::GetParent()
-{
-    return parent_;
 }

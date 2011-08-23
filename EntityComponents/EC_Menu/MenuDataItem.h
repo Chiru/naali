@@ -11,6 +11,7 @@
 #include <QList>
 #include <QString>
 #include <QStringList>
+#include <QWidget>
 
 class MenuDataItem : public QObject
 {
@@ -20,11 +21,14 @@ public:
     ~MenuDataItem();
 
 public slots:
-    bool AddChildren(QString meshref, QStringList materialref);
+    bool AddChildren(QString meshref, QStringList materialref=QStringList());
+    //bool AddChildren(QWidget *widget, QString meshref=QString(), QStringList materialref=QStringList());
+    bool AddChildren(QWidget *widget, int widgetsubmesh, QString meshref=QString(), QStringList materialref=QStringList());
     MenuDataItem* Parent();
 
     bool SetMeshRef(QString meshref);
     bool SetMaterialRef(QStringList materialref);
+    bool SetWidget(QWidget *widget, int widgetsubmesh);
 
     int GetChildCount();
     MenuDataItem* GetChildDataItem(int index);
@@ -33,13 +37,18 @@ public slots:
 
     QString GetMeshRef();
     QStringList GetMaterialRef();
-
+    QWidget* GetWidget(){return widget_;}
 
 private:
     MenuDataItem *parent_;
     QList<MenuDataItem*> childItems_;
     QString meshreference_;
     QStringList materialreference_;
+    QWidget *widget_;
+    int widgetsubmesh_;
+
+signals:
+    void DataChanged();
 
 };
 #endif

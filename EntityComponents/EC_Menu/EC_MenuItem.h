@@ -57,8 +57,6 @@ Registered by RexLogic::RexLogicModule.
 class EC_Mesh;
 class EC_3DCanvas;
 class EC_Placeable;
-//class EC_MenuContainer;
-
 
 class EC_MenuItem : public IComponent
 {
@@ -91,8 +89,6 @@ public slots:
 
     void SetDataItem(MenuDataItem *dataitemptr);
 
-    //EC_MenuContainer* GetChildContainer();
-
     //! Returns MenuDataItem related to this EC_MenuItem
     MenuDataItem* GetDataItem() { return itemdata_; }
 
@@ -108,12 +104,12 @@ public slots:
     void SetMenuItemVisible();
     void SetMenuItemHidden();
 
-    void SetMenuItemWidget(int subMeshIndex, QWidget *data);
+    void SetMenuItemWidget(QWidget *data, int subMeshIndex = 0);
 
     //! Setter for EC_Placeable parameters
     void SetParentMenuContainer(ComponentPtr);
 
-    //! Create as many EC_Mesh components to the parent entity as given in input.
+    //! Get parent entitys EC_Mesh component or create one if not present.
     EC_Mesh* GetOrCreateMeshComponent();
 
 
@@ -121,24 +117,19 @@ private slots:
     //! Prepares everything related to the parent widget and other needed components.
     void PrepareMenuItem();
 
-    //! Monitors this entitys added components.
-    void ComponentAdded(IComponent *component, AttributeChange::Type change);
-
-    //! Monitors this entitys removed components.
-    void ComponentRemoved(IComponent *component, AttributeChange::Type change);
-
     //! Monitors this components Attribute changes.
     void AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType);
 
     //! Setter for what mesh to use in this menuitem
     void SetMenuItemMesh(QString, QStringList);
 
-    //! Get parent entitys EC_3DCanvas. Return 0 if not present.
+    //! Monitors data changes in attached MenuDataItem
+    void UpdateChangedData();
+
+    //! Get parent entitys EC_3DCanvas component or create one if not present.
     EC_3DCanvas* GetOrCreateCanvasComponent();
 
-//    //! Create as many EC_Mesh components to the parent entity as given in input.
-//    EC_Mesh* GetOrCreateMeshComponent();
-
+    //! Get parent entitys EC_Placeable component or create one if not present.
     EC_Placeable* GetOrCreatePlaceableComponent();
 
 

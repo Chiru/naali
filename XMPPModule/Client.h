@@ -46,6 +46,8 @@ public:
     Client(Foundation::Framework* framework, QXmppConfiguration &configuration);
     ~Client();
 
+    void Update(f64 frametime);
+
 public slots:
     //! Accept call request from Jabber ID
     void acceptIncomingCall(QString callerJid);
@@ -75,6 +77,10 @@ public slots:
     //! \param roomName name of the muc room (room@service)
     //! \return QObject pointer for room if found, null pointer for room not found
     QObject* getRoom(QString roomName);
+
+    //! Get pointer to the voice call api
+    //! \return QObject pointer to the voice api object
+    QObject* call();
 
     //! Get available muc rooms
     //! \return QStringList containing available muc rooms
@@ -127,9 +133,9 @@ private:
     QXmppCallManager *xmpp_call_manager_;
     QXmppMucManager *xmpp_muc_manager_;
     QXmppConfiguration *current_configuration_;
-    VoiceCall *current_call_;
+    VoiceCall *call_;
     QMap<QString, UserItem*> users_;    /// \todo do we need to use QMap when UserJid's can be fetched from UserItems?
-    QMap<QString, MucRoom*> muc_rooms_;
+    QMap<QString, MucRoom*> muc_rooms_; /// \todo same goes for this map
     Foundation::Framework* framework_;
     bool log_stream_;
 

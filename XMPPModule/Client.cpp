@@ -23,8 +23,8 @@ namespace XMPP
         xmpp_client_(new QXmppClient()),
         xmpp_call_manager_(new QXmppCallManager()),
         xmpp_muc_manager_(new QXmppMucManager()),
-        log_stream_(false),
-        current_call_(0)
+        call_(new VoiceCall(framework, xmpp_call_manager_)),
+        log_stream_(false)
     {
         xmpp_client_->addExtension(xmpp_call_manager_);
         xmpp_client_->addExtension(xmpp_muc_manager_);
@@ -37,7 +37,7 @@ namespace XMPP
         connect(xmpp_client_, SIGNAL(presenceReceived(const QXmppPresence&)),
                 this, SLOT(handlePresenceReceived(const QXmppPresence&)));
         connect(xmpp_client_, SIGNAL(connected()),
-                this, SIGNAL(Connected()));
+                this, SIGNAL(connected()));
         connect(xmpp_client_, SIGNAL(disconnected()),
                 this, SLOT(disconnect()));
 
@@ -73,7 +73,13 @@ namespace XMPP
         disconnect();
         /// \note handle terminating current call here
         SAFE_DELETE(xmpp_client_);
-        SAFE_DELETE(current_call_);
+        SAFE_DELETE(call_);
+    }
+
+    void Client::Update(f64 frametime)
+    {
+        if(call_)
+            call_->Update(frametime);
     }
 
     void Client::disconnect()
@@ -108,6 +114,11 @@ namespace XMPP
         }
 
         XMPPModule::LogInfo(prefix.toStdString() + " " + message.toStdString());
+    }
+
+    QObject* Client::call()
+    {
+        return dynamic_cast<QObject*>(call_);
     }
 
     QString Client::getHost()
@@ -160,25 +171,23 @@ namespace XMPP
         }
     }
 
-
+    /// \note moved to call api, cleanup required.
     void Client::acceptIncomingCall(QString callerJid)
     {
-        if(current_call_)
+        /*if(current_call_)
             return;
 
-        if(!xmpp_call_manager_->call(callerJid))
-            return;
-
-        current_call_ = new VoiceCall();
+        current_call_ = new VoiceCall(framework_, xmpp_call_manager_);
 
         /// \todo Connect call signals to current_call_ here
 
-        emit callStarted(callerJid);
+        emit callStarted(callerJid);*/
     }
 
+    /// \note moved to call api, cleanup required.
     void Client::handleIncomingCall(QXmppCall *call)
     {
-        emit incomingCall(call->jid());
+        //emit incomingCall(call->jid());
     }
 
     void Client::handleRosterReceived()

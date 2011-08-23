@@ -45,19 +45,6 @@ void EC_MenuItem::PrepareMenuItem()
     if (!ViewEnabled() || GetFramework()->IsHeadless())
         return;
 
-    // Get parent and connect to the signals.
-    Scene::Entity *parent = GetParentEntity();
-    assert(parent);
-    if (parent)
-    {
-        connect(parent, SIGNAL(ComponentRemoved(IComponent*, AttributeChange::Type)), SLOT(ComponentRemoved(IComponent*, AttributeChange::Type)), Qt::UniqueConnection);
-    }
-    else
-    {
-        LogError("PrepareComponent: Could not get parent entity pointer!");
-        return;
-    }
-
 }
 
 bool EC_MenuItem::OpenSubMenu()
@@ -81,23 +68,18 @@ bool EC_MenuItem::OpenSubMenu()
 void EC_MenuItem::SetDataItem(MenuDataItem *dataitemptr)
 {
     itemdata_ = dataitemptr;
-    SetMenuItemMesh(itemdata_->GetMeshRef(), itemdata_->GetMaterialRef());
+    connect(itemdata_, SIGNAL(DataChanged()), SLOT(UpdateChangedData()));
+    meshreference_ = itemdata_->GetMeshRef();
+    for(int i=0; i<itemdata_->GetMaterialRef().count();i++)
+    {
+        materials_.Append(AssetReference(itemdata_->GetMaterialRef().at(i)));
+    }
+    widget_ = itemdata_->GetWidget();
 }
-
-//EC_MenuContainer
 
 Vector3df EC_MenuItem::GetMenuItemPosition()
 {
     return GetOrCreatePlaceableComponent()->GetPosition();
-}
-
-void EC_MenuItem::SetMenuItemMesh(QString meshref, QStringList materials)
-{
-    meshreference_=meshref;
-    for(int i=0; i<materials.count();i++)
-    {
-        materials_.Append(AssetReference(materials.at(i)));
-    }
 }
 
 void EC_MenuItem::SetScale(Vector3df scale)
@@ -108,12 +90,6 @@ void EC_MenuItem::SetScale(Vector3df scale)
 void EC_MenuItem::SetMenuItemPosition(Vector3df position)
 {
     GetOrCreatePlaceableComponent()->SetPosition(position);
-}
-
-void EC_MenuItem::SetMenuItemWidget(int subMeshIndex, QWidget *data)
-{
-    widget_ = data;
-    widgetSubmesh_ = subMeshIndex;
 }
 
 void EC_MenuItem::SetParentMenuContainer(ComponentPtr MenuContainer)
@@ -130,6 +106,8 @@ void EC_MenuItem::SetMenuItemVisible()
     {
         EC_Mesh *mesh = GetOrCreateMeshComponent();
         mesh->SetMeshRef(meshreference_);
+        if(!meshreference_.compare("rect_plane.mesh"))
+            mesh->SetAdjustOrientation(Quaternion(0.0, 0.0, 180.0, 0.0));
         if(materials_.Size()>0)
         {
             AttributeChange::Type type = AttributeChange::Default;
@@ -142,6 +120,8 @@ void EC_MenuItem::SetMenuItemVisible()
         EC_3DCanvas *canvas = GetOrCreateCanvasComponent();
         canvas->SetSubmesh(widgetSubmesh_);
         canvas->SetWidget(widget_);
+        canvas->SetRefreshRate(10);
+        canvas->Start();
     }
 }
 
@@ -190,12 +170,14 @@ EC_Placeable *EC_MenuItem::GetOrCreatePlaceableComponent()
     }
 }
 
-void EC_MenuItem::ComponentRemoved(IComponent *component, AttributeChange::Type change)
+void EC_MenuItem::UpdateChangedData()
 {
-}
-
-void EC_MenuItem::ComponentAdded(IComponent *component, AttributeChange::Type change)
-{
+    meshreference_ = itemdata_->GetMeshRef();
+    for(int i=0; i<itemdata_->GetMaterialRef().count();i++)
+    {
+        materials_.Append(AssetReference(itemdata_->GetMaterialRef().at(i)));
+    }
+    widget_ = itemdata_->GetWidget();
 }
 
 void EC_MenuItem::AttributeChanged(IAttribute *attribute, AttributeChange::Type changeType)

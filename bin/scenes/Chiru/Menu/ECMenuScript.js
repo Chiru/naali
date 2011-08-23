@@ -7,6 +7,9 @@ var screenEntity;
 var menuArray;
 var canvasSource;
 
+//var xmpp = framework.GetModuleQObj("XMPPModule");
+//var client = xmpp.newClient("chiru.cie.fi", "", "");
+
 if (!framework.IsHeadless())
 {
     screenEntity = scene.GetEntityByNameRaw("Screen");
@@ -25,13 +28,10 @@ function Create3DMenu()
     var MenuComponent = MenuEntity.GetOrCreateComponentRaw("EC_MenuContainer");
     scene.EmitEntityCreatedRaw(MenuEntity);
     
-    // re-enable next steps if you want to use images as menu data
-    /*var menuData = generateMenuData();
-    MenuComponent.SetMenuWidgets(menuData);
-    */
-
+    //Get datamodel pointer from main MenuContainer
     var menudatamodel = MenuComponent.GetMenuDataModel();
 
+    //Add data to model
     menudatamodel.AddItem("local://mailbox.mesh",["local://mailbox.Material.0.material","local://mailbox.Material.1.material","local://mailbox.Material.2.material","local://mailbox.Material.3.material"]);
     menudatamodel.AddItem("local://chrome.mesh",["local://chrome.Material.0.material","local://chrome.Material.0.material"]);
     menudatamodel.AddItem("local://chatbuble.mesh",["local://chatbuble.Material.0.material","local://chatbuble.Material.1.material"]);
@@ -45,10 +45,10 @@ function Create3DMenu()
     menudatamodel.AddItem("local://radio.mesh",["local://radio.Material.0.material","local://radio.Material.1.material","local://radio.Material.2.material"]);
     menudatamodel.AddItem("local://file.mesh",["file.Material.0.material","file.Material.1.material","file.Material.2.material","file.Material.3.material","file.Material.4.material","file.Material.5.material","file.Material.6.material","file.Material.7.material"]);
     menudatamodel.AddItem("local://diamonds.mesh",["local://diamonds.Material.0.material","local://diamonds.Material.1.material","local://diamonds.Material.2.material"]);
-    menudatamodel.AddItem("local://email.mesh",[""]);
-    menudatamodel.AddItem("local://firefox.mesh",["Material.028.material", "Material.029.material"]);
-    menudatamodel.AddItem("local://letter.mesh",[""]);    
-    menudatamodel.AddItem("local://lock.mesh",["Material.041.material", "Material.042.material", "Material.043.material"]);
+    menudatamodel.AddItem("local://email.mesh");
+    menudatamodel.AddItem("local://firefox.mesh",["firefox.Material.0.material", "firefox.Material.1.material"]);
+    menudatamodel.AddItem("local://letter.mesh");
+    menudatamodel.AddItem("local://lock.mesh",["lock.Material.0.material", "lock.Material.1.material", "lock.Material.2.material"]);
     menudatamodel.AddItem("local://map.mesh",["local://map.Material.0.material","local://map.Material.1.material","local://map.Material.2.material"]);
     menudatamodel.AddItem("local://mic.mesh",["local://mic.Material.0.material","local://mic.Material.1.material","local://mic.Material.2.material"]);
 
@@ -99,7 +99,10 @@ function Create3DMenu()
     dataitem.AddChildren("local://calculator.mesh",["local://calculator.Material.0.material","local://calculator.Material.1.material","local://calculator.Material.2.material"]);
 
     //Generate one menu tree from folder with image subfolders.
-    generateMenuData(menudatamodel.GetMenuDataItemRaw(11));
+    generatePictureMenuData(menudatamodel.GetMenuDataItemRaw(11));
+
+    //Generate one menu tree from xmpp userdata
+    //ImportXmppUsers(menudatamodel.GetMenuDataItemRaw(2));
 
     MenuComponent.OnMenuSelectionRaw.connect(MenuItemSelected);
     MenuComponent.PrepareMenuContainer(6.0, menudatamodel);
@@ -122,17 +125,17 @@ function Close3DMenu()
     }
 }
 
-
-function generateMenuData(menudataitem)
+//Generate 2 datalayers from filesystem
+//upper layer contains folder names and lower layer images from that folder
+function generatePictureMenuData(menudataitem)
 {
     var i=0;
     var j=0;
-
+    var meshref="local://Planar.mesh";
     //Find some way to use relative paths or something?
     var dir = new QDir("/home/juha/Pictures/testData/pictures");
-    //print(dir.dirName());
-    //print(dir.count());
     var numberOfElements = dir.count();
+
     menuArray = new Array(numberOfElements);
     //dir.setFilter(QDir::AllDirs);
     //dir.setFilter(QDir::Files | QDir::Hidden | QDir::NoSymLinks);
@@ -148,7 +151,7 @@ function generateMenuData(menudataitem)
         var fileInfo = dirList[i];
         dataWidget.setText(fileInfo);
 
-        menudataitem.AddChildren(dataWidget);
+        menudataitem.AddChildren(dataWidget, 0, meshref);
 
         //Create images for 3rd layer
         dir.cd(fileInfo);
@@ -161,13 +164,25 @@ function generateMenuData(menudataitem)
         {
             var dataWidget = new QLabel();
             dataWidget.pixmap = new QPixmap(dir.filePath(subDirList[j]));
-            images.AddChildren(dataWidget);
+            images.AddChildren(dataWidget, 0, meshref);
 
             //print("i on: " + i + " j on: "+ j + " : " + subDirList[j]);
         }
         dir.cdUp();
         //menuArray[i-2]=menuData;
     }
+}
+
+//Generate 2 datalayers from Xmpp user data
+//Take parent dataitem as a argument
+function ImportXmppUsers(menudataitem)
+{
+    var userslist = client.getRoster();
+
+    print("userslist: "+ userslist);
+
+    var user = client.getUser(userslist);
+    print("plaa "+user);
 }
 
 function MenuItemSelected(menuitem, submenuitem)

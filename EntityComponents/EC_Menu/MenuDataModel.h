@@ -22,7 +22,7 @@ public:
 
 public slots:
     bool AddItem(MenuDataItem*);
-    bool AddItem(QString mesh, QStringList materials);
+    bool AddItem(QString mesh, QStringList materials=QStringList());
 
     bool AddItemToIndex(MenuDataItem *item, int index=0);
     bool AddItemToIndex(QString mesh, QStringList materials, int index=0);

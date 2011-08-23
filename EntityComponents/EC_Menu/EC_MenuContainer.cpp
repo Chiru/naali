@@ -136,7 +136,7 @@ void EC_MenuContainer::ActivateMenu()
     if (iComponent)
     {
         //hardcoded test for menu visualization
-        QString meshreference_ ="local://Torus_paa_vaaka.mesh";
+        QString meshreference_ ="local://ring_main_horizontal.mesh";
         Vector3df position = Vector3df(0.0, -0.7, 0.7);
         EC_Mesh* mesh = dynamic_cast<EC_Mesh*>(iComponent);
         mesh->SetMeshRef(meshreference_);
@@ -232,7 +232,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
         {
         //case 1 should newer occur here.
         case 2:
-            meshreference_ ="local://Torus_pysty.mesh";
+            meshreference_ ="local://ring_vertical.mesh";
             //x,z,-y (?)
             position = Vector3df(0.0, 0.0, -2.0/3.0 * radius_);
             mesh->SetAdjustPosition(position);
@@ -242,7 +242,7 @@ void EC_MenuContainer::SetAttachedMenuItem(EC_MenuItem *attacheditem)
             break;
 
         case 3:
-            meshreference_ ="local://Torus_ala_vaaka.mesh";
+            meshreference_ ="local://ring_sub_horizontal.mesh";
             position = Vector3df(radius_,-2.0,0.0);
             mesh->SetAdjustPosition(position);
             break;

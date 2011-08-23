@@ -1,0 +1,16 @@
+material lock.Material.0 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.6859571933746338 0.6859571933746338 0.6859571933746338 1.0
+			diffuse 0.548765762876954 0.548765762876954 0.548765762876954 1.0
+			specular 0.5 0.5 0.5 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

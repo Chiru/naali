@@ -1,0 +1,16 @@
+material angrybird.Material.1 
+{
+	receive_shadows on
+	technique
+	{
+		pass
+		{
+			cull_hardware none
+			ambient 0.800000011920929 0.5626676678657532 0.1685009002685547 1.0
+			diffuse 0.6400000190734865 0.45013414100012383 0.134800722223531 1.0
+			specular 0.5 0.5 0.5 1.0 12.5
+			emissive 0.0 0.0 0.0 1.0
+			scene_blend one zero
+		}
+	}
+}

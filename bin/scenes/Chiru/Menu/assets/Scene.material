@@ -14,7 +14,7 @@ material _missing_material_
     }
 }
 
-material Material.212 
+material phone_gre.Materia.0 
 {
 	receive_shadows on
 	technique
@@ -22,15 +22,15 @@ material Material.212
 		pass
 		{
 			cull_hardware none
-			ambient 0.05134623497724533 0.058512646704912186 0.08001188188791275 1.0
-			diffuse 0.041076988593891084 0.04681011806145485 0.06400950646414616 1.0
-			specular 0.5555555820465088 0.5555555820465088 0.5555555820465088 1.0 12.5
+			ambient 0.18737660348415375 0.4488523602485657 0.07558753341436386 1.0
+			diffuse 0.11867184738416192 0.2842731579236002 0.047872103895048035 1.0
+			specular 0.2152777761220932 0.2152777761220932 0.2152777761220932 1.0 12.5
 			emissive 0.0 0.0 0.0 1.0
 			scene_blend one zero
 		}
 	}
 }
-material Material.213 
+material phone_red.Material.0 
 {
 	receive_shadows on
 	technique
@@ -38,46 +38,11 @@ material Material.213
 		pass
 		{
 			cull_hardware none
-			ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
-			diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
-			specular 0.6517857313156128 0.6517857313156128 0.6517857313156128 1.0 12.5
+			ambient 0.5488523840904236 0.028448225930333138 0.056415997445583344 1.0
+			diffuse 0.3476065055620481 0.018017209529791467 0.03573013126718205 1.0
+			specular 0.2152777761220932 0.2152777761220932 0.2152777761220932 1.0 12.5
 			emissive 0.0 0.0 0.0 1.0
 			scene_blend one zero
-			texture_unit
-			{
-				texture cd.JPG
-				tex_address_mode wrap
-				scale 1.0 1.0
-				tex_coord_set 0
-				colour_op_ex blend_manual src_current src_texture 0.0
-			}
-		}
-	}
-}
-material musicplayer.001 
-{
-	receive_shadows on
-	technique
-	{
-		pass
-		{
-			cull_hardware none
-			ambient 0.800000011920929 0.800000011920929 0.800000011920929 1.0
-			diffuse 0.6400000190734865 0.6400000190734865 0.6400000190734865 1.0
-			specular 0.0 0.0 0.0 1.0 12.5
-			emissive 0.0 0.0 0.0 1.0
-			scene_blend alpha_blend
-			scene_blend 1
-			depth_write off
-			texture_unit
-			{
-				texture musicplayer.jpg
-				tex_address_mode wrap
-				scale 1.0 1.0
-				tex_coord_set 0
-				colour_op_ex blend_manual src_current src_texture 0.0
-				alpha_op_ex modulate src_current src_texture
-			}
 		}
 	}
 }

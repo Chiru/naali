@@ -18,6 +18,10 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 - asset
                 - params (LOD, profile)
             are filled and can be used accordingly afterwards.
+
+            Note: This method is only a parser. It will recognize the params it is programmed to do
+            and it will make sanity checking on those. Apart from that it will not use the params for
+            anything. It would be the duty of following code handling the actual asset.
         """
         self.logMessage("Incoming URL: "+str(URL))
         try:
@@ -51,6 +55,12 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
                 self.logMessage("Errorneous param '"+str(p)+"'. Ignoring!")
 
     def pushData(self, localfile, mimetype):
+        """ pushData(localfile, mimetype):
+            - This method finalizes the asset transfer, once the asset has been manipulated first.
+            - It formulates the HTTP response, fills in the header according to mimetype, and finally
+              pushes the data from a file which is given as a parameter. File is treated as binary
+              stream and is pushed as is.
+        """
         try: f = open(localfile)
         except IOError:
             self.send_response(404)
@@ -65,16 +75,33 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.logMessage("data push successful with mimetype: "+str(mimetype))
 
     def handleImageAndResponse(self, localfile, imagetype):
+        """ handleImageAndResponse(localfile, imagetye):
+            - This method will be called once the incoming asset is recognized to be one of
+              the supported image formats.
+            - The method will do whatever for the image file, based on the given HTTP params.
+            - Once the file manipulation has been completed, it will be saved into temporary
+              directory, and sent to requester via pushData() method.
+        """
         try: image = Image.open(localfile)
         except IOError:
             self.send_response(404)
             self.logMessage("PIL image loading failed")
             return
-        image.thumbnail((4, 4), Image.ANTIALIAS)
+        if self.p_LOD == 1: image.thumbnail((8, 8), Image.ANTIALIAS)
+        if self.p_LOD == 2: image.thumbnail((16,16), Image.ANTIALIAS)
+        if self.p_LOD == 3: image.thumbnail((32, 32), Image.ANTIALIAS)
+        if self.p_LOD == 4: image.thumbnail((64, 64), Image.ANTIALIAS)
+        if self.p_LOD == 5: pass # LOD=5 shall mean unaltered original asset
         image.save(localfile, imagetype)
         self.pushData(localfile, "image/"+imagetype)
+        # Hax: always return jpeg
+        #image.save(localfile+".jpg", "jpeg")
+        #self.pushData(localfile+".jpg", "image/jpeg")
 
     def handleMeshAndResponse(self, localfile, meshtype):
+        """ handleMeshAndReponse(localfile, meshtype):
+            - TBD
+        """
         self.pushData(localfile, "model/mesh")
         return
 

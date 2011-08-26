@@ -2,17 +2,20 @@
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
-#include "AudioAPI.h"
 
 #include "Client.h"
+#include "XMPPModule.h"
+#include "UserItem.h"
+#include "Extension.h"
+
+#include "AudioAPI.h"
+
+#include "qxmpp/QXmppClient.h"
+#include "qxmpp/QXmppReconnectionManager.h"
 #include "qxmpp/QXmppVCardManager.h"
 #include "qxmpp/QXmppRosterManager.h"
-#include "qxmpp/QXmppPresence.h"
+#include "qxmpp/QXmppMessage.h"
 #include "qxmpp/QXmppUtils.h"
-
-#include "qxmpp/QXmppMucIq.h"
-#include "qxmpp/QXmppMucManager.h"
-
 
 #include "MemoryLeakCheck.h"
 
@@ -21,14 +24,8 @@ namespace XMPP
     Client::Client(Foundation::Framework* framework, QXmppConfiguration &configuration) :
         framework_(framework),
         xmpp_client_(new QXmppClient()),
-        xmpp_call_manager_(new QXmppCallManager()),
-        xmpp_muc_manager_(new QXmppMucManager()),
-        call_(new VoiceCall(framework, xmpp_call_manager_)),
         log_stream_(false)
     {
-        xmpp_client_->addExtension(xmpp_call_manager_);
-        xmpp_client_->addExtension(xmpp_muc_manager_);
-
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         // -----Client signals-----
@@ -41,10 +38,6 @@ namespace XMPP
         connect(xmpp_client_, SIGNAL(disconnected()),
                 this, SLOT(disconnect()));
 
-        // -----Callmanager signals-----
-        connect(xmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)),
-                this, SLOT(handleIncomingCall(QXmppCall*)));
-
         // -----Rostermanager signals-----
         connect(&xmpp_client_->rosterManager(), SIGNAL(rosterReceived()),
                 this, SLOT(handleRosterReceived()));
@@ -52,10 +45,6 @@ namespace XMPP
                 this, SLOT(handleRosterChanged(const QString&)));
         connect(&xmpp_client_->rosterManager(), SIGNAL(presenceChanged(const QString&, const QString&)),
                 this, SLOT(handlePresenceChanged(const QString&, const QString&)));
-
-        // -----Mucmanager signals-----
-        connect(xmpp_muc_manager_, SIGNAL(invitationReceived(const QString&, const QString&, const QString&)),
-                this, SLOT(handleMucInvite(const QString&, const QString&, const QString&)));
 
         // -----vCardmanager signals-----
         connect(&xmpp_client_->vCardManager(), SIGNAL(vCardReceived(const QXmppVCardIq&)),
@@ -71,15 +60,24 @@ namespace XMPP
     Client::~Client()
     {
         disconnect();
-        /// \note handle terminating current call here
         SAFE_DELETE(xmpp_client_);
-        SAFE_DELETE(call_);
     }
 
     void Client::Update(f64 frametime)
     {
-        if(call_)
-            call_->Update(frametime);
+        Extension *extension;
+        foreach(extension, extensions_)
+            extension->Update(frametime);
+    }
+
+    QObject* Client::getExtension(QString extensionName)
+    {
+        for(int i = 0; i < extensions_.size(); i++)
+        {
+            if(extensions_[i]->name() == extensionName)
+                return dynamic_cast<QObject*>(extensions_[i]);
+        }
+        return 0;
     }
 
     void Client::disconnect()
@@ -116,11 +114,6 @@ namespace XMPP
         XMPPModule::LogInfo(prefix.toStdString() + " " + message.toStdString());
     }
 
-    QObject* Client::call()
-    {
-        return dynamic_cast<QObject*>(call_);
-    }
-
     QString Client::getHost()
     {
         return xmpp_client_->configuration().host();
@@ -129,11 +122,6 @@ namespace XMPP
     void Client::setStreamLogging(bool state)
     {
         log_stream_ = state;
-    }
-
-    void Client::sendMessage(QString userJid, QString message)
-    {
-        xmpp_client_->sendMessage(userJid, message);
     }
 
     QObject* Client::getUser(QString userJid)
@@ -146,48 +134,6 @@ namespace XMPP
     QStringList Client::getRoster()
     {
         return users_.keys();
-    }
-
-    void Client::handleMucInvite(const QString &roomJid, const QString &inviterJid, const QString &reason)
-    {
-        XMPPModule::LogDebug("Muc request to join room \"" + roomJid.toStdString() + "\" from: \"" + inviterJid.toStdString() + "\" reason: \"" + reason.toStdString() + "\"");
-        emit mucInvitationReceived(roomJid, inviterJid, reason);
-    }
-
-    QObject* Client::joinRoom(QString roomJid, QString nickname, QString password)
-    {
-        if(muc_rooms_.contains(roomJid))
-            return getRoom(roomJid);
-
-        if(xmpp_muc_manager_->joinRoom(roomJid, nickname, password))
-        {
-            MucRoom *muc_room = new MucRoom(xmpp_muc_manager_, roomJid, nickname, password);
-            muc_rooms_.insert(roomJid, muc_room);
-            return dynamic_cast<QObject*>(muc_room);
-        }
-        else
-        {
-            return 0;
-        }
-    }
-
-    /// \note moved to call api, cleanup required.
-    void Client::acceptIncomingCall(QString callerJid)
-    {
-        /*if(current_call_)
-            return;
-
-        current_call_ = new VoiceCall(framework_, xmpp_call_manager_);
-
-        /// \todo Connect call signals to current_call_ here
-
-        emit callStarted(callerJid);*/
-    }
-
-    /// \note moved to call api, cleanup required.
-    void Client::handleIncomingCall(QXmppCall *call)
-    {
-        //emit incomingCall(call->jid());
     }
 
     void Client::handleRosterReceived()
@@ -226,41 +172,6 @@ namespace XMPP
 
     void Client::handleMessageReceived(const QXmppMessage &message)
     {
-        QString jid = jidToBareJid(message.from());
-        QString msg = message.body();
-
-        // Consume GroupChat messages that also get sent here
-        if(message.type() == QXmppMessage::GroupChat)
-        {
-            if(muc_rooms_.size() <= 0)
-                return;
-
-            QString room_jid = message.from().split("/").at(0);
-            QString sender_jid = message.from().split("/").at(1);
-
-            XMPPModule::LogDebug("Group message from room: " + room_jid.toStdString() + " from sender: " + sender_jid.toStdString());
-
-            if(muc_rooms_.contains(room_jid))
-                muc_rooms_[room_jid]->receiveMessage(sender_jid, msg);
-            else
-                XMPPModule::LogDebug("Received message from unknown chatroom: " + room_jid.toStdString());
-
-            return;
-        }
-
-        emit privateMessageReceived(jid, msg);
-    }
-
-    QStringList Client::getRooms()
-    {
-        return muc_rooms_.keys();
-    }
-
-    QObject* Client::getRoom(QString roomJid)
-    {
-        if(muc_rooms_.contains(roomJid))
-            return dynamic_cast<QObject*>(muc_rooms_[roomJid]);
-        return 0;
     }
 
     void Client::handlePresenceReceived(const QXmppPresence &presence)
@@ -303,11 +214,6 @@ namespace XMPP
 
         users_[userJid]->updateVCard(vcard);
         emit vCardChanged(userJid);
-    }
-
-    void Client::handleSetPresence(QXmppPresence::Type presenceType)
-    {
-
     }
 
     bool Client::addContact(QString userJid)

@@ -8,6 +8,10 @@
 
 #include "CoreStringUtils.h"
 
+#include <qxmpp/QXmppUtils.h>
+#include <qxmpp/QXmppPresence.h>
+#include <qxmpp/QXmppVCardIq.h>
+
 #include "MemoryLeakCheck.h"
 
 namespace XMPP

@@ -19,6 +19,8 @@ build_library (${TARGET_NAME} STATIC ${SOURCE_FILES} ${MOC_SRCS} )
 
 LinkEntityComponent(EntityComponents/EC_3DCanvas EC_3DCanvas)
 LinkEntityComponent(EntityComponents/EC_Mesh EC_Mesh)
+LinkEntityComponent(EntityComponents/EC_Light EC_Light)
+LinkEntityComponent(EntityComponents/EC_Name EC_Name)
 
 link_ogre()
 link_package_bullet()

@@ -1,15 +1,17 @@
+/**
+ *  For conditions of distribution and use, see copyright notice in license.txt
+ *
+ *  @file   AccountManager.h
+ *  @brief  Provides interface for storing server-username-password combinations to local storage.
+ */
+
 #ifndef incl_XMPP_AccountManager_h
 #define incl_XMPP_AccountManager_h
-
-#include "Framework.h"
-
-
-#include <qxmpp/QXmppJingleIq.h>
-#include <qxmpp/QXmppUtils.h>
 
 #include <QObject>
 #include <QDomElement>
 #include <QByteArray>
+#include <QStringList>
 
 namespace Foundation
 {

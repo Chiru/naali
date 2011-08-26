@@ -3,17 +3,14 @@
 
 #include "Framework.h"
 
-
-#include <qxmpp/QXmppJingleIq.h>
-#include <qxmpp/QXmppUtils.h>
 #include <qxmpp/QXmppRosterIq.h>
-#include <qxmpp/QXmppPresence.h>
-#include <qxmpp/QXmppVCardIq.h>
 
 #include <QObject>
 #include <QMap>
 #include <QByteArray>
-#include <QFlags>
+
+class QXmppVCardIq;
+class QXmppPresence;
 
 namespace XMPP
 {

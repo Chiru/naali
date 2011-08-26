@@ -5,9 +5,11 @@ MocFolder ()
 
 # Define source files
 file (GLOB CPP_FILES *.cpp)
-file (GLOB H_FILES *.h )
+file (GLOB H_FILES *.h)
 file (GLOB XML_FILES *.xml)
-#file (GLOB MOC_FILES )
+#file (GLOB MOC_FILES XMPPModule.h)
+
+AddSourceFolder (Client)
 
 set (SOURCE_FILES ${SOURCE_FILES} ${CPP_FILES} ${H_FILES})
 set (FILES_TO_TRANSLATE ${FILES_TO_TRANSLATE} ${H_FILES} ${CPP_FILES} PARENT_SCOPE)
@@ -19,7 +21,7 @@ configure_qxmpp()
 use_package (QXMPP)
 
 
-use_modules (Core Foundation Interfaces RexCommon ProtocolUtilities Scene Console Audio TundraLogicModule)
+use_modules (XMPPModule Core Foundation Interfaces RexCommon ProtocolUtilities Scene Console Audio TundraLogicModule)
 
 build_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${MOC_SRCS} ${UI_SRCS} ${RESOURCE_SRCS})
 

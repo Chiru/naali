@@ -67,6 +67,7 @@ class EC_Placeable;
 class EC_OgreCamera;
 class EC_Mesh;
 class EC_RigidBody;
+class EC_Light;
 class QListView;
 class QMouseEvent;
 class RaycastResult;
@@ -92,6 +93,7 @@ private:
     MenuDataModel *menudatamodel_;
 
     EC_MenuItem *attachedMenuItem;
+    EC_Light *menulight_;
     ComponentPtr ringmesh_;
 
     //QPoint mousePosition;
@@ -132,6 +134,9 @@ public:
 
     Q_PROPERTY(bool PhysicsEnabled READ getPhysicsEnabled WRITE setPhysicsEnabled);
     DEFINE_QPROPERTY_ATTRIBUTE(bool, PhysicsEnabled);
+
+    Q_PROPERTY(bool MenuLight READ getMenuLight WRITE setMenuLight);
+    DEFINE_QPROPERTY_ATTRIBUTE(bool, MenuLight);
 
 public slots:
 
@@ -200,6 +205,8 @@ private slots:
 
     EC_MenuItem* CreateMenuItem();
     EC_MenuItem* CreateMenuItem(ComponentPtr parentPlaceable);
+
+    void CreateMenuLight();
 
 
 signals:

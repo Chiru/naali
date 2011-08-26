@@ -20,7 +20,7 @@ use_modules (Core Foundation Interfaces Input OgreRenderingModule)
 
 build_library (${TARGET_NAME} SHARED ${SOURCE_FILES} ${MOC_SRCS} ${QML_FILES})
 
-link_modules (Core Foundation Interfaces Input EC_Script)
+link_modules (Core Foundation Interfaces Input EC_Script OgreRenderingModule)
 link_ogre()
 link_package_qtdeclarative()
 LinkEntityComponent(EntityComponents/EC_Script EC_Script)

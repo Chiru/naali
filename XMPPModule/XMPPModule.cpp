@@ -3,14 +3,17 @@
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
 
-#include "Framework.h"
 #include "XMPPModule.h"
+#include "Client/Client.h"
+#include "Client/AccountManager.h"
+
+#include "Framework.h"
 
 #include "MemoryLeakCheck.h"
 
 namespace XMPP
 {
-std::string XMPPModule::type_name_static_ = "XMPPModule";
+std::string XMPPModule::type_name_static_ = "XMPP";
 
 XMPPModule::XMPPModule() :
     IModule(type_name_static_),

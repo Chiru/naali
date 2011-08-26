@@ -16,6 +16,8 @@
 #include "EC_MenuItem.h"
 #include "EC_Mesh.h"
 #include "EC_RigidBody.h"
+#include "EC_Light.h"
+#include "EC_Name.h"
 #include "Entity.h"
 
 #include <OgreCamera.h>
@@ -50,6 +52,7 @@ EC_MenuContainer::EC_MenuContainer(IModule *module) :
     menuIsRotating_(false),
     follow(this, "Follow camera", false),
     PhysicsEnabled(this, "Physics for menu", false),
+    MenuLight(this, "Light for menu", true),
     scrollerTimer_Interval(50),
     selected_(0),
     previousSelected_(0),
@@ -131,6 +134,7 @@ void EC_MenuContainer::ActivateMenu()
         MenuItemList_.append(menuItem);
     }
 
+    CreateMenuLight();
     ringmesh_ =  GetParentEntity()->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false);
     IComponent *iComponent = ringmesh_.get();
     if (iComponent)
@@ -786,7 +790,6 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
             EC_MenuItem *menuItem = dynamic_cast<EC_MenuItem*>(iComponent);
 
             //Sets parent entity for menuItem-entitys placeable component
-            /// \bug parenting placeables brokes physics.
             menuItem->SetParentMenuContainer(parentPlaceable);
             //menuItem->GetOrCreatePlaceableComponent()->; //->Translate(Vector3df(90.0, 90.0, 90.0));
             sceneManager_->EmitEntityCreated(MenuItemEntity, AttributeChange::LocalOnly);
@@ -798,6 +801,59 @@ EC_MenuItem* EC_MenuContainer::CreateMenuItem(ComponentPtr parentPlaceable)
         }
     }
     return 0;
+}
+
+void EC_MenuContainer::CreateMenuLight()
+{
+    Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
+
+    entity_id_t id = sceneManager_->GetNextFreeIdLocal();
+    Scene::EntityPtr entity_ = sceneManager_->CreateEntity(id, QStringList(), AttributeChange::LocalOnly, false);
+
+    //LogInfo("Pointer " + ToString(entity_));
+    if(!entity_)
+        LogError("Couldn't create entity with given ID");
+    else
+    {
+        Scene::Entity *MenuLightEntity = entity_.get();
+        MenuLightEntity->SetTemporary(true);
+        IComponent *menulightComponent = MenuLightEntity->GetOrCreateComponent("EC_Light", AttributeChange::LocalOnly, false).get();
+        IComponent *lightPlaceableComponent = MenuLightEntity->GetOrCreateComponent("EC_Placeable", AttributeChange::LocalOnly, false).get();
+        IComponent *lightNameComponent = MenuLightEntity->GetOrCreateComponent("EC_Name", AttributeChange::LocalOnly, false).get();
+        IComponent *lightMeshComponent = MenuLightEntity->GetOrCreateComponent("EC_Mesh", AttributeChange::LocalOnly, false).get();
+
+        if(menulightComponent)
+        {
+            menulight_ = dynamic_cast<EC_Light*>(menulightComponent);
+            sceneManager_->EmitEntityCreated(MenuLightEntity, AttributeChange::LocalOnly);
+
+            if(lightNameComponent)
+            {
+                EC_Name* name = dynamic_cast<EC_Name*>(lightNameComponent);
+                name->setname("MenuLightEntity");
+            }
+            if(lightMeshComponent)
+            {
+                QString meshreference_;
+                //Temp mesh, needed for testing to see where light really is.
+                meshreference_ ="local://phone_red.mesh";
+                EC_Mesh* mesh = dynamic_cast<EC_Mesh*>(lightMeshComponent);
+                mesh->SetMeshRef(meshreference_);
+            }
+            if(lightPlaceableComponent)
+            {
+                //Default position for light is same as menucontainers.
+                EC_Placeable* placeable = dynamic_cast<EC_Placeable*>(lightPlaceableComponent);
+                placeable->SetPosition(GetOrCreatePlaceableComponent()->GetPosition());
+            }
+
+        }
+        else
+        {
+            LogError("Error while creating MenuLight");
+        }
+    }
+
 }
 
 QObject* EC_MenuContainer::GetMenuDataModel()
@@ -845,6 +901,21 @@ void EC_MenuContainer::ComponentRemoved(IComponent *component, AttributeChange::
 
 void EC_MenuContainer::AttributeChanged(IAttribute* attribute, AttributeChange::Type change)
 {
+    if(attribute == &MenuLight)
+    {
+        if(MenuLight.Get() == true)
+        {
+            CreateMenuLight();
+        }
+        else
+        {
+            Scene::SceneManager *sceneManager_ = framework_->Scene()->GetDefaultScene().get();
+            entity_id_t id = menulight_->GetParentEntity()->GetId();
+            if(id)
+                sceneManager_->RemoveEntity(id, AttributeChange::LocalOnly);
+        }
+    }
+
     if(attribute == &PhysicsEnabled)
     {
         if(PhysicsEnabled.Get() == true)

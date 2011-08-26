@@ -2,12 +2,17 @@
 
 #include "StableHeaders.h"
 #include "DebugOperatorNew.h"
-#include "ConfigAPI.h"
 
 #include "AccountManager.h"
 #include "XMPPModule.h"
 
+#include "ConfigAPI.h"
+#include "Framework.h"
+
+#include <qxmpp/QXmppUtils.h>
+
 #include <QFile>
+#include <QTextStream>
 
 #include "MemoryLeakCheck.h"
 

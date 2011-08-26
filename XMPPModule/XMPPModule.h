@@ -10,16 +10,14 @@
 
 #include "IModule.h"
 #include "ModuleLoggingFunctions.h"
+#include "XMPPModuleApi.h"
 #include "ForwardDefines.h"
 #include "CoreStringUtils.h"
+
 #include "qxmpp/QXmppConfiguration.h"
 
-#include "XMPPModuleApi.h"
-
-#include "AccountManager.h"
-#include "Client.h"
-
 #include <QObject>
+
 
 namespace XMPP
 {

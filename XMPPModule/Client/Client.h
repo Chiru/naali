@@ -1,28 +1,27 @@
+/**
+ *  For conditions of distribution and use, see copyright notice in license.txt
+ *
+ *  @file   Client.h
+ *  @brief  Provides single client-server XMPP connection.
+ */
+
+
 #ifndef incl_XMPP_Client_h
 #define incl_XMPP_Client_h
 
-#include "XMPPModule.h"
+#include "CoreTypes.h"
 
-#include "VoiceCall.h"
-#include "UserItem.h"
-#include "MucRoom.h"
-
-#include "qxmpp/QXmppClient.h"
-#include "qxmpp/QXmppCallManager.h"
-#include "qxmpp/QXmppMessage.h"
-#include "qxmpp/QXmppJingleIq.h"
-#include "qxmpp/QXmppUtils.h"
 #include "qxmpp/QXmppPresence.h"
-#include "qxmpp/QXmppUtils.h"
-#include "qxmpp/QXmppReconnectionManager.h"
-#include "qxmpp/QXmppRosterIq.h"
-#include "qxmpp/QXmppVCardIq.h"
 #include "qxmpp/QXmppLogger.h"
-#include "qxmpp/QXmppStanza.h"
-#include "qxmpp/QXmppMucManager.h"
 
 #include <QObject>
 #include <QThread>
+
+class QXmppClient;
+class QXmppMessage;
+class QXmppVCardIq;
+class QXmppConfiguration;
+class QXmppPresence;
 
 namespace Foundation
 {
@@ -31,7 +30,8 @@ namespace Foundation
 
 namespace XMPP
 {
-
+class Extension;
+class UserItem;
 //! Represents a single connection to a XMPP Server
 //!
 //! Provides interface for sending and receiveing messages
@@ -48,16 +48,28 @@ public:
 
     void Update(f64 frametime);
 
+    //! Get extension pointer
+    //! \return pointer for the extensions if found, void otherwise
+    template<typename T>
+    T* getExtension()
+    {
+        for (int i = 0; i < extensions_.size(); ++i)
+        {
+            T* extension = qobject_cast<T*>(extensions_[i]);
+            if(extension)
+                return extension;
+        }
+        return 0;
+    }
+
 public slots:
-    //! Accept call request from Jabber ID
-    void acceptIncomingCall(QString callerJid);
+    //! Get extension as a QObject pointer
+    //! \return QObject pointer to the object if found, null otherwise
+    QObject *getExtension(QString extensionName);
 
-    //! End active voice call
-    void endCall();
-
-    //! Set own presence status
+    //! Set own presence availability
     //! \param QString
-    void setPresence(QString presenceType);
+    void setAvailability(QString availability);
 
     //! Connect to a XMPP Server, script friendly overload
     //! \param userJid User's Jabber ID
@@ -71,36 +83,11 @@ public slots:
 
     //! Get UserItem
     //! \param userJid Jabber ID for the user
-    QObject* getUser(QString userJid);
-
-    //! Get multi user chatroom pointer
-    //! \param roomName name of the muc room (room@service)
-    //! \return QObject pointer for room if found, null pointer for room not found
-    QObject* getRoom(QString roomName);
-
-    //! Get pointer to the voice call api
-    //! \return QObject pointer to the voice api object
-    QObject* call();
-
-    //! Get available muc rooms
-    //! \return QStringList containing available muc rooms
-    QStringList getRooms();
+    QObject* getUser(QString userJid);   
 
     //! Get current roster
     //! \return QStringList containing known Jabber ID's
     QStringList getRoster();
-
-    //! Join multi user chatroom
-    //! \param roomJid name of the muc room (room@service)
-    //! \param nickname user's nickname in the room
-    //! \param password optional room password
-    //! \return QObject pointer on success (pointer to old room if already joined), null pointer if join unsuccessfull
-    QObject* joinRoom(QString roomJid, QString nickname, QString password = QString());
-
-    //! Send message
-    //! \param userJid Jabber ID the message is sent to
-    //! \param message self explanatory
-    void sendMessage(QString userJid, QString message);
 
     //! Disconnect from server
     //! \note Requesting a disconnect destroys this Client object
@@ -116,26 +103,20 @@ public slots:
     void setStreamLogging(bool state);
 
 private slots:
-    void handleIncomingCall(QXmppCall *call);
-    void handleCallStateChanged(QXmppCall::State state);
-    void handleMessageReceived(const QXmppMessage &message);
     void handlePresenceChanged(const QString& userJid, const QString& resource);
     void handlePresenceReceived(const QXmppPresence& presence);
     void handleSetPresence(QXmppPresence::Type presenceType);
+    void handleMessageReceived(const QXmppMessage &message);
     void handleRosterReceived();
     void handleRosterChanged(const QString& userJid);
     void handleVCardReceived(const QXmppVCardIq& vcard);
     void handleLogMessage(QXmppLogger::MessageType type, const QString& message);
-    void handleMucInvite(const QString& roomJid, const QString& inviterJid, const QString& reason);
 
 private:
     QXmppClient *xmpp_client_;
-    QXmppCallManager *xmpp_call_manager_;
-    QXmppMucManager *xmpp_muc_manager_;
+    QList<Extension*> extensions_;
     QXmppConfiguration *current_configuration_;
-    VoiceCall *call_;
     QMap<QString, UserItem*> users_;    /// \todo do we need to use QMap when UserJid's can be fetched from UserItems?
-    QMap<QString, MucRoom*> muc_rooms_; /// \todo same goes for this map
     Foundation::Framework* framework_;
     bool log_stream_;
 

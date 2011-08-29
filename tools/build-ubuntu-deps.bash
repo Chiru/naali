@@ -245,6 +245,23 @@ else
     touch $tags/$what-done
 fi
 
+cd $build
+what=qxmpp
+ver=0.3.0
+if test -f $tags/$what-done; then
+    echo $what is done
+else
+    rm -rf $what
+    svn checkout http://qxmpp.googlecode.com/svn/tags/qxmpp-$ver $what
+    cd $what
+    qmake
+    make -j $nprocs
+    mkdir -p $prefix/include/$what
+    cp src/*.h $prefix/include/$what
+    cp lib/libqxmpp.a $prefix/lib/
+    touch $tags/$what-done
+fi
+
 ln -fvs /usr/include/xmlrpc-epi/*.h $prefix/include/
 
 if lsb_release -c | grep -q lucid; then

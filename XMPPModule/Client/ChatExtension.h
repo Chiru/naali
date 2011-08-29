@@ -22,16 +22,22 @@ namespace Foundation
 
 namespace XMPP
 {
+class Client;
 
+//! Handles basic XMPP peer2peer messages
 class ChatExtension : public Extension
 {
     Q_OBJECT
 
 public:
-    ChatExtension(Foundation::Framework *framework, QXmppClient *client);
+    ChatExtension();
     virtual ~ChatExtension();
+    virtual void initialize(Client *client);
 
 public slots:
+    //! Send message for remote party
+    //! \param receiver Bare JabberID of the receiver (user@host.com)
+    //! \param message Message to be sent
     void sendMessage(QString receiver, QString message);
 
 private slots:
@@ -39,6 +45,7 @@ private slots:
 
 private:
     static QString extension_name_;
+    Client *client_;
 
 signals:
     void messageReceived(QString sender, QString message);

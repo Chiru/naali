@@ -15,17 +15,25 @@
 #include <QObject>
 #include <QString>
 
+namespace Foundation
+{
+    class Framework;
+}
+
 namespace XMPP
 {
 class Call;
+class Client;
 
+//! Provides peer2peer SIP calls. Implements XEP-0166, XEP-0167 & XEP-0176.
 class CallExtension : public Extension
 {
     Q_OBJECT
 
 public:
-    CallExtension(Foundation::Framework *framework, QXmppClient *client);
+    CallExtension();
     virtual ~CallExtension();
+    virtual void initialize(Client *client);
     void Update(f64 frametime);
 
     enum CallTypeFlag { VoiceCall = 1, VideoCall = 2 };
@@ -88,11 +96,12 @@ private slots:
 private:
     static QString extension_name_;
     QXmppCallManager *qxmpp_call_manager_;
+    Foundation::Framework *framework_;
+    Client *client_;
     QMap<QString, Call*> calls_;
     QMap<QString, Call*> incoming_calls_;
 
 signals:
-    //void callStateChanged(QString peerJid, Call::State callState);
     void callDisconnected(QString peerJid);
     void callConnected(QString peerJid);
     void callIncoming(QString peerJid);

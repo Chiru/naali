@@ -8,6 +8,10 @@
 #include "UserItem.h"
 #include "Extension.h"
 
+#include "CallExtension.h"
+#include "ChatExtension.h"
+#include "MucExtension.h"
+
 #include "AudioAPI.h"
 
 #include "qxmpp/QXmppClient.h"
@@ -26,6 +30,11 @@ namespace XMPP
         xmpp_client_(new QXmppClient()),
         log_stream_(false)
     {
+        // Bit of a hackish way to store extensions. Feel free to implement better.
+        available_extensions_.append(new CallExtension());
+        available_extensions_.append(new ChatExtension());
+        available_extensions_.append(new MucExtension());
+
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         // -----Client signals-----
@@ -68,6 +77,38 @@ namespace XMPP
         Extension *extension;
         foreach(extension, extensions_)
             extension->Update(frametime);
+    }
+
+    bool Client::addExtension(Extension *extension)
+    {
+        if(extensions_.contains(extension))
+            return false;
+
+        extension->setParent(this);
+        extension->initialize(this);
+
+        extensions_.append(extension);
+
+        return true;
+    }
+
+    QObject* Client ::addExtension(const QString &extensionName)
+    {
+        Extension *extension = 0;
+
+        for(int i = 0; i < available_extensions_.size(); i++)
+        {
+            if(available_extensions_[i]->name() == extensionName)
+            {
+                extension = available_extensions_[i];
+                available_extensions_.removeAt(i);
+            }
+        }
+
+        if(!addExtension(extension))
+            return 0;
+
+        return dynamic_cast<QObject*>(extension);
     }
 
     QObject* Client::getExtension(QString extensionName)

@@ -20,19 +20,39 @@ class QXmppMessage;
 namespace XMPP
 {
 class MucRoom;
+class Client;
 
+//! Handles multiuser chat messaging as defined in XEP-0045
 class MucExtension : public Extension
 {
     Q_OBJECT
 
 public:
-    MucExtension(Foundation::Framework *framework, QXmppClient *client);
+    MucExtension();
     virtual ~MucExtension();
+    virtual void initialize(Client *client);
 
 public slots:
+    //! Join multiuser chatroom on the server
+    //! \param room Full JabberID for the room (room@host.com)
+    //! \param nickname Nickname to be used in the room
+    //! \param password Optional password for the room
+    //! \return bool true for succesful join request
+    //! \note Succesful join request does not mean the actual join was succesful
     bool joinRoom(QString room, QString nickname, QString password = QString());
+
+    //! Leave muc chatroom
+    //! \param room Full JabberID for the room (room@host.com)
+    //! \param bool true for room found and left
     bool leaveRoom(QString room);
+
+    //! Get list of currently active rooms
+    //! \return QStringList containing full JabberIDs of the rooms
     QStringList getRooms() const;
+
+    //! Get participants for given room
+    //! \param room Full JabberID for the room
+    //! \return QStringList containing participant nicknames for the room
     QStringList getParticipants(QString room) const;
 
 private slots:
@@ -44,16 +64,13 @@ private:
     static QString extension_name_;
     QXmppMucManager* qxmpp_muc_manager_;
     QMap<QString, MucRoom*> rooms_;
+    Foundation::Framework *framework_;
+    Client *client_;
 
 signals:
     void messageReceived(QString room, QString sender, QString message);
     void invitationReceived(QString room, QString from, QString reason);
-
-    /// Emitted when room is added
-    /// \note there's no proper way in qxmpp to detect if room join was succesful.
-    ///       currently this signal gets emitted when join request was succesfully sent.
     void roomAdded(QString room);
-
     void roomRemoved(QString room, QString reason);
     void userJoinedRoom(QString room, QString user);
     void userLeftRoom(QString room, QString user);

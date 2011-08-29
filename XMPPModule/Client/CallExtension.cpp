@@ -5,6 +5,7 @@
 
 #include "CallExtension.h"
 #include "Call.h"
+#include "Client.h"
 #include "XMPPModule.h"
 
 #include "MemoryLeakCheck.h"
@@ -14,20 +15,25 @@ namespace XMPP
 
 QString CallExtension::extension_name_ = "Call";
 
-CallExtension::CallExtension(Foundation::Framework *framework, QXmppClient *client) :
-    Extension(framework, client, extension_name_),
+CallExtension::CallExtension() :
+    Extension(extension_name_),
     qxmpp_call_manager_(new QXmppCallManager())
 {
-    qxmpp_client_->addExtension(qxmpp_call_manager_);
-
-    bool check;
-    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
-    Q_ASSERT(check);
 }
 
 CallExtension::~CallExtension()
 {
 
+}
+
+void CallExtension::initialize(Client *client)
+{
+    client_ = client;
+    client_->getQxmppClient()->addExtension(qxmpp_call_manager_);
+
+    bool check;
+    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
+    Q_ASSERT(check);
 }
 
 void CallExtension::Update(f64 frametime)
@@ -47,6 +53,9 @@ bool CallExtension::acceptCall(QString peerJid)
 
 bool CallExtension::callUser(QString peerJid, int callType)
 {
+    if(!client_)
+        return false;
+
     // callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
     QXmppCall *qxmpp_call = qxmpp_call_manager_->call(peerJid);
 

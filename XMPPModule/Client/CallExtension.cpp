@@ -7,6 +7,7 @@
 #include "Call.h"
 #include "Client.h"
 #include "XMPPModule.h"
+#include "UserItem.h"
 
 #include "MemoryLeakCheck.h"
 
@@ -17,17 +18,24 @@ QString CallExtension::extension_name_ = "Call";
 
 CallExtension::CallExtension() :
     Extension(extension_name_),
-    qxmpp_call_manager_(new QXmppCallManager())
+    qxmpp_call_manager_(0)
 {
 }
 
 CallExtension::~CallExtension()
 {
-
+    QString call;
+    foreach(call, calls_.keys())
+    {
+        delete calls_[call];
+        calls_.remove(call);
+    }
 }
 
 void CallExtension::initialize(Client *client)
 {
+    qxmpp_call_manager_ = new QXmppCallManager();
+
     client_ = client;
     client_->getQxmppClient()->addExtension(qxmpp_call_manager_);
     framework_ = client_->getFramework();
@@ -52,13 +60,19 @@ bool CallExtension::acceptCall(QString peerJid)
     return calls_[peerJid]->accept();
 }
 
-bool CallExtension::callUser(QString peerJid, int callType)
+// callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
+bool CallExtension::callUser(QString peerJid, QString peerResource, int callType)
 {
-    if(!client_)
+    if(!client_ || !client_->getUser(peerJid))
         return false;
 
-    // callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
-    QXmppCall *qxmpp_call = qxmpp_call_manager_->call(peerJid);
+    UserItem* user_item = static_cast<UserItem*>(client_->getUser(peerJid));
+    if(!user_item->getCapabilities(peerResource).contains("voice-v1"))
+        return false;
+
+    QString full_jid = peerJid + "/" + peerResource;
+
+    QXmppCall *qxmpp_call = qxmpp_call_manager_->call(full_jid);
 
     if(!qxmpp_call)
         return false;
@@ -69,7 +83,7 @@ bool CallExtension::callUser(QString peerJid, int callType)
     return true;
 }
 
-bool CallExtension::callUser(QString peerJid, QStringList callType)
+bool CallExtension::callUser(QString peerJid, QString peerResource, QStringList callType)
 {
     int flags = 0;
 
@@ -85,7 +99,7 @@ bool CallExtension::callUser(QString peerJid, QStringList callType)
             flags ^= 2;
     }
 
-    return callUser(peerJid, flags);
+    return callUser(peerJid, peerResource, flags);
 }
 
 bool CallExtension::disconnectCall(QString peerJid)

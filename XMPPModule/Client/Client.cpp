@@ -28,7 +28,7 @@ namespace XMPP
     Client::Client(Foundation::Framework* framework, QXmppConfiguration &configuration) :
         framework_(framework),
         xmpp_client_(new QXmppClient()),
-        log_stream_(true)
+        log_stream_(false)
     {
         // Bit of a hackish way to store extensions. Feel free to implement better.
         available_extensions_.append(new CallExtension());

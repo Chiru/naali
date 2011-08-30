@@ -42,19 +42,21 @@ public slots:
     /// Call remote user.
     /// \note Video calls not implemented due to lack of support in QXmpp
     /// \param callType bitfield containing flags defined in CallExtension::CallType enum
+    /// \param peerResource Resource the call is connected to (must have voice-v1 capability)
     /// \param peerJid remote party's JabberID
     /// \return bool true on succesful call request
-    bool callUser(QString peerJid, int callType);
+    bool callUser(QString peerJid, QString peerResource, int callType);
 
     /// Script friendly overload
     /// \note Video calls not implemented due to lack of support in QXmpp
+    /// \param peerJid remote party's JabberID
+    /// \param peerResource Resource the call is connected to (must have voice-v1 capability)
     /// \param callType QStringList with 1-2 elements:
     ///         "Voice" for voice capability
     ///         "Video" for video capability
     ///         Empty list defaults to voice call
-    /// \param peerJid remote party's JabberID
     /// \return bool true on succesful call request
-    bool callUser(QString peerJid, QStringList callType = QStringList());
+    bool callUser(QString peerJid, QString peerResource, QStringList callType = QStringList());
 
     //! Accept incoming call
     //! \param peerJid JabberID the call is associated with

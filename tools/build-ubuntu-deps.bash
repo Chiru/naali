@@ -118,7 +118,7 @@ else
     cd generator
     qmake
     make -j $nprocs
-    ./generator --include-paths=/usr/include/qt4
+    ./generator --include-paths=`qmake -query QT_INSTALL_HEADERS`
     cd ..
 
     cd qtbindings
@@ -254,6 +254,9 @@ else
     rm -rf $what
     svn checkout http://qxmpp.googlecode.com/svn/tags/qxmpp-$ver $what
     cd $what
+    sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
+    sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
+    rm src/temp
     qmake
     make -j $nprocs
     mkdir -p $prefix/include/$what

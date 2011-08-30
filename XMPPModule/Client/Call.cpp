@@ -6,6 +6,8 @@
 #include "Call.h"
 #include "XMPPModule.h"
 
+#include "Framework.h"
+
 #include "qxmpp/QXmppRtpChannel.h"
 #include "qxmpp/QXmppJingleIq.h"
 
@@ -86,6 +88,8 @@ void Call::handleCallConnected()
     if(!call_)
         return;
 
+    Q_ASSERT(framework_);
+
     if(!framework_->Audio())
     {
         XMPPModule::LogError("Tundra sound API not initialized, cannot initialize voice call.");
@@ -93,11 +97,6 @@ void Call::handleCallConnected()
     }
 
     QXmppRtpChannel *channel = call_->audioChannel();
-    bool ok;
-
-    ok = QObject::connect(channel, SIGNAL(readyRead()),
-                          this, SLOT(handleInboundVoice()));
-    Q_ASSERT(ok);
 
     bool stereo; /// \todo change this to global property of the call
     if(channel->payloadType().channels() == 2)
@@ -109,6 +108,9 @@ void Call::handleCallConnected()
     int buffer_size = 16/8*channel->payloadType().clockrate()*200/1000;
 
     framework_->Audio()->StartRecording("", channel->payloadType().clockrate(), true, stereo, buffer_size);
+
+    bool ok = QObject::connect(channel, SIGNAL(readyRead()), this, SLOT(handleInboundVoice()));
+    Q_ASSERT(ok);
 }
 
 void Call::handleInboundVoice()
@@ -135,7 +137,6 @@ void Call::handleInboundVoice()
         audio_channel_ = framework_->Audio()->PlaySoundBuffer(buffer, SoundChannel::Voice);
     else
         framework_->Audio()->PlaySoundBuffer(buffer, SoundChannel::Voice, audio_channel_);
-
 }
 
 void Call::handleOutboundVoice()

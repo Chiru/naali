@@ -30,7 +30,7 @@ public:
         QStringList capabilities; // QStringList for script friendliness (scripts don't mix well with enums)
     };
 
-    UserItem(const QXmppRosterIq::Item &rosterItem);
+    UserItem(const QString &bareJid);
     ~UserItem();
 
     void updateRosterItem(const QXmppRosterIq::Item &item);
@@ -41,8 +41,15 @@ public slots:
     //! Get user's Jabber ID
     QString getJid() { return bare_jid_; }
 
-    //! Get all the capabilities this user has
-    QStringList getCapabilities();
+    //! Get all the capabilities for user/resource
+    //! \param resource capabilities of the resource, if empty
+    //!        all the capabilities the user has will be returned
+    //! \return QStringList containing resource/user capabilities,
+    //!         empty if resource not found.
+    QStringList getCapabilities(QString resource = QString());
+
+    //! Get user's resources
+    QStringList getResources();
 
     //! Get status of the user's vCard
     bool hasVCard() { return has_vcard_; }

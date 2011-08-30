@@ -30,6 +30,7 @@ void CallExtension::initialize(Client *client)
 {
     client_ = client;
     client_->getQxmppClient()->addExtension(qxmpp_call_manager_);
+    framework_ = client_->getFramework();
 
     bool check;
     check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
@@ -66,6 +67,25 @@ bool CallExtension::callUser(QString peerJid, int callType)
     Call *call = new Call(framework_, qxmpp_call);
     calls_.insert(peerJid, call);
     return true;
+}
+
+bool CallExtension::callUser(QString peerJid, QStringList callType)
+{
+    int flags = 0;
+
+    if(callType.size() == 0)
+    {
+        flags ^= 1;
+    }
+    else
+    {
+        if(callType.contains("Voice", Qt::CaseInsensitive))
+            flags ^= 1;
+        if(callType.contains("Video", Qt::CaseInsensitive))
+            flags ^= 2;
+    }
+
+    return callUser(peerJid, flags);
 }
 
 bool CallExtension::disconnectCall(QString peerJid)

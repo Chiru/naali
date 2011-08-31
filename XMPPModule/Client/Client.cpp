@@ -226,6 +226,11 @@ namespace XMPP
 
     void Client::handlePresenceReceived(const QXmppPresence &presence)
     {
+        // Filter Muc messages coming from room@conference.host.com
+        QString from_domain = jidToDomain(presence.from());
+        if(from_domain.contains("conference"))
+            return;
+
         QString from_jid = jidToBareJid(presence.from());
         QString from_resource = jidToResource(presence.from());
 

@@ -9,6 +9,8 @@
 #include "XMPPModule.h"
 #include "UserItem.h"
 
+#include "qxmpp/QXmppUtils.h"
+
 #include "MemoryLeakCheck.h"
 
 namespace XMPP
@@ -66,9 +68,9 @@ bool CallExtension::callUser(QString peerJid, QString peerResource, int callType
     if(!client_ || !client_->getUser(peerJid))
         return false;
 
-    UserItem* user_item = static_cast<UserItem*>(client_->getUser(peerJid));
-    if(!user_item->getCapabilities(peerResource).contains("voice-v1"))
-        return false;
+    //UserItem* user_item = static_cast<UserItem*>(client_->getUser(peerJid));
+    //if(!user_item->getCapabilities(peerResource).contains("voice-v1"))
+    //    return false;
 
     QString full_jid = peerJid + "/" + peerResource;
 
@@ -135,7 +137,7 @@ bool CallExtension::setActiveCall(QString peerJid)
 
 void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
 {
-    QString from_jid = qxmppCall->jid();
+    QString from_jid = jidToBareJid(qxmppCall->jid());
 
     XMPPModule::LogDebug(extension_name_.toStdString()
                          + "Incoming call (from = \"" + from_jid.toStdString() + "\")");

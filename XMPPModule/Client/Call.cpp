@@ -10,6 +10,7 @@
 
 #include "qxmpp/QXmppRtpChannel.h"
 #include "qxmpp/QXmppJingleIq.h"
+#include "qxmpp/QXmppUtils.h"
 
 #include "MemoryLeakCheck.h"
 
@@ -23,6 +24,8 @@ Call::Call(Foundation::Framework *framework, QXmppCall *call) :
         state_ = Call::RingingState;
     else if(call->direction() == QXmppCall::OutgoingDirection)
         state_ = Call::ConnectingState;
+
+    peer_jid_ = jidToBareJid(call->jid());
 
     bool check;
     check = connect(call_, SIGNAL(stateChanged(QXmppCall::State)), this, SLOT(handleCallStateChanged(QXmppCall::State)));

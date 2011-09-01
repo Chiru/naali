@@ -1,11 +1,8 @@
 import PythonQt.QtGui
 import PythonQt.QtCore
 
-from message import MessageDialog
-
 class UserDialog():
     def __init__(self, client):
-        self.visible = False
         self.client = client
         self.users = []
         self.dialog = PythonQt.QtGui.QDialog()
@@ -31,21 +28,26 @@ class UserDialog():
         self.buttonLayout.addSpacerItem(self.buttonSpacer)
         self.buttonLayout.addWidget(self.settingsButton)
         self.layout.addLayout(self.buttonLayout)
-        
-        self.client.connect('rosterChanged()', self.populateUserList)
-        self.client.connect('presenceChanged(QString)', self.updateUser)
-        self.client.connect('vCardChanged(QString)', self.updateUser)
-
-    def getUserByName(self, name):
-        for user in self.users:
-            if(user.fullName == name):
-                    return user
-                    
-    def getUserByJid(self, userJid):
+    
+    # Returns User object for given jid   
+    def getUser(self, userJid):
         for user in self.users:
             if(user.jid == userJid):
                 return user
+    
+    # Returns all jids in userlist
+    def getUserList(self):
+        users = []
+        for user in self.users:
+            users.append(user.jid())
+        return users
         
+    # Get jid of the currently selected user
+    def getSelectedJid(self):
+        item = self.listWidget.currentItem()
+        return item.text()
+    
+    # Fetch   
     def populateUserList(self):
         roster = self.client.getRoster()
         for userJid in roster:
@@ -60,21 +62,22 @@ class UserDialog():
                 break
             
     def showDialog(self):
-        self.visible = True
         self.dialog.show()
         
+    def hideDialog(self):
+        self.dialog.hide()   
         
 class User():
     def __init__(self, userItem, client, listWidget):
         self.userItem = userItem
-        self.jid = userItem.getJid()
         self.client = client
+        self.listWidget = listWidget
+        self.jid = userItem.getJid()
         self.listItem = PythonQt.QtGui.QListWidgetItem(listWidget)
-        self.hasDialog = False
-        
+        self.listItem.setText(self.jid)
+    
+    # Update user's listitem 
     def update(self):
-        self.fullName = self.userItem.getFullName()
-        print "debug: ", len(self.fullName)
         pixmap = PythonQt.QtGui.QPixmap()
         if not(pixmap.loadFromData(self.userItem.getPhoto())):
             pixmap = PythonQt.QtGui.QPixmap(30,30)
@@ -82,27 +85,7 @@ class User():
         self.picture = PythonQt.QtGui.QIcon()
         self.picture.addPixmap(pixmap)
         self.listItem.setIcon(self.picture)
-        self.listItem.setText(self.fullName)
-        
-    def createDialog(self):
-        self.dialog = MessageDialog(self.fullName, self.picture)
-        self.dialog.sendButton.connect('clicked(bool)', self.sendMessage)
-        self.hasDialog = True
-        self.dialog.showDialog()
-    
-    def sendMessage(self):
-        message = self.dialog.getLine()
-        self.client.sendMessage(self.jid, message)
-        
-        displayedMessage = "[You] " + message
-        self.dialog.appendMessage(displayedMessage)
-        
-    def messageReceived(self, message):
-        if not(self.hasDialog):
-            self.createDialog()
             
-        if not(self.dialog.isVisible()):
-            self.dialog.setVisible(True)
-            
-        displayedMessage = "[" + self.fullName + "] " + message
-        self.dialog.appendMessage(displayedMessage)
+    # Returns users fullname if set
+    def fullname(self):
+        return self.userItem.getFullName()

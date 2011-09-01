@@ -8,6 +8,7 @@
 #include "XMPPModule.h"
 
 #include "qxmpp/QXmppMessage.h"
+#include "qxmpp/QXmppUtils.h"
 
 #include "MemoryLeakCheck.h"
 
@@ -40,7 +41,7 @@ void ChatExtension::handleMessageReceived(const QXmppMessage &message)
     if(message.type() == QXmppMessage::GroupChat)
         return;
 
-    QString sender_jid = message.from();
+    QString sender_jid = jidToBareJid(message.from());
     QString msg = message.body();
 
     XMPPModule::LogDebug(extension_name_.toStdString()

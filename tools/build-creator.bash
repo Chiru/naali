@@ -269,7 +269,7 @@ if test "$1" = "--depsonly"; then
 fi
 
 if [ x$build_valgrind != xtrue ]; then
-    options="-O -g"
+    options="-O0 -g"
 else
     options="-O0 -fno-inline -Wall -g"
     cd $viewer/bin/

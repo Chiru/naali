@@ -16,11 +16,11 @@
 
 namespace XMPP
 {
-    UserItem::UserItem(const QXmppRosterIq::Item &rosterItem) :
+    UserItem::UserItem(const QString &bareJid) :
         has_vcard_(false),
         available_(false)
     {
-        bare_jid_ = rosterItem.bareJid();
+        bare_jid_ = bareJid;
     }
 
     UserItem::~UserItem()
@@ -99,19 +99,32 @@ namespace XMPP
         url_ = vcard.url();
     }
 
-    QStringList UserItem::getCapabilities()
+    QStringList UserItem::getResources()
+    {
+        return resources_.keys();
+    }
+
+    QStringList UserItem::getCapabilities(QString resource)
     {
         QStringList capabilities;
 
-        QString resource;
-        foreach(resource, resources_.keys())
+        if(resource.isEmpty())
         {
-            QString capability;
-            foreach(capability, resources_[resource].capabilities)
+            QString resource;
+            foreach(resource, resources_.keys())
             {
-                if(!capabilities.contains(capability))
-                    capabilities.append(capability);
+                QString capability;
+                foreach(capability, resources_[resource].capabilities)
+                {
+                    if(!capabilities.contains(capability))
+                        capabilities.append(capability);
+                }
             }
+        }
+        else
+        {
+            if(resources_.keys().contains(resource))
+                capabilities = resources_[resource].capabilities;
         }
 
         return capabilities;

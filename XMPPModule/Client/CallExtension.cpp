@@ -5,7 +5,11 @@
 
 #include "CallExtension.h"
 #include "Call.h"
+#include "Client.h"
 #include "XMPPModule.h"
+#include "UserItem.h"
+
+#include "qxmpp/QXmppUtils.h"
 
 #include "MemoryLeakCheck.h"
 
@@ -14,20 +18,33 @@ namespace XMPP
 
 QString CallExtension::extension_name_ = "Call";
 
-CallExtension::CallExtension(Foundation::Framework *framework, QXmppClient *client) :
-    Extension(framework, client, extension_name_),
-    qxmpp_call_manager_(new QXmppCallManager())
+CallExtension::CallExtension() :
+    Extension(extension_name_),
+    qxmpp_call_manager_(0)
 {
-    qxmpp_client_->addExtension(qxmpp_call_manager_);
-
-    bool check;
-    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
-    Q_ASSERT(check);
 }
 
 CallExtension::~CallExtension()
 {
+    QString call;
+    foreach(call, calls_.keys())
+    {
+        delete calls_[call];
+        calls_.remove(call);
+    }
+}
 
+void CallExtension::initialize(Client *client)
+{
+    qxmpp_call_manager_ = new QXmppCallManager();
+
+    client_ = client;
+    client_->getQxmppClient()->addExtension(qxmpp_call_manager_);
+    framework_ = client_->getFramework();
+
+    bool check;
+    check = connect(qxmpp_call_manager_, SIGNAL(callReceived(QXmppCall*)), this, SLOT(handleCallReceived(QXmppCall*)));
+    Q_ASSERT(check);
 }
 
 void CallExtension::Update(f64 frametime)
@@ -45,10 +62,19 @@ bool CallExtension::acceptCall(QString peerJid)
     return calls_[peerJid]->accept();
 }
 
-bool CallExtension::callUser(QString peerJid, int callType)
+// callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
+bool CallExtension::callUser(QString peerJid, QString peerResource, int callType)
 {
-    // callType is ignored becouse videochannel is not implemented in QXmpp 0.3.0
-    QXmppCall *qxmpp_call = qxmpp_call_manager_->call(peerJid);
+    if(!client_ || !client_->getUser(peerJid))
+        return false;
+
+    //UserItem* user_item = static_cast<UserItem*>(client_->getUser(peerJid));
+    //if(!user_item->getCapabilities(peerResource).contains("voice-v1"))
+    //    return false;
+
+    QString full_jid = peerJid + "/" + peerResource;
+
+    QXmppCall *qxmpp_call = qxmpp_call_manager_->call(full_jid);
 
     if(!qxmpp_call)
         return false;
@@ -57,6 +83,25 @@ bool CallExtension::callUser(QString peerJid, int callType)
     Call *call = new Call(framework_, qxmpp_call);
     calls_.insert(peerJid, call);
     return true;
+}
+
+bool CallExtension::callUser(QString peerJid, QString peerResource, QStringList callType)
+{
+    int flags = 0;
+
+    if(callType.size() == 0)
+    {
+        flags ^= 1;
+    }
+    else
+    {
+        if(callType.contains("Voice", Qt::CaseInsensitive))
+            flags ^= 1;
+        if(callType.contains("Video", Qt::CaseInsensitive))
+            flags ^= 2;
+    }
+
+    return callUser(peerJid, peerResource, flags);
 }
 
 bool CallExtension::disconnectCall(QString peerJid)
@@ -92,7 +137,7 @@ bool CallExtension::setActiveCall(QString peerJid)
 
 void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
 {
-    QString from_jid = qxmppCall->jid();
+    QString from_jid = jidToBareJid(qxmppCall->jid());
 
     XMPPModule::LogDebug(extension_name_.toStdString()
                          + "Incoming call (from = \"" + from_jid.toStdString() + "\")");

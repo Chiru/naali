@@ -8,6 +8,10 @@
 #include "UserItem.h"
 #include "Extension.h"
 
+#include "CallExtension.h"
+#include "ChatExtension.h"
+#include "MucExtension.h"
+
 #include "AudioAPI.h"
 
 #include "qxmpp/QXmppClient.h"
@@ -26,6 +30,11 @@ namespace XMPP
         xmpp_client_(new QXmppClient()),
         log_stream_(false)
     {
+        // Bit of a hackish way to store extensions. Feel free to implement better.
+        available_extensions_.append(new CallExtension());
+        available_extensions_.append(new ChatExtension());
+        available_extensions_.append(new MucExtension());
+
         xmpp_client_->logger()->setLoggingType(QXmppLogger::SignalLogging);
 
         // -----Client signals-----
@@ -68,6 +77,47 @@ namespace XMPP
         Extension *extension;
         foreach(extension, extensions_)
             extension->Update(frametime);
+    }
+
+    bool Client::addExtension(Extension *extension)
+    {
+        if(extensions_.contains(extension))
+        {
+            XMPPModule::LogError("Extension already initialized: " + extension->name().toStdString());
+            return false;
+        }
+
+        extension->setParent(this);
+        extension->initialize(this);
+
+        extensions_.append(extension);
+
+        return true;
+    }
+
+    QObject* Client ::addExtension(const QString &extensionName)
+    {
+        Extension *extension = 0;
+
+        for(int i = 0; i < available_extensions_.size(); i++)
+        {
+            if(available_extensions_[i]->name() == extensionName)
+            {
+                extension = available_extensions_[i];
+                available_extensions_.removeAt(i);
+            }
+        }
+
+        if(!extension)
+        {
+            XMPPModule::LogError("No extension found: " + extensionName.toStdString());
+            return 0;
+        }
+
+        if(!addExtension(extension))
+            return 0;
+
+        return dynamic_cast<QObject*>(extension);
     }
 
     QObject* Client::getExtension(QString extensionName)
@@ -146,7 +196,7 @@ namespace XMPP
             if(!users_.contains(roster_user))
             {
                 QXmppRosterIq::Item item = xmpp_client_->rosterManager().getRosterEntry(roster_user);
-                UserItem *user = new UserItem(item);
+                UserItem *user = new UserItem(item.bareJid());
                 users_[roster_user] = user;
                 xmpp_client_->vCardManager().requestVCard(roster_user);
             }
@@ -159,7 +209,7 @@ namespace XMPP
         QXmppRosterIq::Item item = xmpp_client_->rosterManager().getRosterEntry(userJid);
         if(!users_.contains(userJid))
         {
-            UserItem *user = new UserItem(item);
+            UserItem *user = new UserItem(item.bareJid());
             users_[userJid] = user;
             /// \todo notify user added (should this logic be moved to a separate function?)
         }
@@ -176,7 +226,28 @@ namespace XMPP
 
     void Client::handlePresenceReceived(const QXmppPresence &presence)
     {
-        /// \todo handle subscription requests also?
+        // Filter Muc messages coming from room@conference.host.com
+        QString from_domain = jidToDomain(presence.from());
+        if(from_domain.contains("conference"))
+            return;
+
+        QString from_jid = jidToBareJid(presence.from());
+        QString from_resource = jidToResource(presence.from());
+
+        if(xmpp_client_->configuration().jidBare() == from_jid)
+            return;
+
+        XMPPModule::LogDebug("Received presence (jid=\"" + from_jid.toStdString() + "\", resource=\"" + from_resource.toStdString() + "\")");
+
+        // Some XMPP implementations send presence data before sending roster,
+        // create UserItems before receiving roster if this happens.
+        if(!users_.contains(from_jid))
+        {
+            UserItem *user = new UserItem(from_jid);
+            users_[from_jid] = user;
+        }
+
+        users_[from_jid]->updatePresence(from_resource, presence);
     }
 
     void Client::handlePresenceChanged(const QString &userJid, const QString &resource)
@@ -186,6 +257,8 @@ namespace XMPP
 
         if(!users_.contains(userJid))
             return;
+
+        XMPPModule::LogDebug("Presence changed (user=\"" + userJid.toStdString() + "\", resource=\"" + resource.toStdString() + "\")");
 
         QMap<QString, QXmppPresence> presences = xmpp_client_->rosterManager().getAllPresencesForBareJid(userJid);
         QXmppPresence& presence = presences[resource];

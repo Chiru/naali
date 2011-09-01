@@ -49,12 +49,11 @@ public slots:
     //! \return QString containing callees/callers Jabber ID
     QString peerJid() const { return peer_jid_; }
 
-
+    //! Returns state of the call
     State state() const { return state_; };
 
 
 private slots:
-    //void handleCallReceived(QXmppCall* call);
     void handleCallTerminated();
     void handleCallConnected();
     void handleCallStateChanged(QXmppCall::State state);

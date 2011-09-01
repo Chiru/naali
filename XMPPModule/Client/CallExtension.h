@@ -15,17 +15,25 @@
 #include <QObject>
 #include <QString>
 
+namespace Foundation
+{
+    class Framework;
+}
+
 namespace XMPP
 {
 class Call;
+class Client;
 
+//! Provides peer2peer SIP calls. Implements XEP-0166, XEP-0167 & XEP-0176.
 class CallExtension : public Extension
 {
     Q_OBJECT
 
 public:
-    CallExtension(Foundation::Framework *framework, QXmppClient *client);
+    CallExtension();
     virtual ~CallExtension();
+    virtual void initialize(Client *client);
     void Update(f64 frametime);
 
     enum CallTypeFlag { VoiceCall = 1, VideoCall = 2 };
@@ -34,19 +42,21 @@ public slots:
     /// Call remote user.
     /// \note Video calls not implemented due to lack of support in QXmpp
     /// \param callType bitfield containing flags defined in CallExtension::CallType enum
+    /// \param peerResource Resource the call is connected to (must have voice-v1 capability)
     /// \param peerJid remote party's JabberID
     /// \return bool true on succesful call request
-    bool callUser(QString peerJid, int callType);
+    bool callUser(QString peerJid, QString peerResource, int callType);
 
     /// Script friendly overload
     /// \note Video calls not implemented due to lack of support in QXmpp
+    /// \param peerJid remote party's JabberID
+    /// \param peerResource Resource the call is connected to (must have voice-v1 capability)
     /// \param callType QStringList with 1-2 elements:
     ///         "Voice" for voice capability
     ///         "Video" for video capability
     ///         Empty list defaults to voice call
-    /// \param peerJid remote party's JabberID
     /// \return bool true on succesful call request
-    bool callUser(QString peerJid, QStringList callType = QStringList());
+    bool callUser(QString peerJid, QString peerResource, QStringList callType = QStringList());
 
     //! Accept incoming call
     //! \param peerJid JabberID the call is associated with
@@ -88,11 +98,12 @@ private slots:
 private:
     static QString extension_name_;
     QXmppCallManager *qxmpp_call_manager_;
+    Foundation::Framework *framework_;
+    Client *client_;
     QMap<QString, Call*> calls_;
     QMap<QString, Call*> incoming_calls_;
 
 signals:
-    //void callStateChanged(QString peerJid, Call::State callState);
     void callDisconnected(QString peerJid);
     void callConnected(QString peerJid);
     void callIncoming(QString peerJid);

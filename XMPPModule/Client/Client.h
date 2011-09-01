@@ -48,6 +48,9 @@ public:
 
     void Update(f64 frametime);
 
+    Foundation::Framework *getFramework() { return framework_; }
+    QXmppClient *getQxmppClient() { return xmpp_client_; }
+
     //! Get extension pointer
     //! \return pointer for the extensions if found, void otherwise
     template<typename T>
@@ -63,6 +66,18 @@ public:
     }
 
 public slots:
+
+    //! Add and initialize extension for the client
+    //! \param extension Pointer for object inherited from XMPP:Extension
+    //! \return bool true for succesfully initialized extension
+    bool addExtension(Extension *extension);
+
+    //! Script friendly overload for adding extensions
+    //! \param extensionName name of the extension
+    //! \return QObject pointer for the extension, if succesfully initialized.
+    //!         NULL for failure.
+    QObject *addExtension(const QString &extensionName);
+
     //! Get extension as a QObject pointer
     //! \return QObject pointer to the object if found, null otherwise
     QObject *getExtension(QString extensionName);
@@ -115,8 +130,9 @@ private slots:
 private:
     QXmppClient *xmpp_client_;
     QList<Extension*> extensions_;
+    QList<Extension*> available_extensions_; // All possible extensions in unititialized state
     QXmppConfiguration *current_configuration_;
-    QMap<QString, UserItem*> users_;    /// \todo do we need to use QMap when UserJid's can be fetched from UserItems?
+    QMap<QString, UserItem*> users_;
     Foundation::Framework* framework_;
     bool log_stream_;
 
@@ -125,25 +141,6 @@ private:
     void ConnectToServer(const QXmppConfiguration& configuration);
 
 signals:
-    //! Signals incoming call from other jabber user,
-    //! must be accepted with AcceptIncomingCall(QString CallerJid)
-    void incomingCall(QString CallerJid);
-
-    //! Signals accepted call succesfully started
-    void callStarted(QString CallerJid);
-
-    //! Signals active call has ended
-    void callEnded(QString CallerJid);
-
-    //! Forwards incoming private message
-    void privateMessageReceived(QString UserJid, QString Message);
-
-    //! Forwards incoming multi user chatroom message
-    //void mucMessageReceived(QString roomJid, QString userNick, QString message);
-
-    //! Forwards invitation to join multi user chatroom
-    void mucInvitationReceived(QString roomJid, QString inviterJid, QString reason);
-
     //! Signals changes in current roster
     void rosterChanged();
 
@@ -159,7 +156,6 @@ signals:
     //! Signals connected status
     //! \note This signal gets emitted when the underlying QXmppClient signals connected state
     void connected();
-
 };
 
 } // end of namespace: XMPP

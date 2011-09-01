@@ -8,9 +8,7 @@
 namespace XMPP
 {
 
-Extension::Extension(Foundation::Framework *framework, QXmppClient *client, const QString &name) :
-    framework_(framework),
-    qxmpp_client_(client),
+Extension::Extension(const QString &name) :
     name_(name)
 {
 }

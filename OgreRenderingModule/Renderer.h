@@ -144,6 +144,11 @@ namespace OgreRenderer
 
         // Removes scenemanager from ogre root
         void RemoveSceneManager(const QString&);
+
+        //! Takes a screenshot and saves it to a file.
+        //! \param filePath File path.
+        //! \param fileName File name.
+        virtual void TakeScreenshot(const QString& filePath, const QString& fileName);
         
     public:
         //! Constructor
@@ -181,11 +186,6 @@ namespace OgreRenderer
 
         //! get visible entities last frame
         virtual const std::set<entity_id_t>& GetVisibleEntities() { return visible_entities_; }
-
-        //! Takes a screenshot and saves it to a file.
-        //! \param filePath File path.
-        //! \param fileName File name.
-        virtual void TakeScreenshot(const std::string& filePath, const std::string& fileName);
 
         //! Returns framework
         Foundation::Framework* GetFramework() const { return framework_; }

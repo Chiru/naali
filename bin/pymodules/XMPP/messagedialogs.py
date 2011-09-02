@@ -61,3 +61,92 @@ class ChatDialog():
         line = self.lineEdit.text
         self.lineEdit.text = ""
         return line
+
+class ChatroomDialog():
+    def __init__(self, mucextension, roomname, nickname):
+        self.dialog = PythonQt.QtGui.QDialog()
+        self.mucExtension = mucextension
+        self.roomName = roomname
+        self.nickname = nickname
+        self.particpants = self.mucExtension.getParticipants(self.roomName)
+        self.dialog.setWindowTitle(self.roomName)
+        self.layout = PythonQt.QtGui.QVBoxLayout(self.dialog)
+        
+        # Create list widgets for messages and userlist 
+        self.listLayout = PythonQt.QtGui.QHBoxLayout()
+        
+        self.messageScroll = PythonQt.QtGui.QScrollArea()
+        self.messageArea = PythonQt.QtGui.QListWidget()
+        self.messageScroll.setWidget(self.messageArea)
+        self.messageArea.setFixedHeight(330)
+        self.messageArea.setFixedWidth(450)
+        self.listLayout.addWidget(self.messageScroll)
+        
+        self.userlistScroll = PythonQt.QtGui.QScrollArea()
+        self.userlistArea = PythonQt.QtGui.QListWidget()
+        self.userlistScroll.setWidget(self.userlistArea)
+        self.userlistArea.setFixedHeight(330)
+        self.userlistArea.setFixedWidth(140)
+        self.listLayout.addWidget(self.userlistScroll)
+        
+        self.layout.addLayout(self.listLayout)
+        
+        # Create line-edit and pushbutton for sending messages
+        self.sendLayout = PythonQt.QtGui.QHBoxLayout()
+        self.lineEdit = PythonQt.QtGui.QLineEdit()
+        self.sendButton = PythonQt.QtGui.QPushButton("Send")
+        self.sendLayout.addWidget(self.lineEdit)
+        self.sendLayout.addWidget(self.sendButton)
+        self.layout.addLayout(self.sendLayout)
+        
+        self.dialog.setFixedHeight(350)
+        self.dialog.setFixedWidth(640)
+        
+        self.sendButton.connect('clicked(bool)', self.__sendMessage__)
+        self.mucExtension.connect('messageReceived(QString,QString,QString)', self.__handleMessageReceived__)
+        self.mucExtension.connect('userJoinedRoom(QString,QString)', self.__handleUserJoined__)
+        self.mucExtension.connect('userLeftRoom(QString,QString)', self.__handleUserLeft__)
+        
+    def showDialog(self):
+        self.dialog.show()
+        
+    def getJid(self):
+        return self.roomName
+    
+    def __sendMessage__(self):
+        message = self.__getLine()
+        self.mucExtension.sendMessage(self.roomName, message)
+        #self.__appendMessage("You", message)
+    
+    def __handleMessageReceived__(self, room, sender, message):
+        if not room == self.roomName:
+            return
+        #if sender == self.nickname:
+        #    return
+        self.__appendMessage(sender, message)
+        
+    def __handleUserJoined__(self, room, user):
+        if not room == self.roomName:
+            return
+        self.__updateUserlist()
+    
+    def __handleUserLeft__(self, room, user):
+        if not room == self.roomName:
+            return
+        self.__updateUserlist()
+    
+    def __updateUserlist(self):
+        if not self.userlistArea.count == 0:
+            for i in range(0, self.userlistArea.count()):
+                self.userlistArea.takeItem(i)
+        for p in self.mucExtension.getParticipants(self.roomName):
+            self.userlistArea.addItem(p)
+        
+    def __getLine(self):
+        line = self.lineEdit.text
+        self.lineEdit.text = ""
+        return line
+        
+    def __appendMessage(self, user, message):
+        displayedMessage = "[" + user + "] " + message
+        self.messageArea.addItem(displayedMessage)

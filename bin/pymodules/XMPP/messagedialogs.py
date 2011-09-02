@@ -150,3 +150,69 @@ class ChatroomDialog():
     def __appendMessage(self, user, message):
         displayedMessage = "[" + user + "] " + message
         self.messageArea.addItem(displayedMessage)
+        
+class CallDialog():
+    def __init__(self, callextension, remotejid, remoteresource, outgoing):
+        self.callExtension = callextension
+        self.remoteJid = remotejid
+        self.remoteResource = remoteresource
+        self.dialog = PythonQt.QtGui.QDialog()
+        self.dialog.setWindowTitle("Call with " + self.remoteJid)
+        self.layout = PythonQt.QtGui.QVBoxLayout(self.dialog)
+        
+        self.statusLabel = PythonQt.QtGui.QLabel("Connecting...")
+        self.layout.addWidget(self.statusLabel)
+        
+        self.buttonLayout = PythonQt.QtGui.QHBoxLayout()
+        self.pauseButton = PythonQt.QtGui.QPushButton("Pause")
+        self.disconnectButton = PythonQt.QtGui.QPushButton("Disconnect")
+        self.redialButton = PythonQt.QtGui.QPushButton("Re-dial")
+        self.redialButton.setEnabled(False)
+        self.buttonLayout.addWidget(self.pauseButton)
+        self.buttonLayout.addWidget(self.disconnectButton)
+        self.buttonLayout.addWidget(self.redialButton)
+        
+        self.layout.addLayout(self.buttonLayout)
+        
+        self.callExtension.connect('activeCallChanged(QString)', self.__handleCallConnected__)
+        self.callExtension.connect('callDisconnected(QString)', self.__handleCallDisconnected__)
+        self.pauseButton.connect('clicked(bool)', self.__muteCall__)
+        self.disconnectButton.connect('clicked(bool)', self.__disconnectCall__)
+        self.redialButton.connect('clicked(bool)', self.__callUser__)
+        
+        if(outgoing):
+            self.__callUser__()
+        
+    def showDialog(self):
+        self.dialog.show()
+        
+    def getJid(self):
+        return self.peerJid()
+        
+    def __handleCallConnected__(self, remoteJid):
+        if not remoteJid == self.remoteJid:
+            print("derp, wrong call: {0}".format(remoteJid))
+            return
+        self.statusLabel.setText("Connected")
+        self.redialButton.setEnabled(False)
+        self.disconnectButton.setEnabled(True)
+        self.pauseButton.setEnabled(True)
+    
+    def __handleCallDisconnected__(self, remoteJid):
+        if not remoteJid == self.remoteJid:
+            print("derp, wrong call: {0}".format(remoteJid))
+            return
+        self.statusLabel.setText("Disconnected")
+        self.redialButton.setEnabled(True)
+        self.pauseButton.setEnabled(False)
+        self.disconnectButton.setEnabled(False)
+        
+    def __callUser__(self):
+        self.callExtension.callUser(self.remoteJid, self.remoteResource)
+        self.statusLabel.setText("Connecting")
+        
+    def __muteCall__(self):
+        print("Not implemented")
+    
+    def __disconnectCall__(self):
+        self.callExtension.disconnectCall(self.remoteJid)

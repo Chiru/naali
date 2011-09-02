@@ -35,7 +35,7 @@ public slots:
 
     //! Disconnect current call
     //! \return bool true for success
-    void disconnect();
+    void hangup();
 
     //! Puts the call in suspended state
     //! \return bool if call was succesfully suspended

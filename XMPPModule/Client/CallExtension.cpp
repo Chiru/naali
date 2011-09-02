@@ -4,7 +4,6 @@
 #include "DebugOperatorNew.h"
 
 #include "CallExtension.h"
-#include "Call.h"
 #include "Client.h"
 #include "XMPPModule.h"
 #include "UserItem.h"
@@ -81,6 +80,10 @@ bool CallExtension::callUser(QString peerJid, QString peerResource, int callType
 
     /// \todo Check if we miss a signal becouse QXmppCall signals are suscribed inside XMPP::Call constructor
     Call *call = new Call(framework_, qxmpp_call);
+
+    bool check = connect(call, SIGNAL(stateChanged(Call::State)), this, SLOT(handleCallStateChanged(Call::State)));
+    Q_ASSERT(check);
+
     calls_.insert(peerJid, call);
     return true;
 }
@@ -109,7 +112,7 @@ bool CallExtension::disconnectCall(QString peerJid)
     if(!calls_.keys().contains(peerJid))
         return false;
 
-    calls_[peerJid]->disconnect();
+    calls_[peerJid]->hangup();
     return true;
 }
 
@@ -148,9 +151,9 @@ void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
     emit callIncoming(from_jid);
 }
 
-void CallExtension::handleCallStateChanged(QXmppCall::State state)
+void CallExtension::handleCallStateChanged(Call::State state)
 {
-    QXmppCall *call = qobject_cast<QXmppCall*>(sender());
+    Call *call = qobject_cast<Call*>(sender());
     Q_ASSERT(call);
 
     switch(state)
@@ -159,16 +162,16 @@ void CallExtension::handleCallStateChanged(QXmppCall::State state)
     case Call::ConnectingState:
         break;
     case Call::ActiveState:
-        emit activeCallChanged(call->jid());
+        emit activeCallChanged(call->peerJid());
         break;
     case Call::SuspendedState:
         break;
     case Call::DisconnectingState:
         break;
     case Call::FinishedState:
+        emit callDisconnected(call->peerJid());
         delete call;
-        calls_.remove(call->jid());
-        emit callDisconnected(call->jid());
+        calls_.remove(call->peerJid());
         break;
     }
 }

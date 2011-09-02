@@ -6,7 +6,7 @@ import PythonQt.QtCore
 
 from logindialog import LoginDialog
 from user import UserDialog, User
-from messagedialogs import ChatDialog, ChatroomDialog
+from messagedialogs import ChatDialog, ChatroomDialog, CallDialog
 
 class Xmpp(Component):
     def __init__(self):
@@ -14,7 +14,9 @@ class Xmpp(Component):
         if not self.xmpp:
             return
         
+        self.chatDialogs = []
         self.chatroomDialogs = []
+        self.callDialogs = []
         self.createLoginDialog()
         
         # Add 'XMPP' menu item under 'View'-menu
@@ -42,6 +44,9 @@ class Xmpp(Component):
             self.joinRoomAction = PythonQt.QtGui.QAction("Join room", 0)
             self.joinRoomAction.connect("triggered()", self.__selectChatroom__)
             filemenu.addAction(self.joinRoomAction)
+            self.callUserAction = PythonQt.QtGui.QAction("Call user", 0)
+            self.callUserAction.connect("triggered()", self.__openCallDialog__)
+            filemenu.addAction(self.callUserAction)
         
         self.client.connect('rosterChanged()', self.userDialog.populateUserList)
         self.client.connect('presenceChanged(QString)', self.userDialog.updateUser)
@@ -70,6 +75,7 @@ class Xmpp(Component):
         self.client = self.xmpp.newClient(self.loginDialog.serverEdit.text, self.loginDialog.jidEdit.text, self.loginDialog.passwordEdit.text)
         self.chatExtension = self.client.addExtension("Chat")
         self.mucExtension = self.client.addExtension("Muc")
+        self.callExtension = self.client.addExtension("Call")
         self.client.connect('connected()', self.handleConnected())
         self.chatExtension.connect('messageReceived(QString,QString)', self.__handleMessageReceived__)
         self.mucExtension.connect('roomAdded(QString,QString)', self.__createChatroomDialog__)
@@ -110,6 +116,23 @@ class Xmpp(Component):
         self.chatroomDialogs.remove(self.__getChatroomDialog(room))
         print("Chatroom \"{0}\" removed, reason: {1}".format(room, reason))
         
+    def __openCallDialog__(self):
+        selectedjid = self.userDialog.getSelectedJid()
+        useritem = self.client.getUser(selectedjid)
+        voiceresource = ""
+        for resource in useritem.getResources():
+            for capability in useritem.getCapabilities(resource):
+                if capability == "voice-v1":
+                    voiceresource = resource
+                    break
+            if not voiceresource == "": break
+        if voiceresource == "":
+            print("User does not have voice capability, call cannot be established.")
+            return
+        calldialog = CallDialog(self.callExtension, selectedjid, voiceresource, True)
+        calldialog.showDialog()
+        self.callDialogs.append(calldialog)
+        
     def __handleMessageReceived__(self, remotejid, message):
         if not self.__getChatDialog(remotejid):
             chatDialog = createChatDialog(remotejid)
@@ -124,6 +147,12 @@ class Xmpp(Component):
         
     def __getChatroomDialog(self, roomjid):
         for dialog in self.chatroomDialogs:
+            if roomjid == dialog.getJid():
+                return dialog
+        return False
+        
+    def __getCallDialog(self, remotejid):
+        for dialog in self.callDialogs:
             if roomjid == dialog.getJid():
                 return dialog
         return False

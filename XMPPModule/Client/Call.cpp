@@ -40,11 +40,13 @@ Call::Call(Foundation::Framework *framework, QXmppCall *call) :
 
 Call::~Call()
 {
+    XMPPModule::LogDebug("Destroyed call object, with jid: " + peer_jid_.toStdString());
     if(audio_channel_)
     {
         framework_->Audio()->Stop(audio_channel_);
         audio_channel_.reset();
     }
+    delete call_;
 }
 
 bool Call::accept()
@@ -56,9 +58,9 @@ bool Call::accept()
     return true;
 }
 
-void Call::disconnect()
+void Call::hangup()
 {
-    call_->disconnect();
+    call_->hangup();
     setState(Call::FinishedState);
 }
 
@@ -118,6 +120,9 @@ void Call::handleCallConnected()
 
 void Call::handleInboundVoice()
 {
+    if(state_ == Call::DisconnectingState || state_ == Call::FinishedState)
+        return;
+
     SoundBuffer buffer;
     QXmppRtpChannel *channel = call_->audioChannel();
     QByteArray data = channel->read(channel->bytesAvailable());

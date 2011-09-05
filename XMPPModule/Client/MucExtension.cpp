@@ -62,7 +62,7 @@ void MucExtension::handleRoomAdded(const QString &room, const QString nickname)
     XMPPModule::LogDebug(extension_name_.toStdString()
                          + ": Joined Muc room (room = \"" + room.toStdString()
                          + "\", nickname = \"" + nickname.toStdString() + "\")");
-    emit roomAdded(room);
+    emit roomAdded(room, nickname);
 }
 
 void MucExtension::handleMessageReceived(const QXmppMessage &message)

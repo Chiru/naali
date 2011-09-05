@@ -8,10 +8,15 @@ class UserDialog():
         self.dialog = PythonQt.QtGui.QDialog()
         self.dialog.setWindowTitle("Tundra XMPP")
         self.dialog.setFixedWidth(204)
-        self.dialog.setFixedHeight(304)
+        self.dialog.setFixedHeight(301)
         self.layout = PythonQt.QtGui.QVBoxLayout(self.dialog)
         self.layout.setContentsMargins(0,0,0,0)
         self.layout.setSpacing(0)
+        
+        self.menuBar = PythonQt.QtGui.QMenuBar(self.dialog)
+        self.menu = PythonQt.QtGui.QMenu("&File")
+        self.menuBar.addMenu(self.menu)
+        self.layout.addWidget(self.menuBar)
         
         self.listWidget = PythonQt.QtGui.QListWidget()
         self.scrollArea = PythonQt.QtGui.QScrollArea()
@@ -20,14 +25,9 @@ class UserDialog():
         self.listWidget.setFixedHeight(270)
         self.layout.addWidget(self.scrollArea)
         
-        self.buttonLayout = PythonQt.QtGui.QHBoxLayout()
-        self.addContactButton = PythonQt.QtGui.QPushButton("+")
-        self.settingsButton = PythonQt.QtGui.QPushButton("S")
-        self.buttonSpacer = PythonQt.QtGui.QSpacerItem(180, 1)
-        self.buttonLayout.addWidget(self.addContactButton)
-        self.buttonLayout.addSpacerItem(self.buttonSpacer)
-        self.buttonLayout.addWidget(self.settingsButton)
-        self.layout.addLayout(self.buttonLayout)
+    # Returns the menu object
+    def getMenu(self):
+        return self.menu
     
     # Returns User object for given jid   
     def getUser(self, userJid):

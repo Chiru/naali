@@ -9,6 +9,7 @@
 #define incl_XMPP_CallExtension_h
 
 #include "Extension.h"
+#include "Call.h"
 
 #include "qxmpp/QXmppCallManager.h"
 
@@ -22,7 +23,6 @@ namespace Foundation
 
 namespace XMPP
 {
-class Call;
 class Client;
 
 //! Provides peer2peer SIP calls. Implements XEP-0166, XEP-0167 & XEP-0176.
@@ -93,7 +93,7 @@ public slots:
 
 private slots:
     void handleCallReceived(QXmppCall* qxmppCall);
-    void handleCallStateChanged(QXmppCall::State state);
+    void handleCallStateChanged(Call::State state);
 
 private:
     static QString extension_name_;

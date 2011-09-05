@@ -86,7 +86,7 @@ private:
 signals:
     void messageReceived(QString room, QString sender, QString message);
     void invitationReceived(QString room, QString from, QString reason);
-    void roomAdded(QString room);
+    void roomAdded(QString room, QString nickname);
     void roomRemoved(QString room, QString reason);
     void userJoinedRoom(QString room, QString user);
     void userLeftRoom(QString room, QString user);

@@ -47,12 +47,14 @@ class UserDialog():
         item = self.listWidget.currentItem()
         return item.text()
     
-    # Fetch   
+    # Populate listwidget with available users in the roster
     def populateUserList(self):
         roster = self.client.getRoster()
         for userJid in roster:
             userItem = self.client.getUser(userJid)
             user = User(userItem, self.client, self.listWidget)
+            if not userItem.isAvailable():
+                user.__availabilityChanged__(False)
             self.users.append(user)
             
     def updateUser(self, userJid):
@@ -75,7 +77,12 @@ class User():
         self.jid = userItem.getJid()
         self.listItem = PythonQt.QtGui.QListWidgetItem(listWidget)
         self.listItem.setText(self.jid)
+        userItem.connect('availabilityChanged(bool)', self.__availabilityChanged__)
     
+    # Set listwidgetitem hidden when user unavailable
+    def __availabilityChanged__(self, available):
+        self.listItem.setHidden(not available)
+        
     # Update user's listitem 
     def update(self):
         pixmap = PythonQt.QtGui.QPixmap()

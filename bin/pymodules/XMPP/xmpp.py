@@ -49,7 +49,6 @@ class Xmpp(Component):
             filemenu.addAction(self.callUserAction)
         
         self.client.connect('rosterChanged()', self.userDialog.populateUserList)
-        self.client.connect('presenceChanged(QString)', self.userDialog.updateUser)
         self.client.connect('vCardChanged(QString)', self.userDialog.updateUser)
         
         self.joinroomDialog.okButton.connect('clicked(bool)', self.__joinChatroom__)

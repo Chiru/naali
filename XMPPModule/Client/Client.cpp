@@ -258,7 +258,7 @@ namespace XMPP
         if(!users_.contains(userJid))
             return;
 
-        XMPPModule::LogDebug("Presence changed (user=\"" + userJid.toStdString() + "\", resource=\"" + resource.toStdString() + "\")");
+        //XMPPModule::LogDebug("Presence changed (user=\"" + userJid.toStdString() + "\", resource=\"" + resource.toStdString() + "\")");
 
         QMap<QString, QXmppPresence> presences = xmpp_client_->rosterManager().getAllPresencesForBareJid(userJid);
         QXmppPresence& presence = presences[resource];
@@ -271,8 +271,8 @@ namespace XMPP
             }
         }
 
-        users_[userJid]->updatePresence(resource, presence);
-        emit presenceChanged(presence.from());
+        //users_[userJid]->updatePresence(resource, presence);
+        //emit presenceChanged(presence.from());
     }
 
     void Client::handleVCardReceived(const QXmppVCardIq& vcard)

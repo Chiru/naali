@@ -22,8 +22,6 @@
 #include <QtDeclarative>
 #include <QTimer>
 
-class QMLWidget;
-
 class KeyEvent;
 class InputContext;
 
@@ -63,10 +61,6 @@ public:
     /*// IModule override
     bool HandleEvent(event_category_id_t category_id, event_id_t event_id, IEventData* data);*/
 
-
-
-
-
     MODULE_LOGGING_FUNCTIONS
 
     // Returns the name of this module. Needed for logging.
@@ -79,19 +73,8 @@ private:
     /// 2D UI widget.
     QDeclarativeView *declarativeview_;
 
-    QDeclarativeView *parentview_;
-
-    /*/// Input context for this module.
+    /// Input context for this module.
     boost::shared_ptr<InputContext> input_;
-
-    /// "Framework" event category ID.
-    event_category_id_t framework_category_;
-
-    /// "NetworkState" event category ID.
-    event_category_id_t network_category_;
-
-    /// "Tundra" event category ID.
-    event_category_id_t tundra_category_;*/
 
     /// Proxywidget for 2D UI
     UiProxyWidget *qmluiproxy_;
@@ -99,11 +82,13 @@ private:
     /// QObject for connecting signals to QDeclarativeView
     QObject *qmlui_;
 
+    QDeclarativeEngine *engine_;
+
+    QDeclarativeContext *context_;
+
     void CreateQDeclarativeView();
 
     bool view_created_;
-
-    InputContextPtr input_;
 
     EC_Placeable *camera_;
 
@@ -117,33 +102,55 @@ private:
 
     bool camera_moving;
 
-    bool entity_movable;
+    bool camera_saved;
+
+    bool scene_added;
+
+    bool editing_mode;
+
+    bool pinching_mode;
+    QPoint *pinch_centerpoint;
 
     int move_start_x;
 
     int move_start_y;
+
+    int mouse_pos_x;
+    int mouse_pos_y;
 
     float last_pos_x;
     float last_pos_y;
     float last_abs_x;
     float last_abs_y;
 
+    float speed_x;
+    float speed_y;
+
+    float last_scale;
+    float last_rotation;
+
     QTimer *camera_movement_timer_;
 
+    QTimer *mouse_press_timer_;
 
+    QTimer *camera_swipe_timer_;
 
-    Scene::Entity *entity_to_rotate_;
+    Transform original_camera_transform_;
 
-    Scene::Entity *entity_to_drag_;
+    Scene::Entity *entity_to_edit_;
+
+    Scene::Entity *zoomed_into_this_entity_;
 
     EC_Placeable *entity_to_focus_on_;
 
 private slots:
     void SmoothCameraMove();
 
-    Scene::Entity* GetActiveFreeLookCamera() const;
-
     Scene::Entity* GetActiveCamera() const;
+
+    void SingleShot();
+
+    void SetPinchingMode(int i);
 
 public slots:
 
@@ -175,26 +182,34 @@ public slots:
 
     void SceneAdded(const QString &name);
 
-    //void HandleGestureInputEvent(GestureEvent *event);
-
     void HandleMouseInputEvent(MouseEvent *mouse);
 
     void FocusCameraOnEntity(Scene::Entity *entity);
 
-    void RotateEntityHorizontally(Scene::Entity *entity, float rotation);
+    void StartDrag(int x, int y);
 
-    void StartDrag(MouseEvent *mouse);
+    void DragEntity(int x, int y);
 
-    void DragEntity(Scene::Entity *entity, MouseEvent *mouse);
+    void LongPress(qreal x, qreal y);
 
+    void TurnCamera(int x, int y);
+
+    void CameraSwipe();
+
+    void MoveReceived(QString direction);
 
 signals:
+
+    void CameraFocusedOnEntity(Vector3df centerpoint, Vector3df camerapos);
+    void ReturningCamera();
+    void Move(QString direction);
 
     /// Direct signals to QMLUI
     void giveQMLNetworkState(QVariant);
     void giveQMLBatteryLevel(QVariant);
     void giveQMLUsingBattery(QVariant);
     void giveQMLNetworkMode(QVariant);
+
 };
 
 

@@ -84,7 +84,7 @@ void MucExtension::handleMessageReceived(const QXmppMessage &message)
     XMPPModule::LogDebug(extension_name_.toStdString()
                          + ": Message (room = \"" + room_jid.toStdString()
                          + "\", sender = \"" + sender_jid.toStdString()
-                         + "\", message =\"" + msg.toStdString() + "\"");
+                         + "\", message =\"" + msg.toStdString() + "\")");
 
     emit messageReceived(room_jid, sender_jid, msg);
 
@@ -98,7 +98,7 @@ void MucExtension::handleInvitationReceived(const QString &room, const QString &
     XMPPModule::LogDebug(extension_name_.toStdString()
                          + ": Invitation (room = \"" + room.toStdString()
                          + "\", inviter = \"" + inviter.toStdString()
-                         + "\", reason =\"" + reason.toStdString() + "\"");
+                         + "\", reason =\"" + reason.toStdString() + "\")");
 
     emit invitationReceived(room, inviter, reason);
 
@@ -115,6 +115,9 @@ void MucExtension::handleParticipantsChanged(const QString &roomJid, const QStri
     if(!rooms_[roomJid]->participants().contains(nickName))
     {
         rooms_[roomJid]->participantJoined(nickName);
+        XMPPModule::LogDebug(extension_name_.toStdString()
+                             + ": Participant joined (room = \"" + roomJid.toStdString()
+                             + "\", nickname = \"" + nickName.toStdString() + "\")");
         emit userJoinedRoom(roomJid, nickName);
     }
     else
@@ -123,6 +126,9 @@ void MucExtension::handleParticipantsChanged(const QString &roomJid, const QStri
         if(!new_participants.keys().contains(nickName))
         {
             rooms_[roomJid]->participantLeft(nickName);
+            XMPPModule::LogDebug(extension_name_.toStdString()
+                                 + ": Participant left (room = \"" + roomJid.toStdString()
+                                 + "\", nickname = \"" + nickName.toStdString() + "\")");
             emit userLeftRoom(roomJid, nickName);
         }
     }

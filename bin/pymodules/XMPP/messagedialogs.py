@@ -137,8 +137,9 @@ class ChatroomDialog():
     
     def __updateUserlist(self):
         if not self.userlistArea.count == 0:
-            for i in range(0, self.userlistArea.count()):
-                self.userlistArea.takeItem(i)
+            #for i in range(0, self.userlistArea.count):
+            #    self.userlistArea.takeItem(i)
+            self.userlistArea.clear()
         for p in self.mucExtension.getParticipants(self.roomName):
             self.userlistArea.addItem(p)
         

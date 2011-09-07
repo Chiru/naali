@@ -98,7 +98,8 @@ namespace XMPP
     QObject* Client ::addExtension(const QString &extensionName)
     {
         Extension *extension = 0;
-
+	XMPPModule::LogError("addExtension called");
+	
         for(int i = 0; i < available_extensions_.size(); i++)
         {
             if(available_extensions_[i]->name() == extensionName)
@@ -117,15 +118,19 @@ namespace XMPP
         if(!addExtension(extension))
             return 0;
 
+	XMPPModule::LogError("addExtension found " + extensionName.toStdString());
         return dynamic_cast<QObject*>(extension);
     }
 
     QObject* Client::getExtension(QString extensionName)
     {
+      XMPPModule::LogError("getExtension called, #extensions: " + ToString(extensions_.size()));
         for(int i = 0; i < extensions_.size(); i++)
         {
-            if(extensions_[i]->name() == extensionName)
+	  if(extensions_[i]->name() == extensionName)
                 return dynamic_cast<QObject*>(extensions_[i]);
+	  else
+	    XMPPModule::LogError("Looking for " + extensionName.toStdString() + " but this is " + extensions_[i]->name().toStdString());
         }
         return 0;
     }

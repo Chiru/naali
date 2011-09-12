@@ -113,7 +113,7 @@ cp -lf $build/$what/plugins/script/* $viewer/bin/qtscript-plugins/script/
 
 what=knet
 # todo: check tag against version hash in hg repo
-if false && test -f $tags/$what-done; then
+if test -f $tags/$what-done; then
    echo $what is done
 else
     cd $build

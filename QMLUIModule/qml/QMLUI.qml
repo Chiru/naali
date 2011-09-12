@@ -1,11 +1,14 @@
 import Qt 4.7
+import "../../bin/scenes/Avatar/simpleavatar.js" as Avatar
 
 Rectangle {
     id: uiRect
     color: "transparent"
     opacity: 1
     signal exit
-    signal setFocus(bool focus)
+    signal pinching(int i)
+    signal move(string direction)
+
     //signal setVisible
     property int usingbat: 0
 
@@ -30,6 +33,7 @@ Rectangle {
             networkMode.text = "Network mode: Invalid"
 
     }
+
 
     function setVisible() {
         if (gdKeyboard.visible == true)
@@ -148,12 +152,22 @@ Rectangle {
             loaderTimer.source = ""
     }
 
+    property int tapCounter: 0
+    property int tapAndHoldCounter: 0
+    property int swipeCounter: 0
 
-    MouseArea {
-        anchors.fill: parent
-
-        onClicked: { setFocus(false);}
+    function isHorizontalSwipe(angle) {
+        if (angle > 150 && angle < 210)
+            return true;
+        if (angle > 330 || angle < 30)
+            return true;
+        return false;
     }
+
+
+    /*MouseArea {
+        anchors.fill: parent
+    }*/
 
     Loader {
         id: loaderTimer
@@ -223,6 +237,10 @@ Rectangle {
         QMLopenfile {
             id: textEdit
             visible: false
+            //anchors.horizontalCenter: gdKeyboard.horizontalCenter
+            //anchors.bottom: gdKeyboard.top
+            //anchors.bottomMargin: 5
+
         }
 
         GridViewKeyboard {
@@ -231,6 +249,230 @@ Rectangle {
             anchors.bottom: parent.bottom
             anchors.bottomMargin: 50
             visible: false
+        }
+
+        Rectangle {
+            anchors.bottom: parent.bottom
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottomMargin: 5
+            color: "white"
+            width: 120
+            height: 60
+            border.width: 1
+            border.color: "black"
+            radius: 15
+            Text {
+                id: pinchtext
+                text: "Pinching OFF"
+                color: "black"
+                anchors.centerIn: parent
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    if (pinchtext.text == "Pinching OFF")
+                    {
+                        pinchtext.text = "Pinching ON"
+                        pinching(1)
+                    }
+                    else
+                    {
+                        pinchtext.text = "Pinching OFF"
+                        pinching(0)
+                    }
+                }
+            }
+        }
+        Rectangle {
+            id: centerball
+            color: "red"
+            width:  20
+            height: 20
+            radius: 360
+            opacity: pinchopacity
+            x: pinchcenterx - centerball.width / 2
+            y: pinchcentery - centerball.height / 2
+        }
+        Rectangle {
+            id: ball1
+            color: "red"
+            width:  30
+            height: 30
+            radius: 360
+            opacity: pinchopacity
+            x: pinchx - ball1.width / 2
+            y: pinchy - ball1.height / 2
+        }
+        Rectangle {
+            id: ball2
+            color: "red"
+            width:  30
+            height: 30
+            radius: 360
+            opacity: pinchopacity
+            x: pinchxx - ball2.width / 2
+            y: pinchyy - ball2.height / 2
+        }
+
+        Grid {
+            rows: 3
+            columns: 3
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 5
+            anchors.left: parent.left
+            anchors.leftMargin: 5
+
+            Rectangle {
+                id: upleft
+                color: "transparent"
+                opacity: 0.5
+                width: 75
+                height: 75
+                //border.width: 1
+                //border.color: "black"
+            }
+
+            Rectangle {
+                id: up
+                color: "gray"
+                opacity: 0.5
+                width: 75
+                height: 75
+                border.width: 1
+                border.color: "black"
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        up.color = "green"
+                        move("up")
+                        Avatar.QMLMove("up")
+                    }
+                    onReleased: {
+                        up.color = "gray"
+                        move("stopup")
+                        Avatar.QMLMove("stopup")
+                    }
+                }
+            }
+
+            Rectangle {
+                id: upright
+                color: "transparent"
+                opacity: 0.5
+                width: 75
+                height: 75
+                //border.width: 1
+                //border.color: "black"
+            }
+
+            Rectangle {
+                id: left
+                color: "gray"
+                opacity: 0.5
+                width: 75
+                height: 75
+                border.width: 1
+                border.color: "black"
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        left.color = "green"
+                        move("left")
+                        Avatar.QMLMove("left")
+                    }
+                    onReleased: {
+                        left.color = "gray"
+                        move("stopleft")
+                        Avatar.QMLMove("stopleft")
+                    }
+                }
+            }
+            Rectangle {
+                id: middle
+                color: "gray"
+                opacity: 0.5
+                width: 75
+                height: 75
+                border.width: 1
+                border.color: "black"
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        middle.color = "green"
+                        move("stop")
+                        Avatar.QMLMove("stop")
+                    }
+                    onReleased: {
+                        middle.color = "gray"
+                    }
+                }
+            }
+
+            Rectangle {
+                id: right
+                color: "gray"
+                opacity: 0.5
+                width: 75
+                height: 75
+                border.width: 1
+                border.color: "black"
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        right.color = "green"
+                        move("right")
+                        Avatar.QMLMove("right")
+                    }
+                    onReleased: {
+                        right.color = "gray"
+                        move("stopright")
+                        Avatar.QMLMove("stopright")
+                    }
+                }
+            }
+
+            Rectangle {
+                id: downleft
+                color: "transparent"
+                opacity: 0.5
+                width: 75
+                height: 75
+                //border.width: 1
+                //border.color: "black"
+            }
+
+            Rectangle {
+                id: down
+                color: "gray"
+                opacity: 0.5
+                width: 75
+                height: 75
+                border.width: 1
+                border.color: "black"
+                MouseArea {
+                    anchors.fill: parent
+                    onPressed: {
+                        down.color = "green"
+                        move("down")
+                        Avatar.QMLMove("down")
+                    }
+                    onReleased: {
+                        down.color = "gray"
+                        move("stopdown")
+                        Avatar.QMLMove("stopdown")
+                    }
+                }
+            }
+
+            Rectangle {
+                id: downright
+                color: "transparent"
+                opacity: 0.5
+                width: 75
+                height: 75
+                //border.width: 1
+                //border.color: "black"
+            }
         }
 }
 

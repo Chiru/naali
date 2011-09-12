@@ -6,7 +6,7 @@ Item {
         id: openMenu
         source: "./images/arrow.png"
         anchors.left: owner.left
-        y: 10
+        y: 60
 
         opacity: 1
 
@@ -34,7 +34,7 @@ Item {
         states: State {
             name: "open"
             PropertyChanges {
-                target: openMenu; y: 180
+                target: openMenu; y: 230
             }
         }
 
@@ -44,7 +44,6 @@ Item {
             reversible: true
             ParallelAnimation {
                 NumberAnimation { properties: "y"; duration: 500; }
-                //NumberAnimation { properties: "rotation"; duration: 500; /*easing.type: Easing.OutInBounce*/ }
             }
         }
     }
@@ -62,9 +61,6 @@ Item {
         border.width: 1
         radius: 5
         anchors.horizontalCenter: openMenu.horizontalCenter
-
-        //Behavior on height { SmoothedAnimation { duration: 500 } }
-
     }
 
 
@@ -72,7 +68,6 @@ Item {
     Text {
         id: oneMenu
         text: "View"
-        //anchors.left: owner.left
         y: -100
         x: 10
         opacity: 0
@@ -82,7 +77,7 @@ Item {
         states: State {
             name: "down"
             PropertyChanges {
-                target: oneMenu; y: 30; opacity: 1; scale: 1
+                target: oneMenu; y: 80; opacity: 1; scale: 1
             }
         }
 
@@ -91,7 +86,7 @@ Item {
             to: "down"
             reversible: true
             ParallelAnimation {
-                NumberAnimation { properties: "y, opacity, scale"; duration: 500; /*easing.type: Easing.OutInBounce*/ }
+                NumberAnimation { properties: "y, opacity, scale"; duration: 500; }
             }
             }
 
@@ -99,141 +94,96 @@ Item {
             id: oneMenuMA
             anchors.fill: parent
             onClicked: {
-                if (submenu1.state == "")
+                if (keyboard.state == "")
                 {
-                    submenu1.state = "open"
-                    submenu2.state = ""
-                    submenu3.state = ""
+                    keyboard.state = "open"
+                    timer.state = ""
                 }
                 else {
-                    submenu1.state = ""
+                    keyboard.state = ""
                 }
 
             }
         }
 
-        Text {
-            id: submenu1
-            text: "Keyboard"
+        Rectangle {
+            id: keyboard
+            width:  keyboard1.width + 10
+            height: keyboard1.height + 10
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 12;
-
-            MouseArea {
-                anchors.fill: parent
-                onClicked: setVisible()
-            }
+            border.width: 1
+            border.color: "black"
+            color: "lightblue"
+            radius: 15
 
             Text {
-                id: kb1
-                text: "Keyboard1"
-                anchors.verticalCenter: parent.verticalCenter
-                anchors.left: parent.right
-                anchors.leftMargin: 5
+                id: keyboard1
+                text: "Keyboard"
+                anchors.centerIn: parent
                 opacity: 1
-                font.pointSize: 12;
+                font.pointSize: 18;
 
                 MouseArea {
                     anchors.fill: parent
-                    onClicked: setKeyboard1()
+                    onClicked: { setVisible(); settedit() }
                 }
             }
 
-            Text {
-                id: kb2
-                text: "Keyboard2"
-                anchors.verticalCenter: kb1.verticalCenter
-                anchors.left: kb1.right
+            Rectangle {
+                id: circlemenu
+                width:  circlemenu1.width + 10
+                height: circlemenu1.height + 10
+                anchors.left: keyboard.right
                 anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
+                border.width: 1
+                border.color: "black"
+                color: "lightblue"
+                radius: 15
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: setKeyboard2()
+                Text {
+                    id: circlemenu1
+                    text: "Circle menu"
+                    anchors.centerIn: parent
+                    opacity: 1
+                    font.pointSize: 18;
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: setPathview()
+                    }
                 }
             }
 
-            Text {
-                id: pathview
-                text: "Pathview"
-                anchors.verticalCenter: kb2.verticalCenter
-                anchors.left: kb2.right
-                anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: setPathview()
-                }
-            }
-
-            Text {
-                id: battery
-                text: "Battery"
-                anchors.verticalCenter: pathview.verticalCenter
-                anchors.left: pathview.right
-                anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: setpb()
-                }
-            }
-
-            Text {
-                id: network
-                text: "Network"
-                anchors.verticalCenter: battery.verticalCenter
-                anchors.left: battery.right
-                anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: setnetworktext()
-                }
-            }
-
-            Text {
+            Rectangle {
                 id: logo
-                text: "Logo"
-                anchors.verticalCenter: network.verticalCenter
-                anchors.left: network.right
+                width:  logo1.width + 10
+                height: logo1.height + 10
+                anchors.left: circlemenu.right
                 anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
+                border.width: 1
+                border.color: "black"
+                color: "lightblue"
+                radius: 15
 
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: setlogo()
+                Text {
+                    id: logo1
+                    text: "Logo"
+                    anchors.centerIn: parent
+                    opacity: 1
+                    font.pointSize: 18;
+
+                    MouseArea {
+                        anchors.fill: parent
+                        onClicked: setlogo()
+                    }
                 }
             }
-
-            Text {
-                id: tedit
-                text: "TextEdit"
-                anchors.verticalCenter: logo.verticalCenter
-                anchors.left: logo.right
-                anchors.leftMargin: 5
-                opacity: 1
-                font.pointSize: 12;
-
-                MouseArea {
-                    anchors.fill: parent
-                    onClicked: settedit()
-                }
-            }
-
 
             states: State {
                 name: "open"
                 PropertyChanges {
-                    target: submenu1; x: 130; opacity: 1
+                    target: keyboard; x: 130; opacity: 1
                 }
             }
 
@@ -242,7 +192,7 @@ Item {
                 to: "open"
                 reversible: true
                 ParallelAnimation {
-                    NumberAnimation { properties: "x, opacity"; duration: 300; /*easing.type: Easing.InQuad*/ }
+                    NumberAnimation { properties: "x, opacity"; duration: 300; }
                 }
             }
         }
@@ -252,7 +202,6 @@ Item {
     Text {
         id: twoMenu
         text: "Load"
-        //anchors.left: owner.left
         y: -100
         x: 10
         opacity: 0
@@ -261,7 +210,7 @@ Item {
         states: State {
             name: "down"
             PropertyChanges {
-                target: twoMenu; y: 80; opacity: 1
+                target: twoMenu; y: 130; opacity: 1
             }
         }
 
@@ -270,7 +219,7 @@ Item {
             to: "down"
             reversible: true
             ParallelAnimation {
-                NumberAnimation { properties: "y, opacity"; duration: 500; /*easing.type: Easing.OutInBounce*/ }
+                NumberAnimation { properties: "y, opacity"; duration: 500; }
             }
         }
 
@@ -278,47 +227,61 @@ Item {
             id: twoMenuMA
             anchors.fill: parent
             onClicked: {
-                if (submenu2.state == "")
+                if (timer.state == "")
                 {
-                    submenu1.state = ""
-                    submenu2.state = "open"
-                    submenu3.state = ""
+                    keyboard.state = ""
+                    timer.state = "open"
                 }
                 else {
-                    submenu2.state = ""
+                    timer.state = ""
                 }
 
             }
         }
 
-        Text {
-            id: submenu2
-            text: "Timer"
+
+        Rectangle {
+            id: timer
+            width: timer1.width + 10
+            height: timer1.height + 10
+            color: "lightblue"
+            border.width: 1
+            border.color: "black"
+            radius: 15
             anchors.verticalCenter: parent.bottom
             opacity: 0
-            font.pointSize: 18;
 
-            MouseArea {
-                id: submenuMA2
-                anchors.fill: parent
-                onClicked: loadtimer()
-            }
 
-            states: State {
-                name: "open"
-                PropertyChanges {
-                    target: submenu2; x: 130; opacity: 1
+            Text {
+                id: timer1
+                text: "Timer"
+                anchors.centerIn: parent
+                opacity: 1
+                font.pointSize: 18;
+
+                    MouseArea {
+                        id: submenuMA2
+                        anchors.fill: parent
+                        onClicked: loadtimer()
+                    }
                 }
-            }
 
-            transitions: Transition {
-                from: ""
-                to: "open"
-                reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "x, opacity"; duration: 300; /*easing.type: Easing.OutInBounce*/ }
+                states: State {
+                    name: "open"
+                    PropertyChanges {
+                        target: timer; x: 130; opacity: 1
+                    }
                 }
-            }
+
+                transitions: Transition {
+                    from: ""
+                    to: "open"
+                    reversible: true
+                    ParallelAnimation {
+                        NumberAnimation { properties: "x, opacity"; duration: 300; }
+                    }
+                }
+
         }
 
     }
@@ -326,7 +289,6 @@ Item {
     Text {
         id: threeMenu
         text: "Exit"
-        //anchors.left: owner.left
         y: -100
         x: 10
         opacity: 0
@@ -335,7 +297,7 @@ Item {
         states: State {
             name: "down"
             PropertyChanges {
-                target: threeMenu; y: 130; opacity: 1
+                target: threeMenu; y: 180; opacity: 1
             }
         }
 
@@ -352,46 +314,7 @@ Item {
             id: threeMenuMA
             anchors.fill: parent
             onClicked: {
-                if (submenu3.state == "")
-                {
-                    submenu1.state = ""
-                    submenu2.state = ""
-                    submenu3.state = "open"
-                }
-                else {
-                    submenu3.state = ""
-                }
-
-            }
-        }
-
-        Text {
-            id: submenu3
-            text: "Exit"
-            anchors.verticalCenter: parent.bottom
-            opacity: 0
-            font.pointSize: 18;
-
-            states: State {
-                name: "open"
-                PropertyChanges {
-                    target: submenu3; x: 130; opacity: 1
-                }
-            }
-
-            transitions: Transition {
-                from: ""
-                to: "open"
-                reversible: true
-                ParallelAnimation {
-                    NumberAnimation { properties: "x, opacity"; duration: 300; /*easing.type: Easing.OutInBounce*/ }
-                }
-            }
-
-            MouseArea {
-                id: submenuMA
-                anchors.fill: parent
-                onClicked: exit()
+                exit()
             }
         }
     }

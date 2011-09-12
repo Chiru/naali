@@ -1,4 +1,4 @@
-import QtQuick 1.0
+import Qt 4.7
 
 Item {
 
@@ -24,7 +24,7 @@ Item {
                      opacity: PathView.iconOpacity
                      Column {
                          Image { anchors.horizontalCenter: nameText.horizontalCenter; width: 100; height: 100; source: icon }
-                         Text { id: nameText; text: name; font.pointSize: 16; color: wrapper.PathView.isCurrentItem ? "red" : "black" }
+                         Text { id: nameText; text: name; font.pointSize: 16; /*color: wrapper.PathView.isCurrentItem ? "red" : "black"*/ }
                      }
                  }
                  }

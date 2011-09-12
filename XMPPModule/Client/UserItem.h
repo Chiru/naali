@@ -57,6 +57,10 @@ public slots:
     //! Number of clients connected to user's Jabber ID
     int resourceCount() { return resources_.size(); }
 
+    //! Returns users availability status
+    //! \return true if atleast one of the user's resources is available
+    bool isAvailable() const { return available_; }
+
     QString getBirthday() { return birthday_; }
     QString getEmail() { return email_; }
     QString getFullName() { return full_name_; }
@@ -65,6 +69,7 @@ public slots:
     QString getUrl() { return url_; }
 
 private:
+    //! Check if any of the user's resources are in available state
     void checkAvailability();
 
     QMap<QString, ResourceItem> resources_;

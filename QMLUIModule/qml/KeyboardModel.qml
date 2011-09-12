@@ -4,93 +4,96 @@ ListModel {
     id: keyboardModel
 
     ListElement {
-        name: "A"
+        name: "q"
     }
     ListElement {
-        name: "B"
+        name: "w"
     }
     ListElement {
-        name: "C"
+        name: "e"
     }
     ListElement {
-        name: "D"
+        name: "r"
     }
     ListElement {
-        name: "E"
+        name: "t"
     }
     ListElement {
-        name: "F"
+        name: "y"
     }
     ListElement {
-        name: "G"
+        name: "u"
     }
     ListElement {
-        name: "H"
+        name: "i"
     }
     ListElement {
-        name: "I"
+        name: "o"
     }
     ListElement {
-        name: "J"
+        name: "p"
     }
     ListElement {
-        name: "K"
+        name: "å"
     }
     ListElement {
-        name: "L"
+        name: "a"
     }
     ListElement {
-        name: "M"
+        name: "s"
     }
     ListElement {
-        name: "N"
+        name: "d"
     }
     ListElement {
-        name: "O"
+        name: "f"
     }
     ListElement {
-        name: "P"
+        name: "g"
     }
     ListElement {
-        name: "Q"
+        name: "h"
     }
     ListElement {
-        name: "R"
+        name: "j"
     }
     ListElement {
-        name: "S"
+        name: "k"
     }
     ListElement {
-        name: "T"
+        name: "l"
     }
     ListElement {
-        name: "U"
+        name: "ö"
     }
     ListElement {
-        name: "V"
+        name: "ä"
     }
     ListElement {
-        name: "W"
+        name: "z"
     }
     ListElement {
-        name: "X"
+        name: "x"
     }
     ListElement {
-        name: "Y"
+        name: "c"
     }
     ListElement {
-        name: "Z"
+        name: "v"
     }
     ListElement {
-        name: "Ö"
+        name: "b"
     }
     ListElement {
-        name: "Ä"
+        name: "n"
     }
     ListElement {
-        name: "-"
+        name: "m"
     }
     ListElement {
         name: "+"
+    }
+    ListElement {
+        name: "-"
     }
 }

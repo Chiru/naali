@@ -54,7 +54,7 @@ Rectangle {
                         }
                     }
 
-                    transitions: [ Transition {
+                    /*transitions: [ Transition {
                         from: ""; to: "down"; //reversible: true;
                         NumberAnimation {
                             //loops: 1
@@ -81,7 +81,7 @@ Rectangle {
                             } }
 
 
-                    ]
+                    ]*/
 
                 Text { text: name; anchors.centerIn: buttonRect }
             }

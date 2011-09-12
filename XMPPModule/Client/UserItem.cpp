@@ -35,13 +35,13 @@ namespace XMPP
         if(resources_.size() == 0)
         {
             available_ = false;
+            XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit availabilityChanged(available_);
             return;
         }
 
-        QStringList resources = resources_.keys();
         QString resource;
-        foreach(resource, resources)
+        foreach(resource, resources_.keys())
         {
             if(resources_[resource].available)
                 available = true;
@@ -50,12 +50,8 @@ namespace XMPP
         if(available_ != available)
         {
             available_ = available;
+            XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability to: " + (available_ ? "available" : "unavailable"));
             emit availabilityChanged(available_);
-
-            if(available_)
-                XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability: true");
-            else
-                XMPPModule::LogDebug(bare_jid_.toStdString() + " changed availability: false");
         }
     }
 

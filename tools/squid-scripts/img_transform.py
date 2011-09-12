@@ -31,6 +31,8 @@ def do_scaling(image, scalex, scaley, scalep, keepratio):
             if ratio != new_ratio:
                 # Keep X, but force change to Y
                 new_y = new_x / ratio
+    if new_x < 1: new_x = 1
+    if new_y < 1: new_y = 1
     print "resizing from (%d,%d) -> (%d,%d)" % (size[0], size[1], new_x, new_y)
     return image.resize((int(new_x), int(new_y)), Image.BICUBIC)
 

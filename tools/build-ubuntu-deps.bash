@@ -47,7 +47,7 @@ if [ x$private_ogre != xtrue ]; then
    more="$more libogre-dev"
 fi
 
-if lsb_release -c | egrep -q "lucid|maverick|natty"; then
+if lsb_release -c | egrep -q "lucid|maverick|natty|oneiric"; then
         which aptitude > /dev/null 2>&1 || sudo apt-get install aptitude
         if [ x$build_valgrind != xfalse ]; then
             more="$more libc6 libc6-dbg valgrind"
@@ -100,6 +100,12 @@ else
     test -f $tarballs/$what.tgz || wget -P $tarballs http://bullet.googlecode.com/files/$what.tgz
     tar zxf $tarballs/$what.tgz
     cd $what
+    # This patch is for GCC 4.6. It overrides a known issue with bullet 2.77 and gcc 4.6
+    # When Tundra upgrades to bullet 2.78 or later, this should be removed.
+    if [ "`gcc --version |head -n 1|cut -f 4 -d " "|cut -c -3`" == "4.6" ]; then
+        sed -i "s/static const T[\t]zerodummy/memset(\&value, 0, sizeof(T))/" ./src/BulletSoftBody/btSoftBodyInternals.h
+        sed -i "s/value=zerodummy;//" ./src/BulletSoftBody/btSoftBodyInternals.h
+    fi
     cmake -DCMAKE_INSTALL_PREFIX=$prefix -DBUILD_DEMOS=OFF -DINSTALL_EXTRA_LIBS=ON -DCMAKE_CXX_FLAGS_RELEASE="-O2 -fPIC -DNDEBUG -DBT_NO_PROFILE" .
     make -j $nprocs
     make install

@@ -26,7 +26,7 @@ if (MSVC)                       # Configure the use of Hydrax.
 endif()
 
 # Configure the use of QMLUIModule. Disabled by default.
-SET(DECLARATIVE_ENABLED 0)
+SET(DECLARATIVE_ENABLED 1)
 if(DECLARATIVE_ENABLED)
     use_package_qtdeclarative()
 endif()
@@ -179,7 +179,7 @@ add_subdirectory(SceneStructureModule)      # Allows accessing, editing, importi
 #add_subdirectory(MobilityModule)            # Listens and relays mobility related data such as device battery levels etc.
 #add_subdirectory(MumbleVoipModule)          # VOIP communication using the Mumble library. Depends on OgreRenderingModule.
 #add_subdirectory(KinectModule)              # This directory addition wont do anything if you are not on Windows with Visual Studio 10 with VC100 compiler.
-#add_subdirectory(XMPPModule)		    # Provides interface for XMPP communications
+add_subdirectory(XMPPModule)		    # Provides interface for XMPP communications
 if (OGREASSETEDITOR)
     add_subdirectory(OgreAssetEditorModule) # Enables Ogre-specific asset editors. Depends on OgreRenderingModule.
 endif()

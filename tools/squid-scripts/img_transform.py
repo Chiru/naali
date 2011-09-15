@@ -5,6 +5,11 @@ import sys, os
 from PIL import Image
 import getopt
 
+def LOG(s):
+    #print s
+    return
+
+
 def print_usage(appname):
     print "Usage:\n  %s\n  -i|--input=inputfile <file> -o|--output=outputfile <file>" % appname
     print "  -f|--format=outputformat -O|--overwrite -q|--quality=<0-100>"
@@ -33,7 +38,8 @@ def do_scaling(image, scalex, scaley, scalep, keepratio):
                 new_y = new_x / ratio
     if new_x < 1: new_x = 1
     if new_y < 1: new_y = 1
-    print "resizing from (%d,%d) -> (%d,%d)" % (size[0], size[1], new_x, new_y)
+    LOG( "resizing from (%d,%d) -> (%d,%d)" % (size[0], size[1], new_x, new_y))
+    if size[0]==new_x and size[1]==new_y: return image
     return image.resize((int(new_x), int(new_y)), Image.BICUBIC)
 
 if __name__ == "__main__": # if run standalone
@@ -58,7 +64,7 @@ if __name__ == "__main__": # if run standalone
     outputfile = ""
     format = ""
     overwrite = False
-    qual = 95
+    qual = 75
     scalex = -1
     scaley = -1
     scalep = -1
@@ -95,26 +101,42 @@ if __name__ == "__main__": # if run standalone
         else:
             assert False, "unhandled option"
 
-    if inputfile == "": print "No input file given. Abort!"; print_usage(sys.argv[0]); sys.exit(2)
-    if format == "": format = inputfile[-3:0]
+    if inputfile == "": LOG( "No input file given. Abort!"); print_usage(sys.argv[0]); sys.exit(2)
+    if format == "": format = inputfile[len(inputfile)-3:len(inputfile)]
     if outputfile == "": outputfile = inputfile + "." + format
+    if outputfile == inputfile:
+        LOG( "Error: Input and output cannot be the same. Abort!")
+        sys.exit(2)
     if os.path.exists(outputfile):
         if overwrite == False:
-            print "Outputfile `%s` exists. Aborting. Use --overwrite to force overwriting." % outputfile
+            LOG( "Outputfile `%s` exists. Aborting. Use --overwrite to force overwriting." % outputfile)
             sys.exit(2)
         else:
-            print "Removing existing outputfile `%s`" % outputfile
+            LOG( "Removing existing outputfile `%s`" % outputfile)
             os.remove(outputfile)
     
-    #print "input '%s', output '%s', format '%s', overwrite '%s', quality=%d" % (inputfile, outputfile, format, overwrite, qual)
-    #print "scalex %d, scaley %d, scalep %d, keepdatio=%s" % (scalex, scaley, scalep, keepratio)
+    LOG( "input '%s', output '%s', format '%s', overwrite '%s', quality=%d" % (inputfile, outputfile, format, overwrite, qual))
+    LOG( "scalex %d, scaley %d, scalep %d, keepdatio=%s" % (scalex, scaley, scalep, keepratio))
    
+    # if scalep happens to be 100 and qual 75 (the default) and format == input file ending
+    # then we simply make a copy of the file so save processing time
+    #
+    if (scalep == 100 or scalep == -1) and scalex==-1 and scaley==-1 and inputfile[len(inputfile)-3:len(inputfile)] == outputfile[len(outputfile)-3:len(outputfile)]:
+        if format == "jpg" and qual != 75: pass
+        else:
+            import shutil
+            # make copy
+            LOG( "making a copy of original image")
+            try: shutil.copyfile(inputfile, outputfile)
+            except IOError: LOG( "Error: copy failed. Abort!"); sys.exit(2)
+            sys.exit(0)
+
     #
     # file open with PIL
     #
     try: image = Image.open(inputfile)
     except IOError:
-        print "PIL: failed to open file `%s`. Abort!" % inputfile
+        LOG( "PIL: failed to open file `%s`. Abort!" % inputfile)
         sys.exit(2)
     pil_format = format
     if format == "jpg": pil_format = "jpeg"
@@ -134,10 +156,10 @@ if __name__ == "__main__": # if run standalone
             image.save(outputfile, pil_format)
         else:
             # Quality affects only JPEG format
-            print ("image.save (%s, %s, %d)" % (outputfile, pil_format, qual))
+            LOG( ("image.save (%s, %s, %d)" % (outputfile, pil_format, qual)))
             image.save(outputfile, pil_format, quality=qual)
     except IOError:
-        print "PIL: Image save operation failed! I/O Error."
+        LOG( "PIL: Image save operation failed! I/O Error.")
 
-    print "PIL: Output written into `%s`" % outputfile
-    print "Done!"
+    LOG( "PIL: Output written into `%s`" % outputfile)
+    LOG( "Done!")

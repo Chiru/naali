@@ -269,6 +269,7 @@ else
     cp src/*.h $prefix/include/$what
     cp lib/libqxmpp.a $prefix/lib/
     touch $tags/$what-done
+fi
 
 what=quazip
 ver=0.2.3

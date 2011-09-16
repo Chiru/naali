@@ -116,6 +116,14 @@ bool CallExtension::disconnectCall(QString peerJid)
     return true;
 }
 
+bool CallExtension::suspendCall(QString peerJid)
+{
+    if(!calls_.contains(peerJid))
+        return false;
+
+    return calls_[peerJid]->suspend();
+}
+
 QString CallExtension::getActiveCall()
 {
     QString call;
@@ -132,10 +140,11 @@ bool CallExtension::setActiveCall(QString peerJid)
     if(!calls_.keys().contains(peerJid))
         return false;
 
-    QString previous = getActiveCall();
-    if(previous != "")
-        calls_[previous]->suspend();
-    calls_[peerJid]->resume();
+    if(calls_[peerJid]->state() != Call::SuspendedState)
+        return false;
+
+    suspendCall(getActiveCall());
+    return calls_[peerJid]->resume();
 }
 
 void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
@@ -163,9 +172,10 @@ void CallExtension::handleCallStateChanged(Call::State state)
     case Call::ConnectingState:
         break;
     case Call::ActiveState:
-        emit activeCallChanged(call->peerJid());
+        emit callActive(call->peerJid());
         break;
     case Call::SuspendedState:
+        emit callSuspended(call->peerJid());
         break;
     case Call::DisconnectingState:
         break;

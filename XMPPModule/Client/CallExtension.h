@@ -69,12 +69,7 @@ public slots:
     bool disconnectCall(QString peerJid);
 
     /// Sets active call on hold
-    void suspendCall();
-
-    /// Continues suspended call
-    /// \param peerJid JabberID the call is associated with
-    /// \return bool true on success, false on call not found
-    bool continueCall(QString peerJid);
+    bool suspendCall(QString peerJid);
 
     /// Returns list of suspended calls
     /// \note Doesn't contain currently active call
@@ -104,10 +99,10 @@ private:
     QMap<QString, Call*> incoming_calls_;
 
 signals:
+    void callSuspended(QString peerJid);
     void callDisconnected(QString peerJid);
-    void callConnected(QString peerJid);
     void callIncoming(QString peerJid);
-    void activeCallChanged(QString peerJid);
+    void callActive(QString peerJid);
 };
 
 } // end of namespace: XMPP

@@ -175,9 +175,10 @@ class CallDialog():
         
         self.layout.addLayout(self.buttonLayout)
         
-        self.callExtension.connect('activeCallChanged(QString)', self.__handleCallConnected__)
+        self.callExtension.connect('callActive(QString)', self.__handleCallActive__)
         self.callExtension.connect('callDisconnected(QString)', self.__handleCallDisconnected__)
-        self.pauseButton.connect('clicked(bool)', self.__muteCall__)
+        self.callExtension.connect('callSuspended(QString)', self.__handleCallSuspended__)
+        self.pauseButton.connect('clicked(bool)', self.__suspendCall__)
         self.disconnectButton.connect('clicked(bool)', self.__disconnectCall__)
         self.redialButton.connect('clicked(bool)', self.__callUser__)
         
@@ -190,14 +191,21 @@ class CallDialog():
     def getJid(self):
         return self.peerJid()
         
-    def __handleCallConnected__(self, remoteJid):
+    def __handleCallActive__(self, remoteJid):
         if not remoteJid == self.remoteJid:
-            print("derp, wrong call: {0}".format(remoteJid))
             return
-        self.statusLabel.setText("Connected")
+        self.statusLabel.setText("Active")
         self.redialButton.setEnabled(False)
         self.disconnectButton.setEnabled(True)
         self.pauseButton.setEnabled(True)
+        self.pauseButton.setText("Suspend")
+        
+    def __handleCallSuspended__(self, remoteJid):
+        if not remoteJid == self.remoteJid:
+            return
+        if self.statusLabel.text == "Active":
+                self.statusLabel.setText("Suspended")
+                self.pauseButton.setText("Continue")
     
     def __handleCallDisconnected__(self, remoteJid):
         if not remoteJid == self.remoteJid:
@@ -212,8 +220,13 @@ class CallDialog():
         self.callExtension.callUser(self.remoteJid, self.remoteResource)
         self.statusLabel.setText("Connecting")
         
-    def __muteCall__(self):
-        print("Not implemented")
+    def __suspendCall__(self):
+        if self.pauseButton.text == "Suspend":
+            print("suspending")
+            self.callExtension.suspendCall(self.remoteJid)
+            self.pauseButton.setText("Continue")
+        else:
+            self.callExtension.setActiveCall(self.remoteJid)
     
     def __disconnectCall__(self):
         self.callExtension.disconnectCall(self.remoteJid)

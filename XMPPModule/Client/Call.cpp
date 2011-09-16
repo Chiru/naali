@@ -73,8 +73,17 @@ bool Call::suspend()
     // We'll just change the internal state of our call and discard received data.
     // We need to craft the messages ourselves unless this changes.
 
-    state_ = Call::SuspendedState;
-    emit stateChanged(state_);
+    setState(Call::SuspendedState);
+    return true;
+}
+
+bool Call::resume()
+{
+    if(state_ != Call::SuspendedState)
+        return false;
+
+    setState(Call::ActiveState);
+    return true;
 }
 
 void Call::Update(f64 frametime)

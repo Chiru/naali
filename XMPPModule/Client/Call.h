@@ -71,7 +71,6 @@ private:
 
 signals:
     void stateChanged(Call::State state);
-
 };
 
 } // end of namespace: XMPP

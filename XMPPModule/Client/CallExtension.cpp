@@ -160,6 +160,13 @@ void CallExtension::handleCallReceived(QXmppCall *qxmppCall)
     emit callIncoming(from_jid);
 }
 
+void CallExtension::handleCallDisconnected(Call *call)
+{
+    emit callDisconnected(call->peerJid());
+    calls_.remove(call->peerJid());
+    delete call;
+}
+
 void CallExtension::handleCallStateChanged(Call::State state)
 {
     Call *call = qobject_cast<Call*>(sender());
@@ -180,9 +187,7 @@ void CallExtension::handleCallStateChanged(Call::State state)
     case Call::DisconnectingState:
         break;
     case Call::FinishedState:
-        emit callDisconnected(call->peerJid());
-        calls_.remove(call->peerJid());
-        delete call;
+        handleCallDisconnected(call);
         break;
     }
 }

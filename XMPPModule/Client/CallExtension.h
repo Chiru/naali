@@ -89,6 +89,7 @@ public slots:
 private slots:
     void handleCallReceived(QXmppCall* qxmppCall);
     void handleCallStateChanged(Call::State state);
+    void handleCallDisconnected(Call *call);
 
 private:
     static QString extension_name_;

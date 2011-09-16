@@ -148,6 +148,7 @@ signals:
     //! Can indicate that capabilities were received
     void presenceChanged(QString UserJid);
 
+    //! Signals changes in user's vCard
     void vCardChanged(QString UserJid);
 
     //! Signals disconnect by request

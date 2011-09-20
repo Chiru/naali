@@ -18,11 +18,16 @@
 
 #include <QObject>
 
+namespace TundraLogic
+{
+    class Server;
+}
 
 namespace XMPP
 {
 class Client;
 class AccountManager;
+class Server;
 
 /**
  *  XMPP Communications support for tundra
@@ -78,6 +83,7 @@ private:
     static std::string type_name_static_;
     AccountManager *account_manager_;
     QList<Client*> clients_;
+    Server *server_;
 
 };
 

@@ -62,6 +62,12 @@ if (MSVC)
     SET(OPENASSETIMPORT 1)
 endif()
 
+# Enables Google 3D Warehouse viewer, which can be used to download models to scene
+SET(G3DWH 1)
+if (MSVC)
+    SET(G3DWH 1)
+endif()
+
 # Enables Ogre asset editor module
 SET(OGREASSETEDITOR 1)
 
@@ -186,12 +192,13 @@ endif()
 if (OPENASSETIMPORT)
     add_subdirectory(OpenAssetImport)       # Allows import of various mesh file formats
 endif()
-
 if (DECLARATIVE_ENABLED)
     add_subdirectory(QMLUIModule)
 endif()
-
-if (MSVC AND VC90)                          # Disable from VC10 build as we don't provide the prebuilt deps yet
+if (G3DWH)
+    add_subdirectory(G3dwhModule)           # Enables Google 3D Warehouse viewer
+endif()
+if (MSVC)
     add_subdirectory(MumbleVoipModule)      # VOIP communication using the Mumble library. Depends on OgreRenderingModule.
     if (VC90)
         add_subdirectory(CameraInputModule) # Camera input module depends on opencv library. Disabled from VC100 build for now.

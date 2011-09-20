@@ -73,8 +73,17 @@ bool Call::suspend()
     // We'll just change the internal state of our call and discard received data.
     // We need to craft the messages ourselves unless this changes.
 
-    state_ = Call::SuspendedState;
-    emit stateChanged(state_);
+    setState(Call::SuspendedState);
+    return true;
+}
+
+bool Call::resume()
+{
+    if(state_ != Call::SuspendedState)
+        return false;
+
+    setState(Call::ActiveState);
+    return true;
 }
 
 void Call::Update(f64 frametime)
@@ -171,36 +180,56 @@ void Call::handleOutboundVoice()
 
 void Call::handleCallStateChanged(QXmppCall::State state)
 {
-    /// \todo clean this up before final commit
-    QString debug_info;
     switch(state)
     {
     case QXmppCall::ConnectingState:
-        debug_info = "connecting";
         setState(Call::ConnectingState);
         break;
     case QXmppCall::ActiveState:
-        debug_info = "active";
         setState(Call::ActiveState);
         break;
     case QXmppCall::DisconnectingState:
-        debug_info = "disconnecting";
         setState(Call::DisconnectingState);
         break;
     case QXmppCall::FinishedState:
-        debug_info = "finished";
         setState(Call::FinishedState);
         break;
     default:
         break;
     }
-
-    XMPPModule::LogInfo("Call with \"" + peer_jid_.toStdString() + "\" " + debug_info.toStdString());
 }
 
 void Call::setState(Call::State state)
 {
     state_ = state;
+    QString state_string;
+
+    switch(state_)
+    {
+    case Call::RingingState:
+        state_string = "ringing";
+        break;
+    case Call::ConnectingState:
+        state_string = "connecting";
+        break;
+    case Call::ActiveState:
+        state_string = "active";
+        break;
+    case Call::SuspendedState:
+        state_string = "suspended";
+        break;
+    case Call::DisconnectingState:
+        state_string = "disconnecting";
+        break;
+    case Call::FinishedState:
+        state_string = "finished";
+        break;
+    default:
+        state_string = "unknown";
+        break;
+    }
+
+    XMPPModule::LogInfo("Call with \"" + peer_jid_.toStdString() + "\" " + state_string.toStdString());
     emit stateChanged(state_);
 }
 

@@ -75,7 +75,6 @@ private:
     QMap<QString, ResourceItem> resources_;
     QString bare_jid_;
 
-    /// \todo shieeet man, store these in struct.. or not, whatever.
     QString birthday_;
     QString email_;
     QString full_name_;

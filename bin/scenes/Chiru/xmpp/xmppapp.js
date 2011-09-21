@@ -4,45 +4,27 @@ engine.ImportExtension("qt.gui");
 incoming_msgs = [];
 nr_msgs = 0;
 
-// function text_bubble(text, x, y, z, lifetime) {
-//     var eid = scene.NextFreeId();
-//     var ent = scene.CreateEntityRaw(eid, ["EC_Placeable", "EC_Mesh", "EC_3DCanvas"]);
-//     var uppercube = scene.GetEntityByNameRaw("uppercube");
-//     ent.mesh = uppercube.mesh;
-//     print("cloned mesh");
-//     ent.mesh.meshMaterial = uppercube.mesh.meshMaterial;
-//     ent.mesh.meshRef = uppercube.mesh.meshRef;
-//     print("creating 3dcanvas");
-//     var canvas = ent.GetOrCreateComponentRaw("EC_3DCanvas");
-//     var label = new QLabel(text);
-//     label.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed);
-//     label.setGeometry(new QRect(0, 0, 500, 500));
-//     // var layout = new QGridLayout();
-//     layout.setGeometry(new QRect(0, 0, 500, 500));
-//     layout.setSizePolicy(QSizePolicy.Minimum, QSizePolicy.Fixed);
-//     label.resize(500, 500);
-//     after(.1, function() { canvas.Update(); });
-//     layout.resize(600, 600);
-//     layout.AddWidget(label, 0, 0);
-//     canvas.SetSubmesh(0);
-//     canvas.SetWidget(layout);
-//     canvas.Update();
-//     canvas.Start();
-//     var trans = ent.placeable.transform;
-//     pos = trans.pos;
-//     //trans.pos = pos;
-//     //print("got pos " + pos);
-//     print("pos now " + pos.x+ " " + pos.y + " " + pos.z);
-//     pos.x = x; pos.y = y; pos.z = z;
-//     print("pos now " + pos.x+ " " + pos.y + " " + pos.z);
-//     frame.DelayedExecute(lifetime).Triggered.connect(function () {
-// 	    scene.RemoveEntityRaw(eid);
-// 	});
-// }
+function make_motion(ent, x, y, z, nsteps) {
+    this.ent = ent;
+    this.x = x;
+    this.y = y;
+    this.z = z;
+    this.nsteps = nsteps;
 
-// frame.DelayedExecute(1).Triggered.connect(this, function () {
-// 	text_bubble("asdfasdfasdfas", 0, 10, 10, 100);
-//     });
+    this.update = function (frametime) {
+	move_relative(this.ent, this.x, this.y, this.z);
+	this.nsteps -= 1;
+	if (this.nsteps <= 0)
+	    frame.Updated.disconnect(this.update);
+    }
+}
+
+function update_motion(frametime) {
+}
+
+function startmotion(ent, x, y, z, nsteps) {
+    frame.Updated.connect(update_motion);
+}
 
 function move_relative(ent, x, y, z) {
     //print("moving " + ent);
@@ -95,12 +77,18 @@ function after(delay, what) {
     frame.DelayedExecute(delay).Triggered.connect(what);
 }
 
+function move_off(bub) {
+    set_mass(bub, 0);
+    move_relative(bub, 0, 0, -10);
+}
+
+var prev_bubble = null;
 function drop(bub) {
+    if(prev_bubble)
+	move_off(prev_bubble);
+    prev_bubble = bub;
     print("dropping bubble id=" + bub.id);
-    //move_relative(bub, 0, 0, -10);
-    //function nudgeup() { move_relative(bub, 0, 0, 10); after(4, nudgeup); }
-    after(2, function () { set_mass(bub, .1); });
-    //after(4, nudgeup);
+    set_mass(bub, .1);
     var canvas = bub.GetOrCreateComponentRaw("EC_3DCanvas");
     var msg = incoming_msgs.pop();
     if (!msg) {
@@ -120,7 +108,7 @@ function drop(bub) {
 	canvas.SetSubmesh(1);
 	canvas.SetWidget(ql);
     }
-    ql.text = msg;
+    canvas.GetWidget().text = msg;
     after(.1, function() { canvas.Update(); });
 	
     canvas.Update();
@@ -144,7 +132,6 @@ after(.5, function () {
 		continue;
 	    }
 	    if (ent.name != "chatbubble") {
-		print("wrong name: " + ent.name);
 		continue;
 	    }
 	    print("found chatbubble id=" + i);
@@ -169,63 +156,10 @@ after(.5, function () {
 	    hanging_b[i].GetComponentRaw("EC_3DCanvas").Update();
 	}
 	
-	function flip() {
-	    while (dropped_b.length) {
-		var bub = dropped_b.pop();
-		move_absolute(bub, startpos.x, startpos.y, startpos.z);
-		hanging_b.push(bub);
-	    }
-	}
-
-	// for (i = 0; i < hanging_b.length; i++) {
-	//     var bub = hanging_b[i];
-	//     print("length " + hanging_b.length + " vs i " + i);
-	//     print("got bub " + bub.id);
-	//     function paa() {
-	// 	print("hello " + bub.id + " " + i);
-	// 	drop(bub);
-	// 	dropped_b.push(bub);
-	//     }	    
-	//     after(i, paa);
-	// }
-	// after(i+1, flip);
-
-	// for (i = 0; i < hanging_b.length; i++) {
-	//     function paa() {
-	// 	var bub = hanging_b.pop();
-	// 	print("hello " /*+ bub*/ + " " + i);
-	// 	drop(bub);
-	// 	dropped_b.push(bub);
-	//     }	    
-	//     after(i, paa);
-	// }
-	// after(i+1, flip);
-
-	// function schedule_drops() {
-
-	//     var i=0;
-	//     after(i++*2, function() { drop_nth(0) });
-	//     after(i++*2, function() { drop_nth(1) });
-	//     after(i++*2, function() { drop_nth(2) });
-	//     after(i++*2, function() { drop_nth(3) });
-	//     after(i++*2, schedule_drops);
-	// }
-
-	// schedule_drops();
-
 	function queue_msg(text) {
 	    nr_msgs += 1;
 	    incoming_msgs.push(text);
 	    drop_nth(nr_msgs % 4);
-	}
-
-	if (0) {
-	    after(1, function() { queue_msg("testing chat messages"); } );
-	    after(4, function() { queue_msg("roly poly little chat messages dropping from the sky"); } );
-	    after(6, function() { queue_msg("testing chat messages"); } );
-	    after(7, function() { queue_msg("roly poly little chat messages dropping from the sky"); } );
-	    after(8, function() { queue_msg("testing chat messages"); } );
-	    after(9, function() { queue_msg("roly poly little chat messages dropping from the sky"); } );
 	}
 
 	function show_url(url) {

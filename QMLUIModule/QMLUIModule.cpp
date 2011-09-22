@@ -39,6 +39,7 @@ QMLUIModule::QMLUIModule() :
     camera_moving = false;
     camera_saved = false;
     pinching_mode = false;
+    qml_moving = false;
     camera_movement_timer_ = new QTimer();
     mouse_press_timer_ = new QTimer();
     camera_swipe_timer_ = new QTimer();
@@ -50,10 +51,8 @@ QMLUIModule::QMLUIModule() :
     camera_swipe_timer_->setInterval(30);
     renderer_ = 0;
     camera_ = 0;
-    //input_ = 0;
     context_ = 0;
     engine_ = 0;
-    //cameraptr_ = 0;
 
     QObject::connect(camera_movement_timer_, SIGNAL(timeout()), this, SLOT(SmoothCameraMove()));
     QObject::connect(mouse_press_timer_, SIGNAL(timeout()), this, SLOT(SingleShot()));
@@ -83,7 +82,6 @@ void QMLUIModule::PostInitialize()
 
     //Create a new input context that QMLUIModule will use to fetch input.
     input_ = framework_->Input()->RegisterInputContext("QMLUIInput", 100);
-    input_->SetTakeMouseEventsOverQt(true);
 
     // Listen on mouse input signals.
     connect(input_.get(), SIGNAL(MouseEventReceived(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
@@ -132,6 +130,8 @@ void QMLUIModule::CreateQDeclarativeView()
 
     framework_->Ui()->AddProxyWidgetToScene(qmluiproxy_);
 
+    declarativeview_->setSource(QUrl::fromLocalFile("../QMLUIModule/qml/QMLUI.qml"));
+
     QMLStatus(declarativeview_->status());
 }
 
@@ -152,6 +152,8 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
         QObject::connect(qmlui_, SIGNAL(pinching(int)), this, SLOT(SetPinchingMode(int)));
 
         QObject::connect(qmlui_, SIGNAL(move(QString)), this, SLOT(MoveReceived(QString)));
+
+        QObject::connect(qmlui_, SIGNAL(qmlmoving(int)), this, SLOT(SetQMLMoving(int)));
 
         QObject::connect(this, SIGNAL(giveQMLNetworkState(QVariant)), qmlui_, SLOT(networkstatechanged(QVariant)));
 
@@ -191,6 +193,8 @@ void QMLUIModule::SceneAdded(const QString &name)
     renderer_ = framework_->GetService<Foundation::RenderServiceInterface>();
 
     scene_added = true;
+
+    CreateQDeclarativeView();
 
 }
 
@@ -232,9 +236,7 @@ void QMLUIModule::ScriptAssetChanged(ScriptAssetPtr newScript)
         }
         else
         {
-
-            //Load ref from under the bin file
-            //TODO: Make finding file more spesific
+            //BUG: This doesn't work
             source = framework_->Asset()->GetAssetCache()->GetDiskSource(sender->getscriptRef().ref);
             declarativeview_->setSource(QUrl(source));
         }
@@ -253,6 +255,14 @@ void QMLUIModule::SetPinchingMode(int i)
         pinching_mode = true;
     else
         pinching_mode = false;
+}
+
+void QMLUIModule::SetQMLMoving(int i)
+{
+    if (i == 1)
+        qml_moving = true;
+    else
+        qml_moving = false;
 }
 
 void QMLUIModule::NetworkModeChanged(int mode)
@@ -291,7 +301,7 @@ Scene::Entity* QMLUIModule::GetActiveCamera() const
     Scene::ScenePtr scene = GetFramework()->Scene()->GetDefaultScene();
     if (!scene)
     {
-        LogError("Failed to find active camera, default world scene wasn't setted.");
+        //LogError("Failed to find active camera, default world scene wasn't setted.");
         return 0;
     }
 
@@ -301,7 +311,7 @@ Scene::Entity* QMLUIModule::GetActiveCamera() const
             return cam.get();
         }
 
-    LogError("No active camera were found.");
+    //LogError("No active camera were found.");
     return 0;
 }
 
@@ -357,8 +367,16 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
     if (camera_moving)
         return;
 
-    if (GetActiveCamera()->GetName() != "FreeLookCamera")
+    if (qml_moving)
         return;
+
+    if (GetActiveCamera() != 0 && GetActiveCamera()->GetName() != "FreeLookCamera")
+    {
+        camera_focused_on_entity = false;
+        camera_moving = false;
+        camera_saved = false;
+        return;
+    }
 
     if(mouse->eventType == MouseEvent::MousePressed && mouse->button == MouseEvent::LeftButton)
     {
@@ -405,9 +423,9 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
         else
         {
             if (camera_focused_on_entity)
-                LogInfo("Cam focused on entity");
+                //LogInfo("Cam focused on entity");
             if (camera_moving)
-                LogInfo("Cam moving");
+                //LogInfo("Cam moving");
         }
     }
 
@@ -541,7 +559,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
         }
         editing_mode = false;
         mouse_press_timer_->stop();
-        if ((speed_x > 3 || speed_x < -3) && !camera_focused_on_entity && !camera_moving)
+        if ((speed_x > 5 || speed_x < -5) && !camera_focused_on_entity && !camera_moving)
         {
             if (speed_x < -20)
                     speed_x = -20;
@@ -567,7 +585,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
                 if(result->entity_ && result->entity_->HasComponent("EC_Placeable") && !result->entity_->HasComponent("EC_Terrain"))
                 {
                     camera_moving = true;
-                    LogInfo("Camera Moving = TRUE");
+                    //LogInfo("Camera Moving = TRUE");
                     zoomed_into_this_entity_ = result->entity_;
                     FocusCameraOnEntity(result->entity_);
                 }
@@ -709,10 +727,17 @@ void QMLUIModule::SmoothCameraMove()
     float diff_x;
     float diff_y;
     float diff_z;
-    float when_to_stop_difference_x = 5;
-    float when_to_stop_difference_y = 5;
-    float when_to_stop_difference_z = 5;
-    int divider = 50; //Affects the speed of camera movement. Higher value -> Slower speed
+    float when_to_stop_difference_x = 1;
+    float when_to_stop_difference_y = 1;
+    float when_to_stop_difference_z = 1;
+    int divider = 20; //Affects the speed of camera movement. Higher value -> Slower speed
+
+    Vector3df target_position;
+    target_position.x = 0;
+    target_position.y = 90;
+    target_position.z = 0;
+    target_position = entity_to_focus_on_->GetRelativeVector(target_position);
+    entity_transform.SetPos(entity_to_focus_on_->gettransform().position.x + target_position.x, entity_to_focus_on_->gettransform().position.y + target_position.y, entity_to_focus_on_->gettransform().position.z + target_position.z);
 
     if (!camera_focused_on_entity)
     {
@@ -775,16 +800,16 @@ void QMLUIModule::SmoothCameraMove()
         }
 
         camera_->SetPosition(camera_transform.position);
-        camera_->LookAt(entity_transform.position);
+        camera_->LookAt(entity_to_focus_on_->gettransform().position);
         //LogInfo("Diffx: " + ToString(diff_x) + " Diffy: " + ToString(diff_y) + " Diffz: " + ToString(diff_z));
 
         if (camx && camy && camz)
         {
-            camera_->LookAt(entity_transform.position);
+            camera_->LookAt(entity_to_focus_on_->gettransform().position);
             camera_focused_on_entity = true;
-            LogInfo("Camera Focused On Entity = TRUE");
+            //LogInfo("Camera Focused On Entity = TRUE");
             camera_moving = false;
-            LogInfo("Camera Moving = FALSE");
+            //LogInfo("Camera Moving = FALSE");
             camera_movement_timer_->stop();
             emit CameraFocusedOnEntity(entity_transform.position, camera_transform.position);
         }
@@ -856,18 +881,18 @@ void QMLUIModule::SmoothCameraMove()
         }
 
         camera_->SetPosition(camera_transform.position);
-        camera_->LookAt(entity_transform.position);
-        LogInfo("Diffx: " + ToString(diff_x) + " Diffy: " + ToString(diff_y) + " Diffz: " + ToString(diff_z));
+        camera_->LookAt(entity_to_focus_on_->gettransform().position);
+        //LogInfo("Diffx: " + ToString(diff_x) + " Diffy: " + ToString(diff_y) + " Diffz: " + ToString(diff_z));
 
         if (camx && camy && camz)
         {
             camera_->SetPosition(original_camera_transform_.position);
-            camera_->LookAt(entity_transform.position);
+            camera_->LookAt(entity_to_focus_on_->gettransform().position);
             camera_focused_on_entity = false;
-            LogInfo("Camera Focused On Entity = FALSE");
+            //LogInfo("Camera Focused On Entity = FALSE");
             camera_saved = false;
             camera_moving = false;
-            LogInfo("Camera Moving = FALSE");
+            //LogInfo("Camera Moving = FALSE");
             camera_movement_timer_->stop();
         }
     }

@@ -36,13 +36,15 @@ Item {
          MouseArea {
              anchors.fill: parent
              onClicked: flipable.flipped = !flipable.flipped
-             onPressed:  flipable.opacity = 0.5
-             onReleased:  flipable.opacity = 1
-
+             onPressed:  {
+                 flipable.opacity = 0.5
+                 qmlmoving(1)
+             }
+             onReleased:  {
+                 flipable.opacity = 1
+                 qmlmoving(0)
+             }
              drag.target: flipable; drag.axis: Drag.XandYAxis
-
-
-
          }
      }
 

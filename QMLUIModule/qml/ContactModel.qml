@@ -1,4 +1,4 @@
-import QtQuick 4.7
+import Qt 4.7
 ListModel {
 
      ListElement {

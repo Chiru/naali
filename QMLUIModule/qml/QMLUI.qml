@@ -1,5 +1,4 @@
 import Qt 4.7
-import "../../bin/scenes/Avatar/simpleavatar.js" as Avatar
 
 Rectangle {
     id: uiRect
@@ -7,6 +6,7 @@ Rectangle {
     opacity: 1
     signal exit
     signal pinching(int i)
+    signal qmlmoving(int i)
     signal move(string direction)
 
     //signal setVisible
@@ -152,18 +152,6 @@ Rectangle {
             loaderTimer.source = ""
     }
 
-    property int tapCounter: 0
-    property int tapAndHoldCounter: 0
-    property int swipeCounter: 0
-
-    function isHorizontalSwipe(angle) {
-        if (angle > 150 && angle < 210)
-            return true;
-        if (angle > 330 || angle < 30)
-            return true;
-        return false;
-    }
-
 
     /*MouseArea {
         anchors.fill: parent
@@ -174,7 +162,7 @@ Rectangle {
         source: ""
         anchors.right: parent.right
         anchors.top: parent.top
-        anchors.topMargin: 30
+        anchors.topMargin: 130
         anchors.rightMargin: 10
     }
 
@@ -328,8 +316,6 @@ Rectangle {
                 opacity: 0.5
                 width: 75
                 height: 75
-                //border.width: 1
-                //border.color: "black"
             }
 
             Rectangle {
@@ -345,12 +331,10 @@ Rectangle {
                     onPressed: {
                         up.color = "green"
                         move("up")
-                        Avatar.QMLMove("up")
                     }
                     onReleased: {
                         up.color = "gray"
                         move("stopup")
-                        Avatar.QMLMove("stopup")
                     }
                 }
             }
@@ -361,8 +345,6 @@ Rectangle {
                 opacity: 0.5
                 width: 75
                 height: 75
-                //border.width: 1
-                //border.color: "black"
             }
 
             Rectangle {
@@ -378,12 +360,10 @@ Rectangle {
                     onPressed: {
                         left.color = "green"
                         move("left")
-                        Avatar.QMLMove("left")
                     }
                     onReleased: {
                         left.color = "gray"
                         move("stopleft")
-                        Avatar.QMLMove("stopleft")
                     }
                 }
             }
@@ -400,7 +380,6 @@ Rectangle {
                     onPressed: {
                         middle.color = "green"
                         move("stop")
-                        Avatar.QMLMove("stop")
                     }
                     onReleased: {
                         middle.color = "gray"
@@ -421,12 +400,10 @@ Rectangle {
                     onPressed: {
                         right.color = "green"
                         move("right")
-                        Avatar.QMLMove("right")
                     }
                     onReleased: {
                         right.color = "gray"
                         move("stopright")
-                        Avatar.QMLMove("stopright")
                     }
                 }
             }
@@ -437,8 +414,6 @@ Rectangle {
                 opacity: 0.5
                 width: 75
                 height: 75
-                //border.width: 1
-                //border.color: "black"
             }
 
             Rectangle {
@@ -454,12 +429,10 @@ Rectangle {
                     onPressed: {
                         down.color = "green"
                         move("down")
-                        Avatar.QMLMove("down")
                     }
                     onReleased: {
                         down.color = "gray"
                         move("stopdown")
-                        Avatar.QMLMove("stopdown")
                     }
                 }
             }
@@ -470,8 +443,6 @@ Rectangle {
                 opacity: 0.5
                 width: 75
                 height: 75
-                //border.width: 1
-                //border.color: "black"
             }
         }
 }

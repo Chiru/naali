@@ -274,6 +274,9 @@ void EC_QML::Render()
 
 void EC_QML::ServerHandleAttributeChange(IAttribute *attribute, AttributeChange::Type changeType)
 {
+    if (GetFramework()->IsHeadless())
+        return;
+
     if (attribute == &qmlsource)
     {
         qml_ready = false;

@@ -12,8 +12,6 @@ Item {
 
 
 
-
-
         Component {
                  id: delegate
 
@@ -23,7 +21,9 @@ Item {
                      scale: PathView.iconScale
                      opacity: PathView.iconOpacity
                      Column {
-                         Image { anchors.horizontalCenter: nameText.horizontalCenter; width: 100; height: 100; source: icon }
+                         Image {
+                            anchors.horizontalCenter: nameText.horizontalCenter; width: 100; height: 100; source: icon
+                         }
                          Text { id: nameText; text: name; font.pointSize: 16; /*color: wrapper.PathView.isCurrentItem ? "red" : "black"*/ }
                      }
                  }
@@ -42,6 +42,11 @@ Item {
                      PathAttribute { name: "iconScale"; value: 0.3 }
                      PathAttribute { name: "iconOpacity"; value: 0.3 }
                      PathQuad { x: 250; y: 120; controlX: -20; controlY: 95 }
+                 }
+                 MouseArea {
+                     anchors.fill: parent
+                     onPressed: qmlmoving(1)
+                     onReleased: qmlmoving(0)
                  }
              }
         }

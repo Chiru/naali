@@ -1,4 +1,5 @@
-// !ref: local://default_avatar.xml
+// !ref: http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/away_avatar.xml
+// !ref: http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/default_avatar.xml
 
 // A simple walking avatar running on client side
 
@@ -46,17 +47,25 @@ if (isserver) {
 function ServerInitialize() {
     var rigidbody = me.GetOrCreateComponentRaw("EC_RigidBody");
     rigidbody.RespectMyAuthority(false);
-    SetAvatarAppearance();
+    SetAvatarAppearance(me, "default");
 }
 
-function SetAvatarAppearance() {
-    var avatar = me.GetOrCreateComponentRaw("EC_Avatar");
+function SetAvatarAppearance(ent, mode) {
+    var avatar = ent.GetComponentRaw("EC_Avatar");
+    if (avatar) {
+	print("avatar appearance: EC_avatar exists, removing it");
+	print("prev appearanceref was " + avatar.appearanceRef.ref);
+	me.RemoveComponentRaw(avatar);
+    }
+    avatar = me.GetOrCreateComponentRaw("EC_Avatar");
+    print("created ec_avatar with appearance " + mode);
     // Set the avatar appearance. This creates the mesh & animationcontroller, once the avatar asset has loaded
     var r = avatar.appearanceRef;
-    r.ref = "local://default_avatar.xml";
+    r.ref = "http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/" + mode + "_avatar.xml";
     avatar.appearanceRef = r;
+    print("new appearanceref is " + avatar.appearanceRef.ref);
     // print("avatar appearance set");
-    //avatar.appearanceId = "local://default_avatar.xml"
+    //avatar.appearanceId = "http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/away_avatar.xml"
 
 }
 
@@ -147,6 +156,7 @@ function ClientUpdatePhysics(frametime) {
         // Apply damping. Only do this if the body is active, because otherwise applying forces
         // to a resting object wakes it up
         if (rigidbody.IsActive()) {
+
             var dampingVec = rigidbody.GetLinearVelocity();
             dampingVec.x = -damping_force * dampingVec.x;
             dampingVec.y = -damping_force * dampingVec.y;
@@ -164,6 +174,8 @@ function ClientUpdatePhysics(frametime) {
         // Manually move the avatar placeable when flying
         // this has the downside of no collisions.
         // Feel free to reimplement properly with mass enabled.
+        var av_placeable = me.placeable;
+        var av_transform = av_placeable.transform;
 
         // Make a vector where we have moved
         var moveVec = new Vector3df();
@@ -172,36 +184,36 @@ function ClientUpdatePhysics(frametime) {
         moveVec.z = motion_z * fly_speed_factor;
 
         // Apply that with av looking direction to the current position
-        var offsetVec = placeable.GetRelativeVector(moveVec);
-        transform.pos.x = transform.pos.x + offsetVec.x;
-        transform.pos.y = transform.pos.y + offsetVec.y;
-        transform.pos.z = transform.pos.z + offsetVec.z;
+        var offsetVec = av_placeable.GetRelativeVector(moveVec);
+        av_transform.pos.x = av_transform.pos.x + offsetVec.x;
+        av_transform.pos.y = av_transform.pos.y + offsetVec.y;
+        av_transform.pos.z = av_transform.pos.z + offsetVec.z;
 
         // This may look confusing. Its kind of a hack to tilt the avatar
         // when flying to the sides when you turn with A and D.
         // At the same time we need to lift up the Z of the av accorting to the angle of tilt
         if (motion_x != 0) {
-            if (motion_y > 0 && transform.rot.x <= 5) {
-                transform.rot.x = transform.rot.x + motion_y/2;
+            if (motion_y > 0 && av_transform.rot.x <= 5) {
+                av_transform.rot.x = av_transform.rot.x + motion_y/2;
         }
-            if (motion_y < 0 && transform.rot.x >= -5) {
-                transform.rot.x = transform.rot.x + motion_y/2;
+            if (motion_y < 0 && av_transform.rot.x >= -5) {
+                av_transform.rot.x = av_transform.rot.x + motion_y/2;
         }
-            if (motion_y != 0 && transform.rot.x > 0) {
-                transform.pos.z = transform.pos.z + (transform.rot.x * 0.0045); // magic number
+            if (motion_y != 0 && av_transform.rot.x > 0) {
+                av_transform.pos.z = av_transform.pos.z + (av_transform.rot.x * 0.0045); // magic number
         }
-        if (motion_y != 0 && transform.rot.x < 0) {
-                transform.pos.z = transform.pos.z + (-transform.rot.x * 0.0045); // magic number
+        if (motion_y != 0 && av_transform.rot.x < 0) {
+                av_transform.pos.z = av_transform.pos.z + (-av_transform.rot.x * 0.0045); // magic number
         }
         }
-        if (motion_y == 0 && transform.rot.x > 0) {
-            transform.rot.x = transform.rot.x - 0.5;
+        if (motion_y == 0 && av_transform.rot.x > 0) {
+            av_transform.rot.x = av_transform.rot.x - 0.5;
     }
-    if (motion_y == 0 && transform.rot.x < 0) {
-            transform.rot.x = transform.rot.x + 0.5;
+    if (motion_y == 0 && av_transform.rot.x < 0) {
+            av_transform.rot.x = av_transform.rot.x + 0.5;
     }
 
-        placeable.transform = transform;
+        av_placeable.transform = av_transform;
     }
 }
 
@@ -238,7 +250,7 @@ function ClientHandleMove(param) {
 }
 
 function ServerHandleStop(param) {
-    print("HandleStop " + param);
+    //print("HandleStop " + param);
     if ((param == "forward") && (motion_x == 1)) {
         motion_x = 0;
     }
@@ -291,7 +303,7 @@ function ServerHandleToggleFly() {
 }
 
 function ServerHandleRotate(param) {
-    print("HandleRotate "  + param);
+    //print("HandleRotate "  + param);
     if (param == "left") {
         rotate = -1;
     }
@@ -335,7 +347,7 @@ function ServerHandleGesture(gestureName) {
 }
 
 function SetAnimationState() {
-    print("in SetAnimationState");
+    //print("in SetAnimationState");
     // Not flying: Stand, Walk or Crouch
     var animName = standAnimName;
     if ((motion_x != 0) || (motion_y != 0)) {
@@ -364,14 +376,28 @@ function SetAnimationState() {
     }
 }
 
+function HandleClientDisconnected() {
+    // we rely on the clientid attr to identify which is our avatar.
+}
+
+
 function ClientInitialize() {
     print("ClientInitialize called");
+
+    client.Disconnected.connect(HandleClientDisconnected);
 
     // Check if this is our own avatar
     // Note: bad security. For now there's no checking who is allowed to invoke actions
     // on an entity, and we could theoretically control anyone's avatar
+
     me.Action("Move").Triggered.connect(ClientHandleMove);
-    if (me.GetName() == "Avatar" + client.GetConnectionID()) {
+
+    var ent_connid = me.GetOrCreateComponentRaw("EC_DynamicComponent").GetAttribute("connectionID");
+    var client_connid = client.GetConnectionID();
+    print ("checking if own avatar, GetConnectionID->" +client_connid + " vs ent registered connid:" + ent_connid);
+    var existing_avatarcamera = scene.GetEntityByNameRaw("AvatarCamera");
+    if (ent_connid == client_connid) {
+	print("found own avatar");
         own_avatar = true;
         ClientCreateInputMapper();
         ClientCreateAvatarCamera();
@@ -911,8 +937,8 @@ function CreateFish() {
         // Create a local mesh component into the same entity
         var fishmesh = me.GetOrCreateComponentRaw("EC_Mesh", "fish", 2, false);
         var r = fishmesh.meshRef;
-        if (r.ref != "local://fish.mesh") {
-            r.ref = "local://fish.mesh";
+        if (r.ref != "http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/fish.mesh") {
+            r.ref = "http://chiru.cie.fi/lvm-connectivity/ClientSideAvatar/fish.mesh";
             fishmesh.meshRef = r;
         }
 

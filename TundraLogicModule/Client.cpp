@@ -476,6 +476,7 @@ void Client::HandleLoginReply(MessageConnection* source, const MsgLoginReply& ms
             // If we are reconnecting, empty the scene, as the server will send everything again anyway
             // Note: when we move to unordered communication, we must guarantee that the server does not send
             // any scene data before the login reply
+            emit changeTab(conNumber);
             QString sceneToGet = "TundraClient_";
             sceneToGet.append(QString("%1").arg(conNumber));
 

@@ -58,7 +58,7 @@ sed -i 's/release/'$LINUX_RELEASE'/' /etc/apt/sources.list
 
 #UPDATE REPOSITORY
 apt-get update
-apt-get -y --force-yes install git-core wget unzip cmake aptitude
+apt-get -y --force-yes install git-core wget unzip cmake aptitude subversion
 cd /$REX_DIR/naali
 
 rm -fr /$REX_DIR/$PACKAGE_NAME-$BRANCH-$VER-$ARCH

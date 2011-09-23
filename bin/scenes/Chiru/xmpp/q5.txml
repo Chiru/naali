@@ -51,14 +51,6 @@
   </component>
  </entity>
  <entity id="3">
-  <component type="EC_Mesh" sync="1">
-   <attribute value="0,0,0,90,0,180,1,1,1" name="Transform"/>
-   <attribute value="local://Cube.001.mesh" name="Mesh ref"/>
-   <attribute value="" name="Skeleton ref"/>
-   <attribute value="" name="Mesh materials"/>
-   <attribute value="0" name="Draw distance"/>
-   <attribute value="false" name="Cast shadows"/>
-  </component>
   <component type="EC_Name" sync="1">
    <attribute value="slab" name="name"/>
    <attribute value="" name="description"/>

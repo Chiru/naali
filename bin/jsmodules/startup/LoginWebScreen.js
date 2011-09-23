@@ -626,7 +626,7 @@ var BrowserManager = Class.extend
             return;
         else
         {
-            p_.tabs.currentIndex = 0;
+            p_.tabs.currentIndex = index;
             p_.onTabIndexChanged(p_.tabs.currentIndex);
             if (p_.connected[index-2] == true)
             {

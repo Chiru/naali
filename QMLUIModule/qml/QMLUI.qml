@@ -447,5 +447,26 @@ Rectangle {
                 height: 75
             }
         }
+
+        Rectangle {
+            width: entitytext.width + 10
+            height: entitytext.height + 10
+            border.width: 1
+            border.color: "black"
+            color:  "lightblue"
+            opacity: movetextopacity
+            radius: 15
+            anchors.horizontalCenter: parent.horizontalCenter
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: 75
+
+        Text {
+            id: entitytext
+            text: entityname
+            color: "black"
+            anchors.centerIn: parent
+
+        }
+        }
 }
 

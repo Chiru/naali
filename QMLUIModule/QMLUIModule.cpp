@@ -110,7 +110,8 @@ void QMLUIModule::CreateQDeclarativeView()
     declarativeview_ = new QDeclarativeView();
     engine_ = declarativeview_->engine();
     context_ = engine_->rootContext();
-    context_->setContextProperty("pinchopacity", 0);
+    context_->setContextProperty("pinchopacity", 0.0);
+    context_->setContextProperty("movetextopacity", 0.0);
     context_->setContextProperty("pinchcenterx", 0);
     context_->setContextProperty("pinchcentery", 0);
     context_->setContextProperty("pinchx", 0);
@@ -119,6 +120,7 @@ void QMLUIModule::CreateQDeclarativeView()
     context_->setContextProperty("pinchyy", 0);
     context_->setContextProperty("screenwidth", renderer_->GetWindowWidth());
     context_->setContextProperty("screenheight", renderer_->GetWindowHeight());
+    context_->setContextProperty("entityname", "");
     QObject::connect(declarativeview_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
 
     declarativeview_->move(0,0);
@@ -127,7 +129,7 @@ void QMLUIModule::CreateQDeclarativeView()
     declarativeview_->setResizeMode(QDeclarativeView::SizeRootObjectToView);
 
 
-    //declarativeview_->setFocusPolicy(Qt::NoFocus);
+    declarativeview_->setFocusPolicy(Qt::NoFocus);
 
 
     qmluiproxy_ = new UiProxyWidget(declarativeview_, Qt::Widget);
@@ -352,6 +354,8 @@ void QMLUIModule::LongPress(qreal x, qreal y)
         {
             entity_to_edit_ = result->entity_;
             editing_mode = true;
+            context_->setContextProperty("entityname", "Entity being moved: " + entity_to_edit_->GetName());
+            context_->setContextProperty("movetextopacity", 1.0);
             StartDrag(x, y);
         }
     }
@@ -562,6 +566,12 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
             context_->setContextProperty("pinchopacity", 0.0);
             return;
         }
+        if (editing_mode)
+        {
+            context_->setContextProperty("entityname", "");
+            context_->setContextProperty("movetextopacity", 0.0);
+        }
+
         editing_mode = false;
         mouse_press_timer_->stop();
         if ((speed_x > 5 || speed_x < -5) && !camera_focused_on_entity && !camera_moving && !qml_moving)

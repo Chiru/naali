@@ -422,9 +422,9 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
         }
         else
         {
-            if (camera_focused_on_entity)
+            //if (camera_focused_on_entity)
                 //LogInfo("Cam focused on entity");
-            if (camera_moving)
+            //if (camera_moving)
                 //LogInfo("Cam moving");
         }
     }

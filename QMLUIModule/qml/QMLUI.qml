@@ -4,6 +4,8 @@ Rectangle {
     id: uiRect
     color: "transparent"
     opacity: 1
+    width: screenwidth
+    height: screenheight
     signal exit
     signal pinching(int i)
     signal qmlmoving(int i)

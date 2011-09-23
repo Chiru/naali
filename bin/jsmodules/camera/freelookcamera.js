@@ -10,6 +10,12 @@ var motion_z = 0;
 var motion_y = 0;
 var motion_x = 0;
 
+if (framework.GetModuleQObj("QMLUIModule"))
+{
+    qmlmodule = framework.GetModuleQObj("QMLUIModule");
+    qmlmodule.Move.connect(QMLMove);
+}
+
 if (!me.HasComponent("EC_OgreCamera"))
 {
     // Create components & setup default position/lookat for the camera, mimicing RexLogicModule::CreateOpenSimViewerCamera()
@@ -64,12 +70,12 @@ if (!me.HasComponent("EC_OgreCamera"))
     me.Action("MouseLookY").Triggered.connect(HandleMouseLookY);
 
     // Connect gestures
-    var inputContext = inputmapper.GetInputContext();
+    /*var inputContext = inputmapper.GetInputContext();
     if (inputContext.GestureStarted && inputContext.GestureUpdated)
     {
 	inputContext.GestureStarted.connect(GestureStarted);
 	inputContext.GestureUpdated.connect(GestureUpdated);
-    }
+    }*/
 }
 
 function IsCameraActive()
@@ -199,4 +205,34 @@ function GestureUpdated(gestureEvent)
         HandleMouseLookY(delta.y());
         gestureEvent.Accept();
     }
+}
+
+function QMLMove(direction)
+{
+    if (direction == "up")
+        me.Exec(2, "Move", "forward");
+    else if (direction == "stopup")
+        me.Exec(2, "Stop", "forward");
+
+    else if (direction == "down")
+        me.Exec(2, "Move", "back");
+    else if (direction == "stopdown")
+        me.Exec(2, "Stop", "back");
+
+    else if (direction == "left")
+        me.Exec(2, "Move", "left");
+    else if (direction == "stopleft")
+        me.Exec(2, "Stop", "left");
+
+    else if (direction == "right")
+        me.Exec(2, "Move", "right");
+    else if (direction == "stopright")
+        me.Exec(2, "Stop", "right");
+
+    else if (direction == "stop")
+    {
+        me.Exec(2, "StopRotate", "all");
+        me.Exec(2, "Stop", "all");
+        
+    }     
 }

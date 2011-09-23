@@ -3,7 +3,7 @@
 // Server-side part of the app, which handles starting the apps on clients 
 
 
-if (server.IsRunning()) {
+if (server.IsRunning() || server.IsAboutToStart()) {
     server.UserAboutToConnect.connect(ServerHandleUserAboutToConnect);
     server.UserConnected.connect(ServerHandleUserConnected);
     server.UserDisconnected.connect(ServerHandleUserDisconnected);
@@ -11,7 +11,18 @@ if (server.IsRunning()) {
     var inputmapper = me.GetOrCreateComponentRaw("EC_InputMapper");
     inputmapper.SetTemporary(true);
     inputmapper.contextPriority = 102;
+    client.Disconnected.connect(HandleClientDisconnected);
 }
+
+function HandleClientDisconnected() {
+    // we have to reset these on client side too
+    var av_ents = scene.GetEntitiesWithComponentRaw("EC_Avatar");
+    for (var i = 0; i < av_ents.length; i++) {
+	var ent = av_ents[i];
+	dc_set(ent, "connectionID", "");
+    }
+}
+
 
 function ServerHandleUserAboutToConnect(connectionID, user) {
     // Uncomment to test access control

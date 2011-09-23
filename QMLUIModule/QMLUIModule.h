@@ -108,6 +108,8 @@ private:
 
     bool editing_mode;
 
+    bool qml_moving;
+
     bool pinching_mode;
     QPoint *pinch_centerpoint;
 
@@ -151,6 +153,8 @@ private slots:
     void SingleShot();
 
     void SetPinchingMode(int i);
+
+    void SetQMLMoving(int i);
 
 public slots:
 

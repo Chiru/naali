@@ -111,6 +111,9 @@ private:
     bool qml_moving;
 
     bool pinching_mode;
+
+    bool handle_mouse_events;
+
     QPoint *pinch_centerpoint;
 
     int move_start_x;
@@ -201,6 +204,8 @@ public slots:
     void CameraSwipe();
 
     void MoveReceived(QString direction);
+
+    void SetHandleMouseEvents(bool value);
 
 signals:
 

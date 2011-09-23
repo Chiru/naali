@@ -45,6 +45,7 @@ QMLUIModule::QMLUIModule() :
     camera_swipe_timer_ = new QTimer();
     scene_added = false;
     editing_mode = false;
+    handle_mouse_events = true;
     camera_movement_timer_->setInterval(20);
     mouse_press_timer_->setInterval(700);
     mouse_press_timer_->setSingleShot(true);
@@ -375,8 +376,17 @@ void QMLUIModule::StartDrag(int x, int y)
     last_abs_y = normalized_height * y;
 }
 
+void QMLUIModule::SetHandleMouseEvents(bool value)
+{
+    handle_mouse_events = value;
+}
+
 void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
 {
+    if (!handle_mouse_events)
+    {
+        return;
+    }
     if (!scene_added)
         return;
 

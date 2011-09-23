@@ -351,7 +351,7 @@ void QMLUIModule::LongPress(qreal x, qreal y)
     {
         result = renderer_->Raycast(x, y);
 
-        if(result->entity_ && result->entity_->HasComponent("EC_Placeable") && !result->entity_->HasComponent("EC_Terrain"))
+        if(result->entity_ && result->entity_->HasComponent("EC_Placeable") && !result->entity_->HasComponent("EC_Terrain") && !result->entity_->HasComponent("EC_MenuItem") && !result->entity_->HasComponent("EC_MenuContainer"))
         {
             entity_to_edit_ = result->entity_;
             editing_mode = true;

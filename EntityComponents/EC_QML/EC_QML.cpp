@@ -17,6 +17,8 @@
 
 #include "InputAPI.h"
 #include "MemoryLeakCheck.h"
+#include "SceneAPI.h"
+#include "SceneManager.h"
 
 #include <QApplication>
 #include <QMouseEvent>
@@ -263,6 +265,11 @@ void EC_QML::Render()
 {
     // Don't do anything if rendering is not enabled
     if (!ViewEnabled() || GetFramework()->IsHeadless())
+        return;
+
+    Scene::SceneManager *scenepointer = framework_->Scene()->GetDefaultScene().get();
+    QVariantList qmllist = scenepointer->GetEntityIdsWithComponent("EC_QML");
+    if (qmllist.count() == 0)
         return;
 
     if (qml_ready)

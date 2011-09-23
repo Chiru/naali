@@ -83,6 +83,7 @@ void QMLUIModule::PostInitialize()
     //Create a new input context that QMLUIModule will use to fetch input.
     input_ = framework_->Input()->RegisterInputContext("QMLUIInput", 100);
 
+
     // Listen on mouse input signals.
     connect(input_.get(), SIGNAL(MouseEventReceived(MouseEvent *)), this, SLOT(HandleMouseInputEvent(MouseEvent *)));
 }
@@ -116,6 +117,8 @@ void QMLUIModule::CreateQDeclarativeView()
     context_->setContextProperty("pinchy", 0);
     context_->setContextProperty("pinchxx", 0);
     context_->setContextProperty("pinchyy", 0);
+    context_->setContextProperty("screenwidth", renderer_->GetWindowWidth());
+    context_->setContextProperty("screenheight", renderer_->GetWindowHeight());
     QObject::connect(declarativeview_, SIGNAL(statusChanged(QDeclarativeView::Status)), this, SLOT(QMLStatus(QDeclarativeView::Status)));
 
     declarativeview_->move(0,0);
@@ -123,7 +126,8 @@ void QMLUIModule::CreateQDeclarativeView()
     declarativeview_->setWindowState(Qt::WindowFullScreen);
     declarativeview_->setResizeMode(QDeclarativeView::SizeRootObjectToView);
 
-    declarativeview_->setFocusPolicy(Qt::NoFocus);
+
+    //declarativeview_->setFocusPolicy(Qt::NoFocus);
 
 
     qmluiproxy_ = new UiProxyWidget(declarativeview_, Qt::Widget);
@@ -132,7 +136,7 @@ void QMLUIModule::CreateQDeclarativeView()
 
     declarativeview_->setSource(QUrl::fromLocalFile("../QMLUIModule/qml/QMLUI.qml"));
 
-    QMLStatus(declarativeview_->status());
+
 }
 
 void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
@@ -145,6 +149,8 @@ void QMLUIModule::QMLStatus(QDeclarativeView::Status qmlstatus)
 
         qmluiproxy_->setVisible(true);
         qmluiproxy_->setFocusPolicy(Qt::NoFocus);
+
+
 
         qmlui_ = dynamic_cast<QObject*>(declarativeview_->rootObject());
         QObject::connect(qmlui_, SIGNAL(exit()), this, SLOT(Exit()));
@@ -245,16 +251,22 @@ void QMLUIModule::ScriptAssetChanged(ScriptAssetPtr newScript)
 }
 
 void QMLUIModule::MoveReceived(QString direction)
-{
+{   
     emit Move(direction);
 }
 
 void QMLUIModule::SetPinchingMode(int i)
 {
     if (i == 1)
+    {
         pinching_mode = true;
+        input_->SetTakeMouseEventsOverQt(true);
+    }
     else
+    {
         pinching_mode = false;
+        input_->SetTakeMouseEventsOverQt(false);
+    }
 }
 
 void QMLUIModule::SetQMLMoving(int i)
@@ -367,8 +379,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
     if (camera_moving)
         return;
 
-    if (qml_moving)
-        return;
+
 
     if (GetActiveCamera() != 0 && GetActiveCamera()->GetName() != "FreeLookCamera")
     {
@@ -409,7 +420,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
             return;
         }
 
-        if (!camera_focused_on_entity && !camera_moving)
+        if (!camera_focused_on_entity && !camera_moving && !qml_moving)
         {
             mouse_press_timer_->start();
 
@@ -419,13 +430,6 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
                 camera_swipe_timer_->stop();
 
             speed_x = 0;
-        }
-        else
-        {
-            //if (camera_focused_on_entity)
-                //LogInfo("Cam focused on entity");
-            //if (camera_moving)
-                //LogInfo("Cam moving");
         }
     }
 
@@ -537,11 +541,12 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
             delete relpoint;
             return;
         }
+
         if (editing_mode)
         {
             DragEntity(mouse->X(), mouse->Y());
         }
-        if (!editing_mode && !camera_focused_on_entity && !camera_moving)
+        if (!editing_mode && !camera_focused_on_entity && !camera_moving && !qml_moving)
         {
             TurnCamera(mouse->X(), mouse->Y());
             speed_x = mouse->RelativeX();
@@ -559,7 +564,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
         }
         editing_mode = false;
         mouse_press_timer_->stop();
-        if ((speed_x > 5 || speed_x < -5) && !camera_focused_on_entity && !camera_moving)
+        if ((speed_x > 5 || speed_x < -5) && !camera_focused_on_entity && !camera_moving && !qml_moving)
         {
             if (speed_x < -20)
                     speed_x = -20;
@@ -575,7 +580,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
     {
         if (pinching_mode)
             return;
-        if (!editing_mode && !camera_focused_on_entity && !camera_moving) //We don't allow zooming if we are in editing mode or already zoomed into an entity or camera is already moving
+        if (!editing_mode && !camera_focused_on_entity && !camera_moving && !qml_moving) //We don't allow zooming if we are in editing mode or already zoomed into an entity or camera is already moving
         {
             RaycastResult* result;
             if (renderer_)
@@ -591,7 +596,7 @@ void QMLUIModule::HandleMouseInputEvent(MouseEvent *mouse)
                 }
             }
         }
-        else if (camera_focused_on_entity && !editing_mode && !camera_moving)
+        else if (camera_focused_on_entity && !editing_mode && !camera_moving && !qml_moving)
         {
                     emit ReturningCamera();
                     camera_moving = true;

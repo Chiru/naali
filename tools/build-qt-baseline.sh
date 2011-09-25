@@ -4,13 +4,13 @@ set -x
 
 # A script to make sure QT+QT3D+QTMobility builds and installs with correct parameters
 # -- for linux environment
-# -- At the moment uses QT 4.7.3, QT3D HEAD, QTMobility 1.2.0
+# -- At the moment uses QT 4.7.4, QT3D HEAD, QTMobility 1.2.0
 # -- and qtscriptgenerator
 
 #---- Set variables for the build
 nprocs=`grep -c "^processor" /proc/cpuinfo` 
 export QTBUILDDIR=$HOME/qt
-export QTVERSION=v4.7.3
+export QTVERSION=v4.7.4
 export QTTARGETDIR=/usr/local/qt-releases/$QTVERSION
 #export QTINSTALLDIR=/usr/local/qt-releases/qt
 mkdir -p $QTBUILDDIR

@@ -15,6 +15,7 @@ var walk = false;
 input.takeMouseEventsOverQt = false;
 input.TopLevelInputContext().MouseMove.connect(mouseMove);
 input.TopLevelInputContext().MouseLeftPressed.connect(mousePress);
+input.TopLevelInputContext().MouseLeftReleased.connect(mouseRelease);
 SceneAPI.DefaultWorldSceneChanged.connect(start);
 
 engine.ImportExtension("qt.core");
@@ -26,28 +27,20 @@ function mouseMove(event)
         return;
     else
     {
-        var avatarent = scene.GetEntityByNameRaw("Avatar" + client.GetConnectionID());
-        if (!avatarent)
-            return;
-        avatarent.Action("MouseLookX").Triggered.connect(HandleMouseLookX);
+        if (walk)
+	{
+	var avatarent = scene.GetEntityByNameRaw("Avatar" + client.GetConnectionID());
+	if (!avatarent)
+	    return;
+	avatarent.Action("MouseLookX").Triggered.connect(HandleMouseLookX);
 
-        if (event.relativeX != 0 && event.relativeX < 100 && event.relativeX > -100)
-            avatarent.Exec(2, "MouseLookX", String(mouse_rotate_sensitivity*2 * parseInt(event.relativeX)));
-        if (event.relativeY != 0 && event.relativeY < -10)
-        {
-            walk = true;
-            avatarent.Exec(2, "Move", "forward");
-        }
-        else if (event.relativeY != 0 && event.relativeY > 10)
-        {
-            avatarent.Exec(2, "Move", "back");
-            walk = false;
-        }
-        //else if (event.relativeY <10 && event.relativeY >-10)
-        //{
-        //    avatarent.Exec(2,"Stop", "forward");
-        //    avatarent.Exec(2,"Stop", "back");
-        //}
+	if (event.relativeX != 0 && event.relativeX < 100 && event.relativeX > -100)
+	    avatarent.Exec(2, "MouseLookX", String(mouse_rotate_sensitivity*2 * parseInt(event.relativeX)));
+	if (event.relativeY < -30)
+	    avatarent.Exec(2,"Move","forward");
+	else if (event.relativeY > 30)
+	    avatarent.Exec(2,"Move","back");
+	}
     }
 }
 
@@ -61,23 +54,20 @@ function HandleMouseLookX(param) {
 
 function mousePress(event)
 {
-    if (event.IsItemUnderMouse())
-        return;
-    var avatarent = scene.GetEntityByNameRaw("Avatar" + client.GetConnectionID());
-    if (!avatarent)
-        return;
-    if (!walk)
-    {
-        walk = true;
-        avatarent.Exec(2, "Move", "forward");
-    }
-    else
-    {
-        avatarent.Exec(2, "Stop", "forward");
-        walk = false;
-    }
-    print("Mouse pressed at x:" + event.x + " y:" + event.y + ".");
+	var avatarent = scene.GetEntityByNameRaw("Avatar" + client.GetConnectionID());
+	if (!avatarent)
+	    return;
+	avatarent.Exec(2, "Stop", "forward");
+        avatarent.Exec(2, "Stop", "back");
+	walk = true;
 }
+
+function mouseRelease(event)
+{
+	walk = false;
+//        me.Exec(2, "StopRotate", "all");
+}
+
 function start(newScene)
 {
     scene = newScene;

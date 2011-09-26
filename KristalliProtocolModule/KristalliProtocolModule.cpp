@@ -510,7 +510,7 @@ void KristalliProtocolModule::connectionArrayUpdate()
             const int cReconnectTimeout = 5 * 1000.f;
             if (reconnectTimer_list_[connection].Test())
             {
-                if (reconnectAttempts_list_[connection])
+                if (true)
                 {
                     PerformReconnection(iter, connection);
                     --reconnectAttempts_list_[connection];

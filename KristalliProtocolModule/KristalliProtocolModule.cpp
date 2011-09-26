@@ -215,7 +215,7 @@ void KristalliProtocolModule::Update(f64 frametime)
     if ((!serverConnection || serverConnection->GetConnectionState() == ConnectionClosed ||
          serverConnection->GetConnectionState() == ConnectionPending) && serverIp.length() != 0)
     {
-        const int cReconnectTimeout = 500000 * 1000.f;
+        const int cReconnectTimeout = 5 * 1000.f;
         if (reconnectTimer.Test())
         {
             if (true)

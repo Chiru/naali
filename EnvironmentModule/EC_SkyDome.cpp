@@ -84,7 +84,7 @@ namespace Environment
             Quaternion orientation = orientationAttr.Get();
             Ogre::Quaternion rotation(orientation.w, orientation.x, orientation.y, orientation.z); 
 
-            renderer->GetSceneManager()->setSkyDome(true,currentMaterial.toStdString().c_str(), curvatureAttr.Get(),tilingAttr.Get(),
+            renderer->GetSceneManager(GetParentSceneName())->setSkyDome(true,currentMaterial.toStdString().c_str(), curvatureAttr.Get(),tilingAttr.Get(),
                 distanceAttr.Get(), drawFirstAttr.Get(), rotation, xSegmentsAttr.Get(), ySegmentsAttr.Get(), -1);
         }
         catch (Ogre::Exception& e)
@@ -166,7 +166,7 @@ namespace Environment
         
         OgreRenderer::RendererPtr renderer = renderer_.lock();   
         
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->setSkyDome(false, "");
         
     }

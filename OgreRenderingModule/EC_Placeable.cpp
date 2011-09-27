@@ -54,7 +54,7 @@ EC_Placeable::EC_Placeable(IModule* module) :
     transform.SetMetadata(&transAttrData);
 
     RendererPtr renderer = renderer_.lock();
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     link_scene_node_ = scene_mgr->createSceneNode(renderer->GetUniqueObjectName("EC_Placeable_LinkSceneNode"));
     scene_node_ = scene_mgr->createSceneNode(renderer->GetUniqueObjectName("EC_Placeable_SceneNode"));
     link_scene_node_->addChild(scene_node_);
@@ -76,7 +76,7 @@ EC_Placeable::~EC_Placeable()
     if (renderer_.expired())
         return;
     RendererPtr renderer = renderer_.lock();
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
                     
     if (scene_node_ && link_scene_node_)
     {
@@ -253,7 +253,7 @@ void EC_Placeable::AttachNode()
     
     if (!parent_)
     {
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         parent_node = scene_mgr->getRootSceneNode();
     }
     else
@@ -282,7 +282,7 @@ void EC_Placeable::DetachNode()
     
     if (!parent_)
     {
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         parent_node = scene_mgr->getRootSceneNode();
     }
     else

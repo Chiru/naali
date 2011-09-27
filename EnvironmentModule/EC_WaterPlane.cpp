@@ -64,7 +64,7 @@ namespace Environment
         renderer_ = framework_->GetServiceManager()->GetService<OgreRenderer::Renderer>();
         if(!renderer_.expired())
         {
-            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             node_ = scene_mgr->createSceneNode(renderer_.lock()->GetUniqueObjectName("EC_WaterPlane_Root"));
         }
 
@@ -102,7 +102,7 @@ namespace Environment
 
         if (node_ != 0)
         {
-            Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+            Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
             scene_mgr->destroySceneNode(node_);
             node_ = 0;
         }
@@ -164,7 +164,7 @@ namespace Environment
             DetachEntity();
 
             // Attach entity directly to Ogre root.
-            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             if ( scene_mgr == 0)
                 return;
 
@@ -277,7 +277,7 @@ namespace Environment
         // Create water plane
         if (renderer_.lock() != 0) 
         {
-            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             assert(sceneMgr);
 
             if (node_ != 0)
@@ -310,7 +310,7 @@ namespace Environment
 
         DetachEntity();
 
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->destroyEntity(entity_);
         entity_ = 0;
         
@@ -476,7 +476,7 @@ namespace Environment
         else
         {
             // There is no placeable attacht entity to OgreSceneRoot 
-            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             node_->attachObject(entity_);
             scene_mgr->getRootSceneNode()->addChild(node_);
             node_->setVisible(true);
@@ -504,7 +504,7 @@ namespace Environment
             // Sanity check..
             if ( entity_->isAttached() )
             {
-                Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager();
+                Ogre::SceneManager* scene_mgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
                 node_->detachObject(entity_);
                 scene_mgr->getRootSceneNode()->removeChild(node_);
                 attachedToRoot_ = false;

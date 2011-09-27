@@ -55,7 +55,7 @@ EC_Mesh::EC_Mesh(IModule* module) :
     meshRef.SetMetadata(&meshRefMetadata);
 
     RendererPtr renderer = renderer_.lock();
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     adjustment_node_ = scene_mgr->createSceneNode(renderer->GetUniqueObjectName("EC_Mesh_adjustment_node"));
 
     connect(this, SIGNAL(ParentEntitySet()), SLOT(UpdateSignals()));
@@ -77,7 +77,7 @@ EC_Mesh::~EC_Mesh()
 
     if (adjustment_node_)
     {
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->destroySceneNode(adjustment_node_);
         adjustment_node_ = 0;
     }
@@ -243,7 +243,7 @@ bool EC_Mesh::SetMesh(QString meshResourceName, bool clone)
         }
     }
     
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     Ogre::Mesh* mesh = PrepareMesh(mesh_name, clone);
     if (!mesh)
@@ -326,7 +326,7 @@ bool EC_Mesh::SetMeshWithSkeleton(const std::string& mesh_name, const std::strin
     
     RemoveMesh();
 
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     Ogre::Mesh* mesh = PrepareMesh(mesh_name, clone);
     if (!mesh)
@@ -397,7 +397,7 @@ void EC_Mesh::RemoveMesh()
         if (bone_attached_mesh_)
             bone_attached_mesh_->DetachMeshFromBone();
         
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->destroyEntity(entity_);
         
         entity_ = 0;
@@ -432,7 +432,7 @@ bool EC_Mesh::SetAttachmentMesh(uint index, const std::string& mesh_name, const 
         return false;
     }
     
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     size_t oldsize = attachment_entities_.size();
     size_t newsize = index + 1;
@@ -538,7 +538,7 @@ void EC_Mesh::RemoveAttachmentMesh(uint index)
     if (index >= attachment_entities_.size())
         return;
     
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     if (attachment_entities_[index] && attachment_nodes_[index])
     {

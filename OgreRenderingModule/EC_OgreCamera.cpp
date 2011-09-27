@@ -36,7 +36,7 @@ EC_OgreCamera::~EC_OgreCamera()
         RendererPtr renderer = renderer_.lock();
         if (renderer->GetCurrentCamera() == camera_)
             renderer->SetCurrentCamera(0);
-        renderer->GetSceneManager()->destroyCamera(camera_);
+        renderer->GetSceneManager(GetParentSceneName())->destroyCamera(camera_);
         camera_ = 0;
     }
 }
@@ -180,7 +180,7 @@ void EC_OgreCamera::UpdateSignals()
         if (!camera_)
         {
             RendererPtr renderer = renderer_.lock();
-            Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+            Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
             Ogre::Viewport* viewport = renderer->GetViewport();
             
             camera_ = scene_mgr->createCamera(renderer->GetUniqueObjectName("EC_OgreCamera"));

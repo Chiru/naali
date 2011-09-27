@@ -240,6 +240,8 @@ public slots:
      */
     bool ViewEnabled() const;
 
+    QString GetParentSceneName() const;
+
     /// Returns an attribute of this component as a QVariant
     /** @param name of attribute
         @return values of the attribute

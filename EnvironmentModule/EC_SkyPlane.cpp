@@ -69,7 +69,7 @@ namespace Environment
             return;
     
         OgreRenderer::RendererPtr renderer = renderer_.lock();  
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
         try
         {
@@ -186,7 +186,7 @@ namespace Environment
         
         OgreRenderer::RendererPtr renderer = renderer_.lock();   
         
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->setSkyPlane(false, Ogre::Plane(), "");
         
     }

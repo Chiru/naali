@@ -77,7 +77,7 @@ namespace Environment
     {
         if (renderer_.lock() != 0) 
         {
-            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             assert(sceneMgr);
             UNREFERENCED_PARAM(sceneMgr);
 #ifdef CAELUM 
@@ -111,7 +111,7 @@ namespace Environment
         OgreRenderer::RendererPtr renderer = renderer_.lock();
         if (sunLight_ != 0)
         {
-            Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+            Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
             sceneManager->destroyLight(sunLight_);
             sunLight_ = 0;
         }
@@ -126,7 +126,7 @@ namespace Environment
     
         OgreRenderer::RendererPtr renderer = renderer_.lock();
     
-        Ogre::SceneManager* sceneManager = renderer->GetSceneManager();
+        Ogre::SceneManager* sceneManager = renderer->GetSceneManager(GetParentSceneName());
         sunLight_ = sceneManager->createLight(renderer->GetUniqueObjectName("EC_Environment_ogresunlight"));
         
         sunLight_->setType(Ogre::Light::LT_DIRECTIONAL);
@@ -152,7 +152,7 @@ namespace Environment
     {
         if (renderer_.lock() != 0) 
         {
-            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager();
+            Ogre::SceneManager *sceneMgr = renderer_.lock()->GetSceneManager(GetParentSceneName());
             assert(sceneMgr);
             
             sceneMgr->setAmbientLight(OgreRenderer::ToOgreColor(ambientColorAttr.Get()));
@@ -179,7 +179,7 @@ namespace Environment
 
         OgreRenderer::RendererPtr renderer = renderer_.lock();
         Ogre::Camera *camera = renderer->GetCurrentCamera();
-        Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+        Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
 
         float sunColorMultiplier = 1.5f;
         float MAX_SUNLIGHT_MULTIPLIER = 1.5f;

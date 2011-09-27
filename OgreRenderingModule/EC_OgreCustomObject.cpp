@@ -76,7 +76,7 @@ bool EC_OgreCustomObject::CommitChanges(Ogre::ManualObject* object)
         object->convertToMesh(mesh_name);
         object->clear();
     
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
 
         entity_ = scene_mgr->createEntity(renderer->GetUniqueObjectName("EC_OgreCustomObject_entity"), mesh_name);
         if (entity_)
@@ -191,7 +191,7 @@ void EC_OgreCustomObject::DestroyEntity()
         return;
     RendererPtr renderer = renderer_.lock();
             
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     if (entity_)
     {

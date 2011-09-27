@@ -110,7 +110,7 @@ void Call::handleCallConnected()
         handleCallTerminated();
     }
 
-    QXmppRtpChannel *channel = call_->audioChannel();
+    QXmppRtpAudioChannel *channel = call_->audioChannel();
 
     bool stereo; /// \todo change this to global property of the call
     if(channel->payloadType().channels() == 2)
@@ -133,7 +133,7 @@ void Call::handleInboundVoice()
         return;
 
     SoundBuffer buffer;
-    QXmppRtpChannel *channel = call_->audioChannel();
+    QXmppRtpAudioChannel *channel = call_->audioChannel();
     QByteArray data = channel->read(channel->bytesAvailable());
 
     // For now, just discard the data when on hold (wastes downlink, proper implementation pending)
@@ -161,7 +161,7 @@ void Call::handleOutboundVoice()
     if(state_ != Call::ActiveState)
         return;
 
-    QXmppRtpChannel *channel = call_->audioChannel();
+    QXmppRtpAudioChannel *channel = call_->audioChannel();
     QByteArray buffer;
 
     int buffer_size = (channel->payloadType().clockrate() * channel->payloadType().channels() * (16 / 8) * 160) / 1000;

@@ -63,7 +63,7 @@ if (MSVC)
 endif()
 
 # Enables Google 3D Warehouse viewer, which can be used to download models to scene
-SET(G3DWH 1)
+SET(G3DWH 0)
 if (MSVC)
     SET(G3DWH 1)
 endif()

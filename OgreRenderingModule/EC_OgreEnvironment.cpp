@@ -103,7 +103,7 @@ EC_OgreEnvironment::~EC_OgreEnvironment()
 
     if (sunlight_)
     {
-        Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+        Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
         sceneManager->destroyLight(sunlight_);
         sunlight_ = 0;
     }
@@ -140,7 +140,7 @@ void EC_OgreEnvironment::SetAmbientLightColor(const Color &color)
         return;
     RendererPtr renderer = renderer_.lock();
     
-    Ogre::SceneManager* sceneManager = renderer->GetSceneManager();
+    Ogre::SceneManager* sceneManager = renderer->GetSceneManager(GetParentSceneName());
     sceneManager->setAmbientLight(ToOgreColor(color));
     
     // Assure that there is "not" None-flag set. 
@@ -157,7 +157,7 @@ Color EC_OgreEnvironment::GetAmbientLightColor() const
         return Color(0.0f, 0.0f, 0.0f, 0.0f);
     RendererPtr renderer = renderer_.lock();
             
-    Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+    Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
     return ToCoreColor(sceneManager->getAmbientLight());
 }
 
@@ -295,7 +295,7 @@ void EC_OgreEnvironment::UpdateVisualEffects(f64 frametime)
     RendererPtr renderer = renderer_.lock();
     Ogre::Camera *camera = renderer->GetCurrentCamera();
 //    Ogre::Viewport *viewport = renderer->GetViewport();
-    Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+    Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
         
 #ifdef CAELUM
     // Set sunlight attenuation using diffuse multiplier.
@@ -463,7 +463,7 @@ void EC_OgreEnvironment::DisableFog()
         return;
     RendererPtr renderer = renderer_.lock();
     
-    Ogre::SceneManager *sceneManager = renderer->GetSceneManager();
+    Ogre::SceneManager *sceneManager = renderer->GetSceneManager(GetParentSceneName());
     sceneManager->setFog(Ogre::FOG_NONE);
 }
 
@@ -480,7 +480,7 @@ void EC_OgreEnvironment::CreateSunlight()
         return;
     RendererPtr renderer = renderer_.lock();
     
-    Ogre::SceneManager* sceneManager = renderer->GetSceneManager();
+    Ogre::SceneManager* sceneManager = renderer->GetSceneManager(GetParentSceneName());
     sunlight_ = sceneManager->createLight(renderer->GetUniqueObjectName("EC_OgreEnviroment_Sunlight"));
     sunlight_->setType(Ogre::Light::LT_DIRECTIONAL);
     ///\todo Read parameters from config file?
@@ -512,7 +512,7 @@ void EC_OgreEnvironment::InitCaelum()
     // Caelum clouds are hidden, otherwise shadows get messed up.
 
     caelumSystem_ = new CaelumSystem(renderer->GetRoot().get(),
-        renderer->GetSceneManager(), (CaelumSystem::CaelumComponent)caelumComponents_);
+        renderer->GetSceneManager(GetParentSceneName()), (CaelumSystem::CaelumComponent)caelumComponents_);
 
     // Flip the Caelum camera and ground node orientations 90 degrees.
     Ogre::Quaternion orientation(Ogre::Degree(90), Ogre::Vector3(1, 0, 0));
@@ -548,7 +548,7 @@ void EC_OgreEnvironment::InitHydrax()
     RendererPtr renderer = renderer_.lock();   
 
     // Create Hydrax system.
-    hydraxSystem_ = new Hydrax::Hydrax(renderer->GetSceneManager(), renderer->GetCurrentCamera(),
+    hydraxSystem_ = new Hydrax::Hydrax(renderer->GetSceneManager(GetParentSceneName()), renderer->GetCurrentCamera(),
         renderer->GetViewport());
 
     // Create noise module. 

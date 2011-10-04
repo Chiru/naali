@@ -54,7 +54,7 @@ void EC_OgreSky::CreateSky(bool show)
     RendererPtr renderer = renderer_.lock();  
     DisableSky();
     
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     
     /*RexTypes::Vector3 v = genericSkyParameters.angleAxis;
     Ogre::Quaternion orientation(Ogre::Degree(genericSkyParameters.angle), Ogre::Vector3(v.x, v.y, v.z));*/
@@ -183,7 +183,7 @@ void EC_OgreSky::DisableSky()
         return;
     RendererPtr renderer = renderer_.lock();
 
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     scene_mgr->setSkyBox(false, "");
     scene_mgr->setSkyDome(false, "");
     scene_mgr->setSkyPlane(false, Ogre::Plane(), "");

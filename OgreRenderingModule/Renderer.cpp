@@ -457,7 +457,7 @@ namespace OgreRenderer
         }
         catch (Ogre::ItemIdentityException &e)
         {
-            OgreRenderingModule::LogInfo("No such sceneManager called: " + name);
+            //OgreRenderingModule::LogInfo("No such sceneManager called: " + name);
             return scenemanager_;
         }
 

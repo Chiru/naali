@@ -253,15 +253,16 @@ fi
 
 cd $build
 what=qxmpp
-ver=0.3.0
+rev=r1671
 if test -f $tags/$what-done; then
     echo $what is done
 else
     rm -rf $what
-    svn checkout http://qxmpp.googlecode.com/svn/tags/qxmpp-$ver $what
+    svn checkout http://qxmpp.googlecode.com/svn/trunk@$rev $what
     cd $what
     sed 's/# DEFINES += QXMPP_USE_SPEEX/DEFINES += QXMPP_USE_SPEEX/g' src/src.pro > src/temp
     sed 's/# LIBS += -lspeex/LIBS += -lspeex/g' src/temp > src/src.pro
+    sed 's/LIBS += $$QXMPP_LIBS/LIBS += $$QXMPP_LIBS -lspeex/g' tests/tests.pro > tests/temp && mv tests/temp tests/tests.pro
     rm src/temp
     qmake
     make -j $nprocs

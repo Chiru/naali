@@ -12,15 +12,15 @@
 
 #include <QObject>
 #include <QString>
-#include <QMap>
+#include <QList>
 
 class QXmppMucManager;
+class QXmppMucRoom;
 class QXmppMessage;
 class QXmppPresence;
 
 namespace XMPP
 {
-class MucRoom;
 class Client;
 
 //! Handles multiuser chat messaging as defined in XEP-0045
@@ -40,18 +40,18 @@ public slots:
     //! \param password Optional password for the room
     //! \return bool true for succesful join request
     //! \note Succesful join request does not mean the actual join was succesful
-    bool joinRoom(QString room, QString nickname, QString password = QString());
+    bool joinRoom(QString roomJid, QString nickname, QString password = QString());
 
     //! Leave muc chatroom
     //! \param room Full JabberID for the room (room@conference.host.com)
     //! \param bool true for room found and left
-    bool leaveRoom(QString room);
+    bool leaveRoom(QString roomJid);
 
     //! Send message to muc chatroom
     //! \param room Full JabberID for the room (room@conference.host.com)
     //! \param message Message to sent
     //! \return bool true for succesfully sent message
-    bool sendMessage(QString room, QString message);
+    bool sendMessage(QString roomJid, QString message);
 
     //! Get list of currently active rooms
     //! \return QStringList containing full JabberIDs of the rooms
@@ -60,28 +60,32 @@ public slots:
     //! Get participants for given room
     //! \param room Full JabberID for the room
     //! \return QStringList containing participant nicknames for the room
-    QStringList getParticipants(QString room) const;
+    QStringList getParticipants(QString roomJid);
 
     //! Invite user to chatroom
     //! \param room Room the user is invited to
     //! \param peerJid JabberID of the remote user
     //! \param reason Optional reason message
     //! \return bool true for succesful invite
-    bool invite(QString room, QString peerJid, QString reason = QString());
+    bool invite(QString roomJid, QString peerJid, QString reason = QString());
 
 private slots:
     void handleMessageReceived(const QXmppMessage &message);
     void handleInvitationReceived(const QString &room, const QString &inviter, const QString &reason);
-    void handleParticipantsChanged(const QString &roomJid, const QString &nickName);
-    void handlePresenceReceived(const QXmppPresence &presence);
-    void handleRoomAdded(const QString &room, const QString nickname);
+    void handleParticipantJoined(const QString &jid);
+    void handleParticipantLeft(const QString &jid);
+    void handleRoomJoined();
 
 private:
     static QString extension_name_;
     QXmppMucManager* qxmpp_muc_manager_;
-    QMap<QString, MucRoom*> rooms_;
+    //QMap<QString, MucRoom*> rooms_;
+    QList<QXmppMucRoom*> rooms_;
     Foundation::Framework *framework_;
     Client *client_;
+
+protected:
+    QXmppMucRoom *getRoom(const QString &roomJid);
 
 signals:
     void messageReceived(QString room, QString sender, QString message);
@@ -90,31 +94,6 @@ signals:
     void roomRemoved(QString room, QString reason);
     void userJoinedRoom(QString room, QString user);
     void userLeftRoom(QString room, QString user);
-};
-
-class MucRoom
-{
-public:
-    ~MucRoom();
-
-    QString jid() const { return jid_; }
-    QString userNickname() const { return user_nickname_; }
-    QStringList participants() const { return participants_; }
-
-    void setNickname(QString nickname) { user_nickname_ = nickname; }
-
-protected:
-    void participantLeft(QString participant);
-    void participantJoined(QString participant);
-
-private:
-    MucRoom(QString roomJid, QString userNickname);
-
-    QString jid_;
-    QString user_nickname_;
-    QStringList participants_;
-
-    friend class MucExtension;
 };
 
 } // end of namespace: XMPP

@@ -22,7 +22,7 @@ EC_SelectionBox::EC_SelectionBox(IModule* module) :
     selectionBox_(0)
 {
     RendererPtr renderer = renderer_.lock();
-    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+    Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
     selectionBox_ = scene_mgr->createManualObject(renderer->GetUniqueObjectName("EC_Selected"));
     selectionBox_->setRenderQueueGroup(Ogre::RENDER_QUEUE_OVERLAY);
     selectionBox_->setUseIdentityProjection(true);
@@ -39,7 +39,7 @@ EC_SelectionBox::~EC_SelectionBox()
     
     if (selectionBox_)
     {
-        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager();
+        Ogre::SceneManager* scene_mgr = renderer->GetSceneManager(GetParentSceneName());
         scene_mgr->destroyManualObject(selectionBox_);
         selectionBox_ = 0;
     }

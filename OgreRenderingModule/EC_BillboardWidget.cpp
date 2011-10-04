@@ -91,7 +91,7 @@ void EC_BillboardWidget::InitializeOgreBillboard()
     if (renderer_.expired())
         return;
 
-    Ogre::SceneManager *ogre_scene = renderer_.lock()->GetSceneManager();
+    Ogre::SceneManager *ogre_scene = renderer_.lock()->GetSceneManager(GetParentSceneName());
     assert(ogre_scene);
     if (!ogre_scene)
         return;
@@ -162,7 +162,7 @@ void EC_BillboardWidget::UninitializeOgreBillboard()
 
     if (billboard_set_)
     {
-        Ogre::SceneManager* scene = renderer->GetSceneManager();
+        Ogre::SceneManager* scene = renderer->GetSceneManager(GetParentSceneName());
         if (scene)
         {
             scene->destroyBillboardSet(billboard_set_);

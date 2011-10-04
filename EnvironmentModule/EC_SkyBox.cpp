@@ -107,7 +107,7 @@ void EC_SkyBox::CreateSky()
         //RexTypes::Vector3 v = angleAxisAttr.Get();
         //Ogre::Quaternion rotation(Ogre::Degree(90.0), Ogre::Vector3(1, 0, 0));
         Quaternion o = orientation.Get();
-        renderer_.lock()->GetSceneManager()->setSkyBox(true, currentMaterial.toStdString().c_str(), distance.Get(),
+        renderer_.lock()->GetSceneManager(GetParentSceneName())->setSkyBox(true, currentMaterial.toStdString().c_str(), distance.Get(),
             drawFirst.Get(), Ogre::Quaternion(o.w, o.x, o.y, o.z));
     }
     catch(Ogre::Exception& e)
@@ -175,7 +175,7 @@ void EC_SkyBox::DisableSky()
         return;
 
     if (!renderer_.expired())
-        renderer_.lock()->GetSceneManager()->setSkyBox(false, "");
+        renderer_.lock()->GetSceneManager(GetParentSceneName())->setSkyBox(false, "");
 }
 
 }

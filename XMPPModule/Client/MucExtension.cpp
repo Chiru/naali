@@ -27,9 +27,10 @@ MucExtension::MucExtension() :
 
 MucExtension::~MucExtension()
 {
-    QString room;
-    foreach(room, rooms_.keys())
-        leaveRoom(room);
+    foreach(QXmppMucRoom *room, rooms_)
+    {
+        room->leave("Logging off!");
+    }
 }
 
 void MucExtension::initialize(Client *client)
@@ -39,103 +40,32 @@ void MucExtension::initialize(Client *client)
 
     client_->getQxmppClient()->addExtension(qxmpp_muc_manager_);
 
-    bool check;
-
-    check = connect(client_->getQxmppClient(), SIGNAL(messageReceived(QXmppMessage)), this, SLOT(handleMessageReceived(QXmppMessage)));
+    bool check = connect(qxmpp_muc_manager_, SIGNAL(invitationReceived(QString,QString,QString)), this, SLOT(handleInvitationReceived(QString,QString,QString)));
     Q_ASSERT(check);
-
-    check = connect(client->getQxmppClient(), SIGNAL(presenceReceived(QXmppPresence)), this, SLOT(handlePresenceReceived(QXmppPresence)));
-    Q_ASSERT(check);
-
-    check = connect(qxmpp_muc_manager_, SIGNAL(invitationReceived(QString,QString,QString)), this, SLOT(handleInvitationReceived(QString,QString,QString)));
-    Q_ASSERT(check);
-
-    check = connect(qxmpp_muc_manager_, SIGNAL(roomParticipantChanged(QString,QString)), this, SLOT(handleParticipantsChanged(QString,QString)));
-    Q_ASSERT(check);
-}
-
-void MucExtension::handleRoomAdded(const QString &room, const QString nickname)
-{
-    MucRoom *muc_room = new MucRoom(room, nickname);
-    rooms_.insert(room, muc_room);
-
-    XMPPModule::LogDebug(extension_name_.toStdString()
-                         + ": Joined Muc room (room = \"" + room.toStdString()
-                         + "\", nickname = \"" + nickname.toStdString() + "\")");
-    emit roomAdded(room, nickname);
 }
 
 void MucExtension::handleMessageReceived(const QXmppMessage &message)
 {
-    if(message.type() != QXmppMessage::GroupChat)
+    QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
+    if(!room)
         return;
 
-    QString room_jid = message.from().split("/").at(0);
-    QString sender_jid = message.from().split("/").at(1);
-    QString msg = message.body();
+    XMPPModule::LogInfo("Received message. From: " + message.from().toStdString() + " Body: " + message.body().toStdString());
 
-    if(!rooms_.keys().contains(room_jid))
-    {
-        XMPPModule::LogDebug(extension_name_.toStdString()
-                             + ": Message from unkwnown Muc room (room = \"" + room_jid.toStdString() + "\")");
-        return;
-    }
-
-    XMPPModule::LogDebug(extension_name_.toStdString()
-                         + ": Message (room = \"" + room_jid.toStdString()
-                         + "\", sender = \"" + sender_jid.toStdString()
-                         + "\", message =\"" + msg.toStdString() + "\")");
-
-    emit messageReceived(room_jid, sender_jid, msg);
-
-    return;
 }
 
 void MucExtension::handleInvitationReceived(const QString &room, const QString &inviter, const QString &reason)
 {
-    /// \todo check if we already are in the room
-
-    XMPPModule::LogDebug(extension_name_.toStdString()
-                         + ": Invitation (room = \"" + room.toStdString()
-                         + "\", inviter = \"" + inviter.toStdString()
-                         + "\", reason =\"" + reason.toStdString() + "\")");
-
+    XMPPModule::LogDebug(extension_name_.toStdString() + ": Received invitation (room ="
+                         + room.toStdString() + " inviter ="
+                         + inviter.toStdString() + " reason = "
+                         + reason.toStdString() +")");
     emit invitationReceived(room, inviter, reason);
-
-    return;
 }
 
-void MucExtension::handleParticipantsChanged(const QString &roomJid, const QString &nickName)
-{
-    if(!rooms_.keys().contains(roomJid))
-    {
-        handleRoomAdded(roomJid, "");
-    }
 
-    if(!rooms_[roomJid]->participants().contains(nickName))
-    {
-        rooms_[roomJid]->participantJoined(nickName);
-        XMPPModule::LogDebug(extension_name_.toStdString()
-                             + ": Participant joined (room = \"" + roomJid.toStdString()
-                             + "\", nickname = \"" + nickName.toStdString() + "\")");
-        emit userJoinedRoom(roomJid, nickName);
-    }
-    else
-    {
-        QMap<QString, QXmppPresence> new_participants = qxmpp_muc_manager_->roomParticipants(roomJid);
-        if(!new_participants.keys().contains(nickName))
-        {
-            rooms_[roomJid]->participantLeft(nickName);
-            XMPPModule::LogDebug(extension_name_.toStdString()
-                                 + ": Participant left (room = \"" + roomJid.toStdString()
-                                 + "\", nickname = \"" + nickName.toStdString() + "\")");
-            emit userLeftRoom(roomJid, nickName);
-        }
-    }
-    return;
-}
 
-void MucExtension::handlePresenceReceived(const QXmppPresence &presence)
+/*void MucExtension::handlePresenceReceived(const QXmppPresence &presence)
 {
     QString from_domain = jidToDomain(presence.from());
     if(!from_domain.contains("conference"))
@@ -148,95 +78,105 @@ void MucExtension::handlePresenceReceived(const QXmppPresence &presence)
         rooms_[room_jid]->setNickname(nickname);
     else
         handleRoomAdded(room_jid, nickname);
+}*/
+
+void MucExtension::handleParticipantJoined(const QString &jid)
+{
+    QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
+    if(!room)
+        return;
+
+    emit userJoinedRoom(room->jid(), jid);
 }
 
-bool MucExtension::joinRoom(QString room, QString nickname, QString password)
+void MucExtension::handleParticipantLeft(const QString &jid)
 {
-    if(!client_)
-        return false;
+    QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
+    if(!room)
+        return;
 
-    if(rooms_.keys().contains(room))
-        return false;
-
-    return qxmpp_muc_manager_->joinRoom(room, nickname, password);
+    emit userLeftRoom(room->jid(), jid);
 }
 
-bool MucExtension::leaveRoom(QString room)
+void MucExtension::handleRoomJoined()
 {
-    if(!client_)
-        return false;
+    QXmppMucRoom *room = qobject_cast<QXmppMucRoom*>(sender());
+    if(!room)
+        return;
 
-    if(!rooms_.keys().contains(room))
-        return false;
-
-    if(qxmpp_muc_manager_->leaveRoom(room))
-    {
-        delete(rooms_[room]);
-        rooms_.remove(room);
-        XMPPModule::LogDebug(extension_name_.toStdString()
-                             + ": Left Muc room (room = \"" + room.toStdString() + "\")");
-        emit roomRemoved(room, "Remove requested by user");
-        return true;
-    }
-    return false;
+    rooms_.append(room);
+    emit roomAdded(room->jid(), room->nickName());
 }
 
-bool MucExtension::sendMessage(QString room, QString message)
+bool MucExtension::joinRoom(QString roomJid, QString nickname, QString password)
 {
-    if(!client_)
-        return false;
+    QXmppMucRoom *room = qxmpp_muc_manager_->addRoom(roomJid);
+    room->setNickName(nickname);
+    room->setPassword(password);
 
-    if(!rooms_.keys().contains(room))
-        return false;
+    bool check = connect(room, SIGNAL(joined()), this, SLOT(handleRoomJoined()));
+    Q_ASSERT(check);
 
-    return qxmpp_muc_manager_->sendMessage(room, message);
+    room->join();
 }
 
-bool MucExtension::invite(QString room, QString peerJid, QString reason)
+bool MucExtension::leaveRoom(QString roomJid)
 {
-    if(!client_)
+    QXmppMucRoom *room = getRoom(roomJid);
+    if(!room)
         return false;
 
-    if(!rooms_.keys().contains(room))
-        return false;
-
-    return qxmpp_muc_manager_->sendInvitation(room, peerJid, reason);
+    return room->leave("Bye!");
 }
 
-QStringList MucExtension::getParticipants(QString room) const
+bool MucExtension::sendMessage(QString roomJid, QString message)
 {
-    if(rooms_.keys().contains(room))
-        return rooms_[room]->participants();
-    return QStringList();
+    QXmppMucRoom *room = getRoom(roomJid);
+    if(!room)
+        return false;
+
+    return room->sendMessage(message);
+}
+
+bool MucExtension::invite(QString roomJid, QString peerJid, QString reason)
+{
+    QXmppMucRoom *room = getRoom(roomJid);
+    if(!room)
+        return false;
+
+    return room->sendInvitation(peerJid, reason);
+}
+
+QStringList MucExtension::getParticipants(QString roomJid)
+{
+    QXmppMucRoom *room = getRoom(roomJid);
+    if(!room)
+        return QStringList();
+
+    return room->participants();
 }
 
 QStringList MucExtension::getRooms() const
 {
-    return rooms_.keys();
-}
-
-MucRoom::MucRoom(QString roomJid, QString userNickname) :
-    jid_(roomJid),
-    user_nickname_(userNickname)
-{
-}
-
-void MucRoom::participantJoined(QString participant)
-{
-    if(!participants_.contains(participant))
-        participants_.append(participant);
-}
-
-void MucRoom::participantLeft(QString participant)
-{
-    for(int i = 0; i < participants_.size(); i++)
+    QStringList rooms;
+    foreach(QXmppMucRoom *room, rooms_)
     {
-        if(participants_[i] == participant)
-        {
-            participants_.removeAt(i);
-            return;
-        }
+        rooms.append(room->jid());
     }
+    return rooms;
 }
+
+QXmppMucRoom* MucExtension::getRoom(const QString &roomJid)
+{
+    foreach(QXmppMucRoom *room, rooms_)
+    {
+        if(room->jid() == roomJid)
+            return room;
+    }
+    XMPPModule::LogError("No such room: " + roomJid.toStdString());
+    return 0;
+}
+
+
 
 } // end of namespace: XMPP

@@ -294,6 +294,7 @@ void Environment::Update(f64 frametime)
     Ogre::Viewport *viewport = renderer.get()->GetViewport();
     if (!viewport)
         return;
+
     Ogre::SceneManager *sceneManager = renderer.get()->GetSceneManager();
     float cameraFarClip = renderer.get()->GetViewDistance();
     

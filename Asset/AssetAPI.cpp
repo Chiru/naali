@@ -605,7 +605,13 @@ AssetTransferPtr AssetAPI::RequestAsset(QString assetRef, QString assetType)
     }
     else // Can't find the asset in cache. Do a real request from the asset provider.
     {
-        transfer = provider->RequestAsset(assetRef, assetType);
+        // Chiru temporary proxy support code
+        QString delta = "";
+        if (assetRef.startsWith("http://")) {
+            delta = "?Profile=1&LOD=1";
+        }
+        // Chiru temporary proxy support code
+        transfer = provider->RequestAsset(assetRef+delta, assetType);
     }
 
     if (!transfer)
@@ -856,6 +862,10 @@ void AssetAPI::AssetTransferCompleted(IAssetTransfer *transfer_)
         return;
     }
 
+    // Chiru temporary proxy support code
+    // We shall remove the http params after loading, since they mess up with internal dictionary
+     transfer->source.ref = transfer->source.ref.section("?", 0, 0);
+    // Chiru temporary proxy support code
     // We should be tracking this transfer in an internal data structure.
     AssetTransferMap::iterator iter = currentTransfers.find(transfer->source.ref);
     if (iter == currentTransfers.end())

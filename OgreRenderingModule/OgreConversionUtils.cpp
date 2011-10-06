@@ -53,6 +53,11 @@ std::string SanitateAssetIdForOgre(const std::string& input)
     std::string ret = input;
     ReplaceCharInplace(ret, ':', '_');
     ReplaceCharInplace(ret, '/', '_');
+    // Chiru temporary proxy support code
+    ReplaceCharInplace(ret, '=', '_');
+    ReplaceCharInplace(ret, '?', '_');
+    ReplaceCharInplace(ret, '&', '_');
+    // Chiru temporary proxy support code
     return ret;
 }
 

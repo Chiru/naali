@@ -30,6 +30,10 @@ QString SanitateAssetRefForCache(QString assetRef)
     assetRef.replace("<", "_");
     assetRef.replace(">", "_");
     assetRef.replace("|", "_");
+    // Chiru temporary proxy support code
+    assetRef.replace("&", "_");
+    assetRef.replace("=", "_");
+    // Chiru temporary proxy support code
     return assetRef;
 }
 

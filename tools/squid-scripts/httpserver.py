@@ -82,18 +82,27 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
             - Once the file manipulation has been completed, it will be saved into temporary
               directory, and sent to requester via pushData() method.
         """
+        import subprocess
         try: image = Image.open(localfile)
         except IOError:
             self.send_response(404)
             self.logMessage("PIL image loading failed")
             return
-        if self.p_LOD == 1: image.thumbnail((8, 8), Image.ANTIALIAS)
-        if self.p_LOD == 2: image.thumbnail((16,16), Image.ANTIALIAS)
-        if self.p_LOD == 3: image.thumbnail((32, 32), Image.ANTIALIAS)
-        if self.p_LOD == 4: image.thumbnail((64, 64), Image.ANTIALIAS)
-        if self.p_LOD == 5: pass # LOD=5 shall mean unaltered original asset
-        image.save(localfile, imagetype)
-        self.pushData(localfile, "image/"+imagetype)
+        if self.p_LOD == 1:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "6", "-q", "35"])
+        if self.p_LOD == 2:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "13", "-q", "35"])
+        if self.p_LOD == 3:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "25", "-q", "35"])
+        if self.p_LOD == 4:
+            subprocess.call(["python", "img_transform.py", "-i", str(localfile), "-o", str(localfile)+"."+str(imagetype), "-p", "50", "-q", "35"])
+        if self.p_LOD == 5:
+            # LOD=5 shall mean unaltered original asset
+            self.pushData(localfile, "image/"+imagetype)
+            return
+        #image.save(localfile, imagetype)
+        #self.pushData(localfile, "image/"+imagetype)
+        self.pushData(localfile+"."+imagetype, "image/"+imagetype)
         # Hax: always return jpeg
         #image.save(localfile+".jpg", "jpeg")
         #self.pushData(localfile+".jpg", "image/jpeg")
@@ -128,7 +137,7 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         self.baseurl = ""
         self.asset = ""
         self.params = ""
-        self.p_LOD = 1
+        self.p_LOD = 5
         self.p_Profile = 1
 
         self.logMessage("---")

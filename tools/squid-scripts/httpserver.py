@@ -4,6 +4,8 @@ import urllib
 
 from PIL import Image
 import getopt
+import simplify
+
 
 class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
 
@@ -111,8 +113,24 @@ class Handler(BaseHTTPServer.BaseHTTPRequestHandler):
         """ handleMeshAndReponse(localfile, meshtype):
             - TBD
         """
-        self.pushData(localfile, "model/mesh")
-        return
+        #self.pushData(localfile, "model/mesh")
+	if self.p_LOD == 1:
+            parameter=1
+ 	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+        if self.p_LOD == 2:
+            parameter=2
+	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+        if self.p_LOD == 3:
+            parameter=3
+	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+        if self.p_LOD == 4:
+            parameter=4
+	    self.pushData(simplify.process(localfile, parameter), "model/mesh")
+        if self.p_LOD == 5:
+	    parameter=5
+            # LOD=5 shall mean unaltered original asset
+            self.pushData(localfile, "model/mesh")
+	return
 
     def do_GET(self):
         """ do_GET(): custom handler for HTTP GET method

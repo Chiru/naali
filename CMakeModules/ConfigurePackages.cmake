@@ -592,12 +592,15 @@ macro(link_package_quazip)
 endmacro()
 
 macro(configure_package_opencv)
-    # \todo Dont do this on linux systems
-    SET(OPENCV_ROOT ${ENV_NAALI_DEP_PATH}/OpenCV-2.2.0)
+    if (WIN32)
+        SET(OPENCV_ROOT ${ENV_NAALI_DEP_PATH}/OpenCV-2.2.0)
+    else ()
+        SET(OPENCV_ROOT "/usr")
+    endif()
 
     # Include directories to add to the user project:
     SET(OpenCV_INCLUDE_DIR ${OPENCV_ROOT}/include)
-    SET(OpenCV_INCLUDE_DIRS ${OPENCV_ROOT}/include ${OPENCV_ROOT}/include/opencv)
+    SET(OpenCV_INCLUDE_DIRS ${OPENCV_ROOT}/include ${OPENCV_ROOT}/include/opencv ${OPENCV_ROOT}/include/opencv2)
     INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIRS})
 
     # Link directories to add to the user project:
@@ -609,14 +612,19 @@ macro(configure_package_opencv)
     #set(OPENCV_LIB_COMPONENTS opencv_core opencv_imgproc opencv_features2d opencv_gpu opencv_calib3d opencv_objdetect opencv_video opencv_highgui opencv_ml opencv_legacy opencv_contrib opencv_flann)
     set(OPENCV_LIB_COMPONENTS opencv_core opencv_highgui)
     SET(OpenCV_LIBS "")
+    if (WIN32)
+        SET(CVLIB_SUFFIX "220")
+    else ()
+        SET(CVLIB_SUFFIX "")
+    endif()
     foreach(__CVLIB ${OPENCV_LIB_COMPONENTS})
         # CMake>=2.6 supports the notation "debug XXd optimized XX"
         if (CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
             # Modern CMake:
-            SET(OpenCV_LIBS ${OpenCV_LIBS} debug ${__CVLIB}220d optimized ${__CVLIB}220)
+            SET(OpenCV_LIBS ${OpenCV_LIBS} debug ${__CVLIB}220d optimized ${__CVLIB}${CVLIB_SUFFIX})
         else(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
             # Old CMake:
-            SET(OpenCV_LIBS ${OpenCV_LIBS} ${__CVLIB}220)
+            SET(OpenCV_LIBS ${OpenCV_LIBS} ${__CVLIB}${CVLIB_SUFFIX})
         endif(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
     endforeach(__CVLIB)
 
@@ -628,8 +636,7 @@ macro(configure_package_opencv)
         if (WIN32)
             INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIR}/${MODNAME})
         else()
-            # \todo Impl linux module folder includes
-            # something like INCLUDE_DIRECTORIES("/usr/include/opencv/${MODNAME}/include") ??
+            INCLUDE_DIRECTORIES(${OpenCV_INCLUDE_DIR}/opencv2/${MODNAME})
         endif()
     endforeach(__CVLIB)
 
@@ -638,21 +645,23 @@ macro(configure_package_opencv)
         LINK_DIRECTORIES(${OPENCV_ROOT}/3rdparty/lib)
     else()
         # \todo Verify this works in linux
-        LINK_DIRECTORIES(${OPENCV_ROOT}/share/opencv/3rdparty/lib)
+        #LINK_DIRECTORIES(${OPENCV_ROOT}/share/opencv/3rdparty/lib)
     endif()    
 
-    set(OpenCV_LIBS comctl32;gdi32;ole32;vfw32 ${OpenCV_LIBS})
-    set(OPENCV_EXTRA_COMPONENTS libjpeg libpng libtiff libjasper zlib opencv_lapack)
+    if (WIN32)
+        set(OpenCV_LIBS comctl32;gdi32;ole32;vfw32 ${OpenCV_LIBS})
+        set(OPENCV_EXTRA_COMPONENTS libjpeg libpng libtiff libjasper zlib opencv_lapack)
 
-    if (CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
-        foreach(__EXTRA_LIB ${OPENCV_EXTRA_COMPONENTS})
-            set(OpenCV_LIBS ${OpenCV_LIBS}
-                debug ${__EXTRA_LIB}d
-                optimized ${__EXTRA_LIB})
-        endforeach(__EXTRA_LIB)
-    else(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
-        set(OpenCV_LIBS ${OpenCV_LIBS} ${OPENCV_EXTRA_COMPONENTS})
-    endif(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
+        if (CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
+            foreach(__EXTRA_LIB ${OPENCV_EXTRA_COMPONENTS})
+                set(OpenCV_LIBS ${OpenCV_LIBS}
+                    debug ${__EXTRA_LIB}d
+                    optimized ${__EXTRA_LIB})
+            endforeach(__EXTRA_LIB)
+        else(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
+            set(OpenCV_LIBS ${OpenCV_LIBS} ${OPENCV_EXTRA_COMPONENTS})
+        endif(CMAKE_MAJOR_VERSION GREATER 2  OR  CMAKE_MINOR_VERSION GREATER 4)
+    endif ()
 endmacro()
 
 macro(link_package_opencv)

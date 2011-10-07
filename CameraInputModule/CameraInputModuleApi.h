@@ -10,7 +10,7 @@
 #define CAMERAINPUT_MODULE_API __declspec(dllimport) 
 #endif
 #else
-#define AR_MODULE_API
+#define CAMERAINPUT_MODULE_API
 #endif
 
 #endif

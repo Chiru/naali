@@ -4,7 +4,7 @@
 
 #include "AssetFwd.h"
 #include "CoreTypes.h"
-
+#include <iostream>
 #include <QString>
 
 /// A common interface for all classes that implement downloading and uploading assets via different protocols.
@@ -39,7 +39,7 @@ public:
     /** If the asset provider supports this feature, it will delete the asset from the source. */
     virtual void DeleteAssetFromStorage(QString assetRef)
     {
-        printf("IAssetStorage::DeleteAssetFromStorage: not implemented!\n");
+      std::cerr << "IAssetStorage::DeleteAssetFromStorage: not implemented!" << std::endl;
     }
 
     /// Removes the storage with the given name from this provider, or returns false if it doesn't exist.

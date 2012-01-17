@@ -615,7 +615,7 @@ void EC_RigidBody::OnAttributeUpdated(IAttribute* attribute)
             return;
 
         if (gravityEnabled.Get())
-            body_->setGravity(world_->GetGravity());
+            body_->setGravity(world_->Gravity());
         else
             body_->setGravity(btVector3(0,0,0));
     }

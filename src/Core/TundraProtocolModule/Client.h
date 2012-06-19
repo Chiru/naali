@@ -12,11 +12,15 @@
 #include <QObject>
 #include <QUrl>
 #include <QMap>
+#include "Math/Quat.h"
+#include "Math/float3.h"
+#include <QTimer>
 
 struct MsgLogin;
 struct MsgLoginReply;
 struct MsgClientJoined;
 struct MsgClientLeft;
+struct MsgCameraOrientation;
 
 namespace KristalliProtocol
 {
@@ -133,6 +137,9 @@ public slots:
     /// Get connected scene names
     QStringList getSceneNames();
 
+    /// Get the current camera orientation
+    void GetCameraOrientation();
+
     /// Set active scenename for multiconnection
     void setActiveScenename(const QString &name) { activescenename_ = name; }
     /// Get active scenename for multiconnection
@@ -174,6 +181,9 @@ private slots:
     void DelayedLogout();
 
 private:
+    /// Send camera orientation to the server
+    void SendCameraOrientation(Quat orientation, float3 location);
+
     /// Saves connection properties to Containers
     void saveProperties(const QString name = "NEW");
 
@@ -212,6 +222,10 @@ private:
     QString discScene;
     // Current active scenename
     QString activescenename_;
+    // Current camera orientation
+    Quat currentcameraorientation_;
+    // Current camera location
+    float3 currentcameralocation_;
 
 };
 

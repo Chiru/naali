@@ -1669,7 +1669,6 @@ void SyncManager::HandleCameraOrientation(kNet::MessageConnection* source, const
     user->syncState->clientLocation.y = ds.Read<float>();
     user->syncState->clientLocation.z = ds.Read<float>();
 
-    user->syncState->orientationIsUpdated = true;
     user->syncState->orientationInitialized = true;
 
 #if 0

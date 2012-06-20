@@ -85,7 +85,8 @@ TundraLogicModule::TundraLogicModule() :
     autoStartServerPort_(cDefaultPort),
     kristalliModule_(0),
     netrateBool(false),
-    netrateValue(0)
+    netrateValue(0),
+    imdialog_(0)
 {
 }
 
@@ -271,7 +272,6 @@ void TundraLogicModule::HandleKeyPressedEvent(KeyEvent *event)
             {
                 if(scene->Name().compare(i.key()) == 0)
                 {
-                            LogError("ASD");
                     found = true;
                     imdialog_ = new InterestManagerDialog(0, 0, i.value()->GetIMProperties());
 

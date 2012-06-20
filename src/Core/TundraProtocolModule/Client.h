@@ -209,6 +209,7 @@ private:
     TundraLogicModule* owner_; ///< Owning module
     Framework* framework_; ///< Framework pointer
     QString sceneName;
+    QTimer *cameraUpdateTimer;
 
     // Container for all the connections loginstates
     QMap<QString,ClientLoginState> loginstate_list_;

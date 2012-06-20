@@ -12,13 +12,11 @@
 
 #include "Profiler.h"
 #include "SceneAPI.h"
-#include "AssetAPI.h"
 #include "IAssetTransfer.h"
 #include "IAsset.h"
 #include "ConfigAPI.h"
 #include "IComponentFactory.h"
 #include "Scene.h"
-#include "AssetAPI.h"
 #include "ConsoleAPI.h"
 #include "AssetAPI.h"
 #include "CoreException.h"
@@ -273,6 +271,7 @@ void TundraLogicModule::HandleKeyPressedEvent(KeyEvent *event)
             {
                 if(scene->Name().compare(i.key()) == 0)
                 {
+                            LogError("ASD");
                     found = true;
                     imdialog_ = new InterestManagerDialog(0, 0, i.value()->GetIMProperties());
 

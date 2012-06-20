@@ -26,10 +26,10 @@ IMProperties::~IMProperties()
 bool IMProperties::GetEuclideanMode()             { return euclidean_mode_; }
 bool IMProperties::GetRelevanceMode()             { return relevance_mode_; }
 bool IMProperties::GetRaycastMode()               { return raycast_mode_;   }
+double IMProperties::GetRaycastRange()            { return raycast_range_;  }
 double IMProperties::GetMaxRange()                { return max_range_;      }
 double IMProperties::GetCriticalRange()           { return critical_range_; }
 int IMProperties::GetUpdateInterval()             { return update_interval_;}
-double IMProperties::GetRaycastRange()            { return raycast_range_;  }
 
 void IMProperties::SetEuclideanMode(bool mode)    { euclidean_mode_ = mode; }
 void IMProperties::SetRelevanceMode(bool mode)    { relevance_mode_ = mode; }

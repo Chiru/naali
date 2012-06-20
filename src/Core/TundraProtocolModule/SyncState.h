@@ -277,6 +277,14 @@ public:
     /// Entity interpolations
     std::map<entity_id_t, RigidBodyInterpolationState> entityInterpolations;
 
+    std::map<entity_id_t, double> entityRelevances;
+    std::set<entity_id_t> visibleEntities;
+
+    Quat clientOrientation;
+    float3 clientLocation;
+    bool orientationIsUpdated;
+    bool orientationInitialized;
+
 signals:
     /// This signal is emitted when a entity is being added to the client sync state.
     /// All needed data for evaluation logic is in the StateChangeRequest parameter object.

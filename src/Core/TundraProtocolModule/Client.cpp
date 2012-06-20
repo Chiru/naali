@@ -199,6 +199,7 @@ void Client::Logout(const QString &name)
 
 void Client::DelayedLogout()
 {
+    cameraUpdateTimer->stop();
     DoLogout(false);
 }
 

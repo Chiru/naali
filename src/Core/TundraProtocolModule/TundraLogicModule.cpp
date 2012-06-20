@@ -23,6 +23,7 @@
 #include "AssetAPI.h"
 #include "CoreException.h"
 #include "LoggingFunctions.h"
+#include "UiAPI.h"
 
 #include "EC_Name.h"
 #include "EC_DynamicComponent.h"
@@ -239,6 +240,8 @@ void TundraLogicModule::Initialize()
     }
     connect(framework_->Scene(), SIGNAL(SceneAdded(QString)), this, SLOT(registerSyncManager(QString)));
     connect(framework_->Scene(), SIGNAL(SceneRemoved(QString)), this, SLOT(removeSyncManager(QString)));
+    inputContext = framework_->Input()->RegisterInputContext("TundraLogicInput", 90);
+    connect(inputContext.get(), SIGNAL(KeyPressed(KeyEvent *)), this, SLOT(HandleKeyPressedEvent(KeyEvent *)));
 }
 
 void TundraLogicModule::Uninitialize()
@@ -249,6 +252,47 @@ void TundraLogicModule::Uninitialize()
     syncManagers_.clear();
     client_.reset();
     server_.reset();
+}
+
+void TundraLogicModule::HandleKeyPressedEvent(KeyEvent *event)
+{
+    Scene *scene = framework_->Scene()->MainCameraScene();
+    bool found = false;
+
+    if(scene == NULL)
+        return;
+
+    if(IsServer())
+    {
+        if (event->Sequence() == QKeySequence(Qt::ShiftModifier + Qt::Key_I))
+        {
+            if(imdialog_)
+                return;
+
+            for(QMap<QString, SyncManager*>::iterator i = syncManagers_.begin(); i != syncManagers_.end(); ++i)
+            {
+                if(scene->Name().compare(i.key()) == 0)
+                {
+                    found = true;
+                    imdialog_ = new InterestManagerDialog(0, 0, i.value()->GetIMProperties());
+
+                    framework_->Ui()->AddWidgetToScene(imdialog_, Qt::Dialog);
+                    imdialog_->show();
+                    imdialog_->move(200, 200);
+                    connect(imdialog_, SIGNAL(destroyed()), this, SLOT(IMDialogDestroyed()));
+                }
+            }
+
+            if(!found)
+                LogError("Could not find correct syncmanager for IM-dialog");
+        }
+    }
+}
+
+void TundraLogicModule::IMDialogDestroyed()
+{
+    imdialog_ = 0;
+    delete imdialog_;
 }
 
 void TundraLogicModule::Update(f64 frametime)

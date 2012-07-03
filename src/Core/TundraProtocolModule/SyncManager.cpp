@@ -306,10 +306,10 @@ void SyncManager::OnAttributeChanged(IComponent* comp, IAttribute* attr, Attribu
 
 bool SyncManager::CheckRelevance(UserConnectionPtr userconnection, Entity* changed_entity)
 {
-    ScenePtr scene = scene_.lock();
-
     if(!improperties_->isEnabled())
         return true;
+
+    ScenePtr scene = scene_.lock();
 
     if (!scene)
         return true;
@@ -343,7 +343,7 @@ bool SyncManager::CheckRelevance(UserConnectionPtr userconnection, Entity* chang
 
         if(improperties_->GetRaycastMode() == true && dot >= 0)
         {
-            accepted = RayVisibilityFilter(distance, cpos, epos, changed_entity->Id());
+            accepted = RayVisibilityFilter(distance, cpos, epos, changed_entity->Id(), scene);
         }
 
         if(improperties_->GetRelevanceMode() == true && dot >= 0)
@@ -380,26 +380,24 @@ bool SyncManager::EuclideanDistanceFilter(float distance)
         return false;
 }
 
-bool SyncManager::RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id)
+bool SyncManager::RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id, ScenePtr scene)
 {
-    ScenePtr scene = scene_.lock();
-
-    if (!scene)
-        return true;
-
     float cutoffrange = improperties_->GetRelevanceMode() ? improperties_->GetMaxRange()     * improperties_->GetMaxRange()
                                                           : improperties_->GetRaycastRange() * improperties_->GetRaycastRange();
 
-    Ray ray(client_location, (entity_location - client_location).Normalized());
-
-    RaycastResult *result;
-    OgreWorldPtr w = scene->GetWorld<OgreWorld>();
+    if(framework_->IsHeadless())    //We cannot use Ray Visibility filter in headless mode.
+        return true;
 
     if(distance < cutoffrange)  //If the entity is close enough, only then do a raycast
     {
+        Ray ray(client_location, (entity_location - client_location).Normalized());
+
+        RaycastResult *result = 0;
+        OgreWorldPtr w = scene->GetWorld<OgreWorld>();
+
         result = w->Raycast(ray, 0xFFFFFFFF);
 
-        if(result->entity && result->entity->Id() == id)  //If the ray hit someone and its our target entity
+        if(result && result->entity && result->entity->Id() == id)  //If the ray hit someone and its our target entity
             return true;
         else
             return false;

@@ -8,7 +8,6 @@
 #include "AssetFwd.h"
 #include <QMap>
 #include "InputAPI.h"
-#include "InterestManagerDialog.h"
 
 namespace kNet
 {
@@ -92,12 +91,10 @@ public slots:
     bool ImportMesh(QString filename, const float3 &pos = float3(0.f,0.f,0.f), const float3 &rot = float3(0.f,0.f,0.f),
         const float3 &scale = float3(1.f,1.f,1.f), bool inspectForMaterialsAndSkeleton = true);
 
-    void IMDialogDestroyed();
+    void InterestManagerSettingsUpdated(bool enabled, bool eucl, bool ray, bool rel, int critrange, int rayrange, int relrange, double updateint);
 
 private slots:
-    /// Handles KeyPressed() signal from input context.
-    /** @param e Key event. */
-    void HandleKeyPressedEvent(KeyEvent *event);
+
     void StartupSceneTransfedSucceeded(AssetPtr asset);
     void StartupSceneTransferFailed(IAssetTransfer *transfer, QString reason);
     void registerSyncManager(const QString);
@@ -120,9 +117,6 @@ private:
     unsigned short autoStartServerPort_; ///< Autostart server port
     bool netrateBool;
     int netrateValue;
-
-    InputContextPtr inputContext; ///< Input context.
-    InterestManagerDialog *imdialog_;
 };
 
 }

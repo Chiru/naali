@@ -6,6 +6,8 @@
  
 #pragma once
 
+#include "Types.h"
+
 class IMProperties
 {
 
@@ -18,7 +20,7 @@ private:
     double max_range_;
     double critical_range_;
     double raycast_range_;
-    int update_interval_;
+    u32 update_interval_;
 
 public:
 
@@ -31,7 +33,7 @@ public:
     bool GetRaycastMode();
     double GetMaxRange();
     double GetCriticalRange();
-    int GetUpdateInterval();
+    u32 GetUpdateInterval();
     double GetRaycastRange();
 
     void SetEuclideanMode(bool mode);
@@ -39,9 +41,11 @@ public:
     void SetRaycastMode(bool mode);
     void SetMaximumRange(double r);
     void SetCriticalRange(double r);
-    void SetUpdateInterval(int i);
+    void SetUpdateInterval(u32 i);
     void SetRaycastRange(double r);
 
     bool isEnabled();
     void setEnabled(bool mode);
+
+    void printConfiguration();
 };

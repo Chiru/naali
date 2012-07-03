@@ -102,7 +102,7 @@ private:
     /// Function calls for relevance checking
     bool CheckRelevance(UserConnectionPtr userconnection, Entity* entity);
     bool EuclideanDistanceFilter(float distance);
-    bool RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id);
+    bool RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id, ScenePtr scene);
     bool RelevanceFilter(float distance, UserConnectionPtr userconnection, Entity *changed_entity);
     void UpdateRelevance(UserConnectionPtr connection, entity_id_t id, double relevance);
     void UpdateLastUpdatedEntity(UserConnectionPtr connection, entity_id_t id);

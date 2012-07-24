@@ -44,6 +44,9 @@ link_modules (Audio)
 # This is only needed because this module bootstraps EC_InputMapper. If this is done by some other means, this dependency can be removed.
 link_modules (Input)
 
+#For websocketpp testing
+target_link_libraries(${TARGET_NAME} websocketpp) #seems to be needed if websocketpp is installed as shared
+
 SetupCompileFlagsWithPCH()
 
 if (WIN32)

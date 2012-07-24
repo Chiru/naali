@@ -7,6 +7,7 @@
 #include "SceneFwd.h"
 #include "AttributeChangeType.h"
 #include "EntityAction.h"
+#include "WebSocketManager.h"
 
 #include <kNetFwd.h>
 #include <kNet/Types.h>
@@ -166,6 +167,10 @@ private:
     char removeAttrsBuffer_[1024];
     std::vector<u8> changedAttributes_;
     std::string sceneUUID;
+
+    /// WebSocketManager pointer
+    WebSocketManager *WSManager;
+
 };
 
 }

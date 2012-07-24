@@ -81,6 +81,7 @@ void SyncManager::WriteComponentFullUpdate(kNet::DataSerializer& ds, ComponentPt
     ds.AddArray<u8>((unsigned char*)attrDataBuffer_, attrDs.BytesFilled());
 }
 
+
 SyncManager::SyncManager(TundraLogicModule* owner) :
     owner_(owner),
     framework_(owner->GetFramework()),
@@ -91,6 +92,12 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
     KristalliProtocolModule *kristalli = framework_->GetModule<KristalliProtocolModule>();
     connect(kristalli, SIGNAL(NetworkMessageReceived(kNet::MessageConnection *, kNet::packet_id_t, kNet::message_id_t, const char *, size_t)), 
         this, SLOT(HandleKristalliMessage(kNet::MessageConnection*, kNet::packet_id_t, kNet::message_id_t, const char*, size_t)));
+
+    //Testing websocket server
+    if (owner_->IsServer()){
+        WSManager = new WebSocketManager(9002);
+    }
+
 }
 
 SyncManager::~SyncManager()
@@ -417,6 +424,10 @@ void SyncManager::OnEntityCreated(Entity* entity, AttributeChange::Type change)
                 }
             }
         }
+
+        //Send test message through websocket manager to web client
+        WSManager->addEntity(entity->Id());
+
     }
     else
     {

@@ -169,7 +169,7 @@ private:
     std::string sceneUUID;
 
     /// WebSocketManager pointer
-    WebSocketManager *WSManager;
+    WebSocketManager *WSManager_;
 
 };
 

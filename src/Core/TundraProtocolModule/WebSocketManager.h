@@ -8,6 +8,7 @@
 //#include <boost/foreach.hpp>
 #include <string>
 #include <cstring>
+#include <sstream>
 #include <set>
 #include <exception>
 #include <qstring.h>
@@ -19,7 +20,23 @@ using boost::property_tree::ptree;
 using namespace std;
 
 
-class WebSocketManager : public server::handler{
+class WebSocketManager : public server::handler
+{
+public:
+    WebSocketManager(unsigned short port);
+    ~WebSocketManager();
+    void startServer();
+    string getConId(connection_ptr con);
+
+    void sendUserConnected();
+
+    int loadCollada(string path, string &data);
+    int parseJSON(string s, ptree&pt);
+    void createEventMsg(string event, string data, string &jsonString);
+
+    //Sync event handlers
+    void addEntity(unsigned int id);
+
 private:
     unsigned short port;
     //List of current connections
@@ -28,20 +45,8 @@ private:
     //server::handler::ptr handler;
     websocketpp::server *endpoint;
 
-public:
-    WebSocketManager(unsigned short port);
-    ~WebSocketManager();
-    void startServer();
-    string getConId(connection_ptr con);
-    int parseJSON(string s, ptree&pt);
-    void sendUserConnected();
 
-    //Sync event handlers
-    void addEntity(unsigned int id);
-
-
-
-    //Connection Events
+    //Socket events
     void on_validate(connection_ptr con);
     void on_open(connection_ptr con);
     void on_close(connection_ptr con);

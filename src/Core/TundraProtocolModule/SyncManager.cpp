@@ -95,7 +95,7 @@ SyncManager::SyncManager(TundraLogicModule* owner) :
 
     //Testing websocket server
     if (owner_->IsServer()){
-        WSManager = new WebSocketManager(9002);
+        WSManager_ = new WebSocketManager(9002);
     }
 
 }
@@ -426,7 +426,7 @@ void SyncManager::OnEntityCreated(Entity* entity, AttributeChange::Type change)
         }
 
         //Send test message through websocket manager to web client
-        WSManager->addEntity(entity->Id());
+        WSManager_->addEntity(entity->Id());
 
     }
     else

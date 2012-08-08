@@ -350,7 +350,7 @@ bool SyncManager::CheckRelevance(UserConnectionPtr userconnection, Entity* chang
         {
             if((improperties_->GetRaycastMode() && !improperties_->GetEuclideanMode() && accepted) ||
                (improperties_->GetRaycastMode() && improperties_->GetEuclideanMode() && accepted) ||
-               (improperties_->GetEuclideanMode() && !improperties_->GetRaycastMode()))
+               (improperties_->GetEuclideanMode() && !improperties_->GetRaycastMode() && !accepted))
             {
                 accepted = RelevanceFilter(distance, userconnection, changed_entity);
             }

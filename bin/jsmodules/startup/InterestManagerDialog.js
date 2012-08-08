@@ -3,71 +3,79 @@
  *   Implements Interest Manager widget functionality. 
  */
 
-/*Variables used in controlling the buttons and such*/
-var tundralogicmodule = null;
 
-var isEnabled = null;
-var PresetsBox = null;
 
-var radA3 = null;
-var radEA3 = null;
-var radManual = null;
+/*Run the script when the scene is loaded*/
+framework.Scene().SceneAdded.connect(IMDialog);
 
-var EuclBox = null;
-var cbEuclEnabled 
-var spnEuclRadius
-
-var RayBox = null;
-var cbRayEnabled = null;
-var spnRayRadius = null;
-
-var ModifiersBox = null;
-var cbRelEnabled = null;
-var spnRelRadius = null;
-
-var btnApply = null;
-var btnCancel = null;
-
-// Saves widget position to config and destroys the widget.
-function OnScriptDestroyed()
+function IMDialog()
 {
-    if (!framework.IsHeadless())
+    /*Variables used in controlling the buttons and such*/
+    var tundralogicmodule = null;
+
+    var isEnabled = null;
+    var PresetsBox = null;
+
+    var radA3 = null;
+    var radEA3 = null;
+    var radManual = null;
+
+    var EuclBox = null;
+    var cbEuclEnabled 
+    var spnEuclRadius
+
+    var RayBox = null;
+    var cbRayEnabled = null;
+    var spnRayRadius = null;
+
+    var ModifiersBox = null;
+    var cbRelEnabled = null;
+    var spnRelRadius = null;
+
+    var btnApply = null;
+    var btnCancel = null;
+
+    // Saves widget position to config and destroys the widget.
+    function OnScriptDestroyed()
     {
-        if (IMWidget)
+        if (!framework.IsHeadless())
         {
-            SaveWindowPositionToSettings();
-            IMWidget.deleteLater();
-            IMWidget = null;
+            if (IMWidget)
+            {
+                SaveWindowPositionToSettings();
+                IMWidget.deleteLater();
+                IMWidget = null;
+            }
         }
     }
-}
 
-// Renderer IM widget usable only in headful mode.
-if (!framework.IsHeadless())
-{
-    engine.ImportExtension("qt.core");
-    engine.ImportExtension("qt.gui");
-
-    var configFile = "tundra";
-    var configUiSection = "ui";
-
-    var configWinPos = "im settings windows pos"
-    var IMWidget = null;
-
-    if (framework.GetModuleByName("TundraLogic"))
-        tundralogicmodule = framework.GetModuleByName("TundraLogic");
-    else
-        print("TundraLogicModule not in use, cannot use interest manager dialog.");
-
-    // Add menu entry to Settings menu
-    var IMMenu = findChild(ui.MainWindow().menuBar(), "SettingsMenu");
-    if (!IMMenu)
+    // Renderer IM widget usable only in headful mode.
+    if (!framework.IsHeadless())
     {
-        IMMenu = ui.MainWindow().menuBar().addMenu("&Settings");
-        IMMenu.objectName = "SettingsMenu";
+        engine.ImportExtension("qt.core");
+        engine.ImportExtension("qt.gui");
+
+        var configFile = "tundra";
+        var configUiSection = "ui";
+
+        var configWinPos = "im settings windows pos"
+        var IMWidget = null;
+
+        if (framework.GetModuleByName("TundraLogic"))
+            tundralogicmodule = framework.GetModuleByName("TundraLogic");
+        else
+            print("TundraLogicModule not in use, cannot use interest manager dialog.");
+
+        // Add menu entry to Settings menu
+        var IMMenu = findChild(ui.MainWindow().menuBar(), "SettingsMenu");
+        if (!IMMenu)
+        {
+            IMMenu = ui.MainWindow().menuBar().addMenu("&Settings");
+            IMMenu.objectName = "SettingsMenu";
+        }
+        var IMSettings = IMMenu.addAction("Interest Management");
+        IMSettings.triggered.connect(ShowIMSettings);
     }
-    var IMSettings = IMMenu.addAction("Interest Management");
-    IMSettings.triggered.connect(ShowIMSettings);
 
     // Shows IM or hides it if it's already visible.
     function ShowIMSettings()

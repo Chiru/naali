@@ -278,6 +278,7 @@ public:
     std::map<entity_id_t, RigidBodyInterpolationState> entityInterpolations;
 
     std::map<entity_id_t, double> entityRelevances;
+    std::map<entity_id_t, bool> visibleEntities;
 
     Quat clientOrientation;
     float3 clientLocation;

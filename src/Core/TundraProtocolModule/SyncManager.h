@@ -102,10 +102,13 @@ private:
     /// Function calls for relevance checking
     bool CheckRelevance(UserConnectionPtr userconnection, Entity* entity);
     bool EuclideanDistanceFilter(float distance);
-    bool RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id, ScenePtr scene);
+    bool RayVisibilityFilter(UserConnectionPtr conn, float distance, float3 client_location, float3 entity_location, Entity *changed_entity, ScenePtr scene);
     bool RelevanceFilter(float distance, UserConnectionPtr userconnection, Entity *changed_entity);
     void UpdateRelevance(UserConnectionPtr connection, entity_id_t id, double relevance);
-    void UpdateLastUpdatedEntity(UserConnectionPtr connection, entity_id_t id);
+    void UpdateEntityVisibility(UserConnectionPtr connection, entity_id_t id, bool visible);
+    void UpdateLastUpdatedEntity(entity_id_t id);
+    void UpdateLastRaycastedEntity(entity_id_t id);
+    void UpdateEntityVisibility(entity_id_t id, bool visible);
 
     /// Handle entity action message.
     void HandleEntityAction(kNet::MessageConnection* source, MsgEntityAction& msg);
@@ -184,6 +187,7 @@ private:
     std::string sceneUUID;
 
     std::map<entity_id_t, tick_t> lastUpdatedEntitys_;
+    std::map<entity_id_t, tick_t> lastRaycastedEntitys_;
     IMProperties *improperties_;
 };
 

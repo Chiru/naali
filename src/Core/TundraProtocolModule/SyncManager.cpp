@@ -343,7 +343,7 @@ bool SyncManager::CheckRelevance(UserConnectionPtr userconnection, Entity* chang
 
         if(improperties_->GetRaycastMode() == true && dot >= 0)
         {
-            accepted = RayVisibilityFilter(distance, cpos, epos, changed_entity->Id(), scene);
+            accepted = RayVisibilityFilter(userconnection, distance, cpos, epos, changed_entity, scene);
         }
 
         if(improperties_->GetRelevanceMode() == true && dot >= 0)
@@ -358,7 +358,7 @@ bool SyncManager::CheckRelevance(UserConnectionPtr userconnection, Entity* chang
 
         if(accepted)
         {
-            UpdateLastUpdatedEntity(userconnection, changed_entity->Id());
+            UpdateLastUpdatedEntity(changed_entity->Id());
             return true;
         }
 
@@ -380,7 +380,7 @@ bool SyncManager::EuclideanDistanceFilter(float distance)
         return false;
 }
 
-bool SyncManager::RayVisibilityFilter(float distance, float3 client_location, float3 entity_location, entity_id_t id, ScenePtr scene)
+bool SyncManager::RayVisibilityFilter(UserConnectionPtr conn, float distance, float3 client_location, float3 entity_location, Entity *changed_entity, ScenePtr scene)
 {
     float cutoffrange = improperties_->GetRelevanceMode() ? improperties_->GetMaxRange()     * improperties_->GetMaxRange()
                                                           : improperties_->GetRaycastRange() * improperties_->GetRaycastRange();
@@ -390,17 +390,51 @@ bool SyncManager::RayVisibilityFilter(float distance, float3 client_location, fl
 
     if(distance < cutoffrange)  //If the entity is close enough, only then do a raycast
     {
-        Ray ray(client_location, (entity_location - client_location).Normalized());
+        tick_t lastRaycasted;
+        /*Check when was the last time we raycasted and dont do it if its not the time*/
+        std::map<entity_id_t, tick_t>::iterator it = lastRaycastedEntitys_.find(changed_entity->Id());
 
-        RaycastResult *result = 0;
-        OgreWorldPtr w = scene->GetWorld<OgreWorld>();
-
-        result = w->Raycast(ray, 0xFFFFFFFF);
-
-        if(result && result->entity && result->entity->Id() == id)  //If the ray hit someone and its our target entity
-            return true;
+        if(it == lastRaycastedEntitys_.end())
+            lastRaycasted = 0;
         else
-            return false;
+            lastRaycasted = it->second;
+
+        tick_t currentTime = GetCurrentClockTime();
+
+        if(lastRaycasted + 250000000 > currentTime)
+        {
+            std::map<entity_id_t, bool>::iterator it2;
+
+            it2 = conn->syncState->visibleEntities.find(changed_entity->Id());
+
+            if(it2->second == true) //bool which contains a value determining if the entity was visible to the user
+                return true;
+            else
+                return false;
+        }
+
+        else
+        {
+            Ray ray(client_location, (entity_location - client_location).Normalized());
+
+            RaycastResult *result = 0;
+            OgreWorldPtr w = scene->GetWorld<OgreWorld>();
+
+            result = w->Raycast(ray, 0xFFFFFFFF);
+
+            UpdateLastRaycastedEntity(changed_entity->Id());
+
+            if(result && result->entity && result->entity->Id() == changed_entity->Id())  //If the ray hit someone and its our target entity
+            {
+                UpdateEntityVisibility(conn, changed_entity->Id(), true);
+                return true;
+            }
+            else
+            {
+                UpdateEntityVisibility(conn, changed_entity->Id(), false);
+                return false;
+            }
+        }
     }
 
     return false;
@@ -461,7 +495,19 @@ void SyncManager::UpdateRelevance(UserConnectionPtr connection, entity_id_t id, 
         it->second = relevance;
 }
 
-void SyncManager::UpdateLastUpdatedEntity(UserConnectionPtr connection, entity_id_t id)
+void SyncManager::UpdateEntityVisibility(UserConnectionPtr conn, entity_id_t id, bool visible)
+{
+    std::map<entity_id_t, bool>::iterator it;
+
+    it = conn->syncState->visibleEntities.find(id);
+
+    if(it == conn->syncState->visibleEntities.end()) //Theres no entry with this entity_id
+        conn->syncState->visibleEntities.insert(std::make_pair(id, visible));
+    else
+        it->second = visible;
+}
+
+void SyncManager::UpdateLastUpdatedEntity(entity_id_t id)
 {
     std::map<entity_id_t, tick_t>::iterator it;
     tick_t time = GetCurrentClockTime();
@@ -470,6 +516,19 @@ void SyncManager::UpdateLastUpdatedEntity(UserConnectionPtr connection, entity_i
 
     if(it == lastUpdatedEntitys_.end())
         lastUpdatedEntitys_.insert(std::make_pair(id, time));
+    else
+        it->second = time;
+}
+
+void SyncManager::UpdateLastRaycastedEntity(entity_id_t id)
+{
+    std::map<entity_id_t, tick_t>::iterator it;
+    tick_t time = GetCurrentClockTime();
+
+    it = lastRaycastedEntitys_.find(id);
+
+    if(it == lastRaycastedEntitys_.end())
+        lastRaycastedEntitys_.insert(std::make_pair(id, time));
     else
         it->second = time;
 }

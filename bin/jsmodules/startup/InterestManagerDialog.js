@@ -6,6 +6,8 @@
 /*Variables used in controlling the buttons and such*/
 var tundralogicmodule = null;
 
+var moveButton = null;
+
 var isEnabled = null;
 var PresetsBox = null;
 
@@ -115,6 +117,9 @@ function CreateIMSettingsWindow()
     isEnabled = findChild(IMWidget, "chkFilterEnabled");
     isEnabled.stateChanged.connect(FilteringChanged);
 
+    moveButton = findChild(IMWidget, "btnMove");
+    moveButton.clicked.connect(MoveButtonClicked);
+
     btnApply  = findChild(IMWidget, "btnApply"); 
     btnApply.clicked.connect(ApplyButtonClicked);
 
@@ -216,6 +221,28 @@ function ApplyButtonClicked(value)
 function CancelButtonClicked(value)    
 {
     IMWidget.close();
+}
+
+// Handles the Start Moving buttons click event
+function MoveButtonClicked(value)
+{
+    /*Go through all entities and order them to start moving*/
+    var users = server.AuthenticatedUsers();
+
+    if (users.length > 0)
+        print("[InterestManagerDialog] Ordering the avatars to start moving!");
+    else
+        print("[InterestManagerDialog] No avatars present inside the environment at the moment. Aborting!");
+
+    for(var i = 0; i < users.length; i++)
+    {
+        var entity = framework.Scene().MainCameraScene().GetEntityByName("Avatar" + users[i].id);
+
+        if(entity != null)
+            entity.Exec(4, "StartMoving");
+        else
+            print("[InterestManagerDialog] Something went wrong!");
+    }
 }
 
 // Handles the A3 Radiobutton events

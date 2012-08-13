@@ -19,7 +19,8 @@ function OnEntityCreated(entity, change)
     if (!server.IsRunning() && entity.name == "Avatar" + client.connectionId)
     {
         avatarEntityId = entity.id;
-        frame.DelayedExecute(1.0).Triggered.connect(ProduceRandomMovement);
+        entity.Action("StartMoving").Triggered.connect(this, ProduceRandomMovement);
+        //frame.DelayedExecute(1.0).Triggered.connect(ProduceRandomMovement);
 //        frame.Updated.connect(ProduceRandomMovement);
     }
 }
@@ -71,5 +72,6 @@ function ProduceRandomMovement()
         entity.Exec(1, "Rotate", "left");
     if (decision == 12)
         entity.Exec(1, "StopRotate", "left");
+
     frame.DelayedExecute(1.0).Triggered.connect(ProduceRandomMovement);
 }

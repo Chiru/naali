@@ -239,7 +239,10 @@ function MoveButtonClicked(value)
         var entity = framework.Scene().MainCameraScene().GetEntityByName("Avatar" + users[i].id);
 
         if(entity != null)
+        {
+            print("[InterestManagerDialog] Telling Avatar" + users[i].id + " to start moving.");
             entity.Exec(4, "StartMoving");
+        }
         else
             print("[InterestManagerDialog] Something went wrong!");
     }

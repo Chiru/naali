@@ -233,10 +233,10 @@ macro(link_package_skyx)
 endmacro()
 
 macro (configure_qtpropertybrowser)
-    if (NOT MSVC)
+    if (NOT MSVC AND NOT APPLE)
       sagase_configure_package (QT_PROPERTY_BROWSER
-          NAMES QtPropertyBrowser QtSolutions_PropertyBrowser-2.5
-          COMPONENTS QtPropertyBrowser QtSolutions_PropertyBrowser-2.5
+          NAMES QtPropertyBrowser QtSolutions_PropertyBrowser-2.5 QtSolutions_PropertyBrowser-head
+          COMPONENTS QtPropertyBrowser QtSolutions_PropertyBrowser-2.5 QtSolutions_PropertyBrowser-head
           PREFIXES ${ENV_TUNDRA_DEP_PATH})
 
       sagase_configure_report (QT_PROPERTY_BROWSER)

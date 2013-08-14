@@ -1,0 +1,30 @@
+material joint
+{
+    receive_shadows on
+    technique b2ogre_1358863163.734552
+    {
+        pass b2ogre_1358863163.734577
+        {
+            ambient 0.6980392336845398 0.686274528503418 0.6745098233222961 1.0
+            diffuse 0.558431395268908 0.5490196309837643 0.5396078666986206 1.0
+            specular 0.1823529452085495 0.16862745583057404 0.14901961386203766 1.0 12.5
+            emissive 0.0 0.0 0.0 1.0
+            alpha_to_coverage off
+            colour_write on
+            cull_hardware clockwise
+            depth_check on
+            depth_func less_equal
+            depth_write on
+            illumination_stage
+            light_clip_planes off
+            light_scissor off
+            lighting on
+            normalise_normals off
+            polygon_mode solid
+            scene_blend one zero
+            scene_blend_op add
+            shading gouraud
+            transparent_sorting on
+        }
+    }
+}
